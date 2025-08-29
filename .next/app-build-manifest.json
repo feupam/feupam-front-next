@@ -1,0 +1,55 @@
+{
+  "pages": {
+    "/countdown/[uuid]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/countdown/[uuid]/page.js"
+    ],
+    "/countdown/[uuid]/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/countdown/[uuid]/layout.js"
+    ],
+    "/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/css/app/layout.css",
+      "static/chunks/app/layout.js"
+    ],
+    "/login/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/login/page.js"
+    ],
+    "/event/[eventName]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/event/[eventName]/page.js"
+    ],
+    "/perfil/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/perfil/page.js"
+    ],
+    "/eventos/layout": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/eventos/layout.js"
+    ],
+    "/eventos/[uuid]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/eventos/[uuid]/page.js"
+    ],
+    "/eventos/[uuid]/loading": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/eventos/[uuid]/loading.js"
+    ],
+    "/reserva/[eventId]/[ticketKind]/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/reserva/[eventId]/[ticketKind]/page.js"
+    ]
+  }
+}

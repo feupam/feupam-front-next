@@ -1,0 +1,223 @@
+### Base URL
+@base_url=https://api-s3go7ufjia-uc.a.run.app
+@eventId=federa
+@token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjNmOWEwNTBkYzRhZTgyOGMyODcxYzMyNTYzYzk5ZDUwMjc3ODRiZTUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSWdyZWphIFByZXNiaXRlcmlhbmEgSW5kZXBlbmRlbnRlIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0k4b0RRWFJFdHQ5OTJEQmNqbTVfQVZOajZ0cDNrRFFUTVIzZldwWFhSRnhIX2hVVlU9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZmVkZXJhLWFwaSIsImF1ZCI6ImZlZGVyYS1hcGkiLCJhdXRoX3RpbWUiOjE3NDY2NDE0NzgsInVzZXJfaWQiOiJoYTlBMWpMVFI2ZXNzYXkzMFBvRjlFa2xGS28yIiwic3ViIjoiaGE5QTFqTFRSNmVzc2F5MzBQb0Y5RWtsRktvMiIsImlhdCI6MTc0NjY0NTY3MSwiZXhwIjoxNzQ2NjQ5MjcxLCJlbWFpbCI6ImlwaWNhcm1vcmlvY2xhcm9AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDI0NzI3Mjg0MjY5OTk4MzI0NzgiXSwiZW1haWwiOlsiaXBpY2FybW9yaW9jbGFyb0BnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.K5b3IzfXUenumW_K3sOV8bPszE1I3iOyoZKr51Vq5ZnYNk4Ax0YtsYqBtqmSF0E3oQGmtdgboYlcS6RRCxB6jDPVU-na-jxc-NwvJ4XnjG-Am8xN7vyNG9YD1_kYfNoNwyHIJHWgptG6HnAxNm1E6E7dq8YFPrAAF3AG5ZPOMUPJRjHgNfRpuDoCS-kqURjHyqI3gLudts7MMzJjAol20IPzZEhPu_D1UCCdgys4tlO5vvPh8Wd1KXFWnBbqh-6qLv0SYZC26s41Hg-Jyiw8vhcV_L5TjHwrIZjzlgWBywyP-yIIMZAg19J6pNs90DDWWbz0W8tZ1amFDopALLo_8Q
+
+### Chamada POST para a API payPaymentsPagarme
+# @name pagarmeCredit
+POST {{base_url}}/payments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "items": [
+        {
+            "amount": 87380,
+            "description": "federa"
+        }
+    ],
+    "customer": {
+        "email": "ipicarmorioclaro@gmail.com"
+    },
+    "payments": {
+        "payment_method": "credit_card",
+        "credit_card": {
+            "installments": 10,
+            "statement_descriptor": "FEDERA",
+            "card": {
+                "number": "4000000000000001",
+                "holder_name": "tony stark",
+                "exp_month": 1,
+                "exp_year": 30,
+                "cvv": "123",
+                "billing_address": {
+                    "line_1": "776 RUA JOSE BRAZ VILELA",
+                    "zip_code": "37150-000",
+                    "city": "Carmo do Rio Claro",
+                    "state": "MG",
+                    "country": "BR"
+                }
+            }
+        }
+    },
+    
+}
+
+{
+  "items": [
+    {
+      "amount": 2990,
+      "description": "{{eventId}}"
+    }
+  ],
+  "customer": {
+    "email": "ariela.stefanini@sou.unifal-mg.edu.br"
+  },
+  "payments": {
+    "payment_method": "credit_card",
+    "credit_card": {
+      "installments": 1,
+      "statement_descriptor": "AVENGERS",
+      "card": {
+        "number": "4000000000000010",
+        "holder_name": "Tony Stark",
+        "exp_month": 1,
+        "exp_year": 30,
+        "cvv": "3531",
+        "billing_address": {
+          "line_1": "10880, Malibu Point, Malibu Central",
+          "zip_code": "90265",
+          "city": "Malibu",
+            "state": "CA",
+            "country": "US"                
+        }
+      }
+    }
+  }
+}
+
+###
+# @name pagarmeBoleto
+POST {{base_url}}/payments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "items": [
+    {
+      "amount": 2990,
+      "description": "{{eventId}}"
+    }
+  ],
+  "customer": {
+    "email": "ariela.stefanini@sou.unifal-mg.edu.br"
+  },
+  "payments": {
+    "payment_method": "boleto",
+    "boleto": {
+      "due_at": "2024-08-13T00:00:00Z"
+    }
+  }
+}
+
+###
+# @name pagarmePix
+POST {{base_url}}/payments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "items": [
+    {
+      "amount": 2990,
+      "description": "{{eventId}}"
+    }
+  ],
+  "customer": {
+    "email": "ariela.stefanini@sou.unifal-mg.edu.br"
+  },
+  "payments": {
+    "payment_method": "pix"
+  }
+}
+
+###
+# @name webehook_test
+POST {{base_url}}/payments/webhook-pagarme
+Content-Type: application/json
+
+{
+  "id": "hook_nVNwZ28uAu3WqLEO",
+  "account": {
+    "id": "acc_8dnw5PzCoSJWmZrg",
+    "name": "PRESBITERIO VALE DO RIO GRANDE - test"
+  },
+  "type": "charge.paid",
+  "created_at": "2024-04-09T16:56:01.8782162Z",
+  "data": {
+    "id": "ch_qDwX1JYtRlSmKm2B",
+    "code": "D3NETMAX0D",
+    "gateway_id": "807329",
+    "amount": 33000,
+    "paid_amount": 33000,
+    "status": "paid",
+    "currency": "BRL",
+    "payment_method": "pix",
+    "paid_at": "2024-04-09T16:52:18.4976896Z",
+    "created_at": "2024-04-09T16:52:18.407Z",
+    "updated_at": "2024-04-09T16:52:18.5260834Z",
+    "pending_cancellation": false,
+    "customer": {
+      "id": "cus_qgBk15ztlXSoZkeG",
+      "name": "Ariela Stefanini ",
+      "email": "costumer2@costumer.br",
+      "document": "08850515995",
+      "type": "individual",
+      "delinquent": false,
+      "address": {
+        "id": "addr_8wRq51qs0Un5XgjN",
+        "line_1": "Rua Antonio Divino de Morais",
+        "street": "Rua Antonio Divino de Morais",
+        "zip_code": "37.940000",
+        "city": "Alpinopolis",
+        "state": "MG",
+        "country": "BR",
+        "status": "active",
+        "created_at": "2024-03-21T22:02:28.957Z",
+        "updated_at": "2024-03-21T22:02:28.957Z",
+        "metadata": {}
+      },
+      "created_at": "2024-03-21T22:02:28.943Z",
+      "updated_at": "2024-03-21T22:02:28.943Z",
+      "phones": {
+        "mobile_phone": {
+          "country_code": "55",
+          "number": "998185335",
+          "area_code": "35"
+        }
+      },
+      "metadata": {}
+    },
+    "order": {
+      "id": "or_kDQPldGS2kf7Pmo1",
+      "code": "D3NETMAX0D",
+      "amount": 33000,
+      "closed": true,
+      "created_at": "2024-04-09T16:52:18.393Z",
+      "updated_at": "2024-04-09T16:52:18.5260834Z",
+      "closed_at": "2024-04-09T16:52:18.393Z",
+      "currency": "BRL",
+      "status": "paid",
+      "customer_id": "cus_qgBk15ztlXSoZkeG",
+      "metadata": {}
+    },
+    "last_transaction": {
+      "transaction_type": "pix",
+      "pix_provider_tid": "807329",
+      "qr_code": "https://digital.mundipagg.com/pix/",
+      "qr_code_url": "https://api.pagar.me/core/v5/transactions/tran_58pLydT7OS0BJdnO/qrcode?payment_method=pix",
+      "end_to_end_id": "E12345678202009091221abcdef12345",
+      "payer": {
+        "name": "Tony Stark",
+        "document": "***951352**",
+        "document_type": "CPF",
+        "bank_account": {
+          "bank_name": "Pagarme Bank",
+          "ispb": "35245745"
+        }
+      },
+      "expires_at": "2024-04-09T18:52:18.4066667Z",
+      "id": "tran_3kxAdWZefXCNLpQB",
+      "gateway_id": "807329",
+      "amount": 33000,
+      "status": "paid",
+      "success": true,
+      "created_at": "2024-04-09T16:52:18.5260834Z",
+      "updated_at": "2024-04-09T16:52:18.5260834Z",
+      "gateway_response": {},
+      "antifraud_response": {},
+      "metadata": {}
+    },
+    "metadata": {}
+  }
+}

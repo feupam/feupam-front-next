@@ -1,0 +1,61 @@
+### Base URL
+@base_url=https://us-central1-federa-api.cloudfunctions.net/api
+@eventId=federa1
+@email=test@test.com
+@token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjNmOWEwNTBkYzRhZTgyOGMyODcxYzMyNTYzYzk5ZDUwMjc3ODRiZTUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSWdyZWphIFByZXNiaXRlcmlhbmEgSW5kZXBlbmRlbnRlIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0k4b0RRWFJFdHQ5OTJEQmNqbTVfQVZOajZ0cDNrRFFUTVIzZldwWFhSRnhIX2hVVlU9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZmVkZXJhLWFwaSIsImF1ZCI6ImZlZGVyYS1hcGkiLCJhdXRoX3RpbWUiOjE3NDY2NDE0NzgsInVzZXJfaWQiOiJoYTlBMWpMVFI2ZXNzYXkzMFBvRjlFa2xGS28yIiwic3ViIjoiaGE5QTFqTFRSNmVzc2F5MzBQb0Y5RWtsRktvMiIsImlhdCI6MTc0NjY0MTQ3OCwiZXhwIjoxNzQ2NjQ1MDc4LCJlbWFpbCI6ImlwaWNhcm1vcmlvY2xhcm9AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDI0NzI3Mjg0MjY5OTk4MzI0NzgiXSwiZW1haWwiOlsiaXBpY2FybW9yaW9jbGFyb0BnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.p8ULzITunR3UKdUUq2Z66C0LFQwHkqsqsBbAjNEZEtN7-75bAA15SJsHoSCcRJ41xlnTpq0xL8HekUieCiWWtTEvu_eNJKKR2zUib_gSmbYqfjx8bi9aTKB8YldiRaVIaFbbmZ_4yahIgxc576SV8iuiH0fEuCJEMRQYiVlWtE5e_NhOf4ARghI6paFDw5F1HMn-Hsu2jg25AcOK1u-gfGvpQYL3J0huk0BL-zWBj9X-mSLqwKkmkt0XXToj2_1mkwoPybn2yqOTmVFTJ5iGqT2mnlA5EBktcOzy6jKq3vXLGjgQSE1kLThCx_J4MYz3UPgrufCh4rU3S99oBGyQyg
+
+###
+# @name createEvent
+POST {{base_url}}/events
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+      "name": "federa",
+      "date": "2025-06-18",
+      "location": "betel",
+      "eventType": "gender_specific",
+      "maxClientMale": "13" ,
+      "maxClientFemale": "3",
+      "maxStaffMale": "3",
+      "maxStaffFemale": "3",
+      "maxGeneralSpots": "300",
+      "startDate": "2025-05-08T22:00:00Z",
+      "endDate": "2025-01-08T22:59:59Z",
+      "price": 32500
+}
+
+###
+# @name listEvents
+GET {{base_url}}/events
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+# @name getEvent
+GET {{base_url}}/events/{{eventId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+# @name updateEvent
+PUT {{base_url}}/events/{{eventId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "name": "federa1"
+}
+
+###
+# @name deleteEvent
+DELETE {{base_url}}/events/{{eventId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+
+###
+# @name excel
+GET {{base_url}}/events/{{eventId}}/excel
+Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+Authorization: Bearer {{token}}

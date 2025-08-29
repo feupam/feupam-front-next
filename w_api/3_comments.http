@@ -1,0 +1,46 @@
+### Base URL
+@base_url=https://us-central1-federa-api.cloudfunctions.net/api
+@commentsId=federa
+@email=test@test.com
+@token=
+
+###
+# @name createComments
+POST {{base_url}}/comments
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "comment": "string"
+}
+
+###
+@commentId = {{ createComments.response.body.id }}
+
+###
+# @name listCommentss
+GET {{base_url}}/comments
+Content-Type: application/json
+
+###
+# @name getComments
+GET {{base_url}}/comments/{{commentId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+# @name updateComments
+PATCH {{base_url}}/comments/{{commentId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "comment": "string",
+    "hide": true
+}
+
+###
+# @name deleteComments
+DELETE {{base_url}}/comments/{{commentId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}

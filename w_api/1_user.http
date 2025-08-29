@@ -1,0 +1,85 @@
+### Base URL
+@base_url=https://api-s3go7ufjia-uc.a.run.app/
+@email=test1@test.com
+@eventId=FederaOficial
+@token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjNmOWEwNTBkYzRhZTgyOGMyODcxYzMyNTYzYzk5ZDUwMjc3ODRiZTUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiTHVpeiBBbG1laWRhIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0tjeFNOcjhUR0RVaWRkX0lfaEdOWGNCQjVwaG95Ml9uSlBmcUhsbUlxX0ZoQnE9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZmVkZXJhLWFwaSIsImF1ZCI6ImZlZGVyYS1hcGkiLCJhdXRoX3RpbWUiOjE3NDY1NDE1MDYsInVzZXJfaWQiOiJXU1dsdEtXTG5uWWZSWWZ5dzJqMzV5R0pmWDAyIiwic3ViIjoiV1NXbHRLV0xubllmUllmeXcyajM1eUdKZlgwMiIsImlhdCI6MTc0NjU4NTU4OSwiZXhwIjoxNzQ2NTg5MTg5LCJlbWFpbCI6Imx1aXouZ2FycmFAbGl2ZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJnb29nbGUuY29tIjpbIjEwMzkwNjQyODAyMzA4ODIwMDI5OCJdLCJlbWFpbCI6WyJsdWl6LmdhcnJhQGxpdmUuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoiZ29vZ2xlLmNvbSJ9fQ.jlW8J8zn2FgOlw7MauWE5_Tm_9iy_uEif1dPmDN_77gnA_ymftK68DJ8zPRtH11GlKlmMGfwMeAt9OghyOR2FcY08jrlZML2ekdhC0AEuuMODaXKoeMz9m2X_aHMH2JWGTn6Q0Aof6Qnd2KgvyYnXO0Ck69ohHqj2xuCb_eLpY5r7laJrVFeqD7WMWGv2-CMgO4qG07D0CuWF75_PLsqzsQN5zA0bMqNPbpbzxyJqYBJ_2Gz9S8f1QcPIyU1qQuPmrsvNdkd4lXOhYMeKBPGCJM55mmRfQ8GYeAKijKbnJ4xO2xOSSbFUJ7FKJVDFyRVNCUoSE5Zh4VyidgqquOvmg
+###
+# @name createUser
+POST {{base_url}}/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userType": "client",
+  "name": "Ariela Stefanini ",
+  "church": "IPI Alpinópolis",
+  "pastor": "Vitor",
+  "ddd": "35",
+  "cellphone": "99818536351",
+  "gender": "male",
+  "cep": "37.940-000",
+  "cpf": "912",
+  "data_nasc":"17/03/1993",
+  "idade": 18,
+  "responsavel": "Paulo",
+  "documento_responsavel": "05904651805",
+  "ddd_responsavel": "35",
+  "cellphone_responsavel": "999095569",
+  "address": "Rua Antonio Divino de Morais",
+  "complemento": "",
+  "cidade": "Alpinopolis",
+  "estado": "MG",
+  "alergia": "Não",
+  "medicamento":"Não",
+  "info_add": "Nao"
+}
+
+###
+# @name getUserById
+GET {{base_url}}/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+# @name ListUser
+GET {{base_url}}/users/list-users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+# @name updateUser
+PATCH  {{base_url}}/users
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "userType": "client",
+  "name": "Ariela Stefanini ",
+  "church": "IPI Alpinópolis",
+  "pastor": "Vitor",
+  "ddd": "35",
+  "cellphone": "99818536351",
+  "gender": "male",
+  "cep": "37.940-000",
+  "cpf": "912",
+  "data_nasc":"17/03/1993",
+  "idade": 18,
+  "responsavel": "Paulo",
+  "documento_responsavel": "05904651805",
+  "ddd_responsavel": "35",
+  "cellphone_responsavel": "999095569",
+  "address": "Rua Antonio Divino de Morais",
+  "complemento": "",
+  "cidade": "Alpinopolis",
+  "estado": "MG",
+  "alergia": "Não",
+  "medicamento":"Não",
+  "info_add": "Nao"
+}
+
+
+###
+# @name deleteUser
+DELETE {{base_url}}/users
+Content-Type: application/json
+Authorization: Bearer {{token}}

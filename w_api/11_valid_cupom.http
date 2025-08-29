@@ -1,0 +1,28 @@
+### Base URL
+@base_url=https://us-central1-federa-api.cloudfunctions.net/api
+@email = test@test.com
+@eventId=federa
+@token=
+
+###
+# @name createCupom/updateCupom
+POST {{base_url}}/cupons/{{eventId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "CUPOM32",
+  "discount": 0.72
+}
+
+###
+# @name listCupons
+GET {{base_url}}/cupons/{{eventId}}
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+###
+# @name deleteCupom
+DELETE {{base_url}}/cupons/{{eventId}}?name=CUPOM32
+Content-Type: application/json
+Authorization: Bearer {{token}}

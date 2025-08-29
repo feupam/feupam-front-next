@@ -1,0 +1,64 @@
+@base_url=http://localhost:3000
+@email=c@costumer.br
+@eventId=federa
+@token=
+
+### Chamada POST cria usuario com dados fake menos email
+# @name fastUser
+POST {{base_url}}/admin/fast-user
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "email": "{{email}}"
+}
+
+### Chamada POST para a API payPaymentsPagarme
+# @name checkSpot
+POST {{base_url}}/events/{{eventId}}/check-spot
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+### Chamada POST da disconto
+# @name discount
+POST {{base_url}}/admin/discount
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "email": "{{email}}",
+    "discount": 0.20,
+    "event": "federa"
+}
+
+### Chamada POST da inscricao
+# @name freeEvent
+POST {{base_url}}/admin/{{eventId}}/free-event
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "email": "{{email}}"
+}
+
+### Chamada POST gerencia staff
+# @name setStaff
+PATCH {{base_url}}/admin/set-staff
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "email": "{{email}}",
+    "isStaff": true
+}
+
+### Chamada POST muda o email
+# @name updateEmail
+PATCH {{base_url}}/admin/update-email
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "email": "{{email}}",
+    "newEmail": "update@test.com"
+}

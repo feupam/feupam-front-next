@@ -8,7 +8,7 @@ import RootClientLayout from '@/components/RootClientLayout';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'EventFlow - Secure your spot at exciting events',
+  title: 'Feupam - Secure your spot at exciting events',
   description: 'Find and purchase tickets for the best events with our seamless experience, including waiting rooms and virtual queues for high-demand shows.',
 };
 

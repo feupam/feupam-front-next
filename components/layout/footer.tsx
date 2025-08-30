@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="space-y-4 xl:col-span-1">
             <Link href="/" className="flex items-center gap-2">
               <Ticket className="h-6 w-6 text-primary" />
-              <span className="font-bold text-lg text-foreground">EventFlow</span>
+              <span className="font-bold text-lg text-foreground">Feupam</span>
             </Link>
             <p className="text-sm text-muted-foreground">
               Secure your spot at the most exciting events with our seamless ticket purchasing system.
@@ -128,7 +128,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-12 border-t border-border pt-8">
-          <p className="text-sm text-muted-foreground">&copy; 2025 EventFlow, Inc. All rights reserved.</p>
+          <p className="text-sm text-muted-foreground">&copy; 2025 Feupam, Inc. All rights reserved.</p>
         </div>
       </div>
     </footer>

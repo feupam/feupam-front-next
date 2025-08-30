@@ -36,12 +36,12 @@ const nextConfig = {
     return [
       {
         source: '/',
-        destination: '/countdown/federa',
+        destination: '/home',
         permanent: true,
       },
       {
         source: '/eventos',
-        destination: '/countdown/federa',
+        destination: '/home',
         permanent: true,
       }
     ]

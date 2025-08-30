@@ -106,7 +106,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
           window.location.href = `/reserva/${currentEvent.name}/${ticketKind}`;
         } else {
           // Se evento está fechado: vai para página do evento (mostra card com startDate/endDate)
-          window.location.href = `/event/${currentEvent.name}`;
+          window.location.href = `/event/${currentEvent.name}?fromProfile=true`;
         }
       } else {
         // Fallback: vai para lista de eventos
@@ -294,7 +294,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
           </Card>
         ))}
 
-        <div className="flex justify-center">
+        <div className="flex justify-end">
           <Button 
             type="submit" 
             disabled={isLoading || isSubmitting}

@@ -94,31 +94,31 @@ const EventSection: React.FC<EventSectionProps> = ({
   const appleCalendarLink = `data:text/calendar;charset=utf8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ASUMMARY:${encodeURIComponent(eventTitle)}%0ADTSTART:${encodeURIComponent(startDateObj.toISOString().replace(/-|:|\.\d+/g, ''))}%0ADTEND:${encodeURIComponent(startDateObj.toISOString().replace(/-|:|\.\d+/g, ''))}%0ADESCRIPTION:${encodeURIComponent(eventDescription)}%0ALOCATION:${encodeURIComponent(eventLocation)}%0AEND:VEVENT%0AEND:VCALENDAR`;
 
   return (
-    <div className="relative z-10 max-w-3xl mx-auto px-4 sm:px-6 py-8">
-      <div className="backdrop-blur-md bg-black/30 rounded-xl p-6 sm:p-10 border border-emerald-400/20 shadow-2xl">
-        <span className={`inline-block px-4 py-1 text-white text-sm font-medium rounded-full mb-4 ${currentDateObj > new Date(endDate) ? 'bg-red-500' : isOpen ? 'bg-green-500' : 'bg-emerald-500/80'}`}>
+    <div className="relative z-10 max-w-full sm:max-w-3xl mx-auto px-2 sm:px-6 py-4 sm:py-8">
+      <div className="backdrop-blur-md bg-black/30 rounded-xl p-3 sm:p-10 border border-emerald-400/20 shadow-2xl">
+        <span className={`inline-block px-3 py-1 text-white text-xs sm:text-sm font-medium rounded-full mb-3 sm:mb-4 ${currentDateObj > new Date(endDate) ? 'bg-red-500' : isOpen ? 'bg-green-500' : 'bg-emerald-500/80'}`}>
           {currentDateObj > new Date(endDate) ? 'Inscrições encerradas' : isOpen ? 'Inscrições abertas' : 'Em breve'}
         </span>
         
-        <h1 className="text-4xl sm:text-5xl font-bold text-emerald-300 mb-4">
+        <h1 className="text-xl sm:text-5xl font-bold text-emerald-300 mb-2 sm:mb-4 break-words">
           {eventName}
         </h1>
         
-        <p className="text-emerald-100 text-lg mb-6">
+        <p className="text-emerald-100 text-base sm:text-lg mb-3 sm:mb-6">
           {eventDescription}
         </p>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-          <div className="flex items-center text-emerald-200">
-            <CalendarCheck className="w-5 h-5 mr-2 text-emerald-400" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-8">
+          <div className="flex items-center text-emerald-200 text-xs sm:text-base">
+            <CalendarCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-400" />
             <span>{eventDate}</span>
           </div>
-          <div className="flex items-center text-emerald-200">
-            <MapPin className="w-5 h-5 mr-2 text-emerald-400" />
+          <div className="flex items-center text-emerald-200 text-xs sm:text-base">
+            <MapPin className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-400" />
             <span>{eventLocation}</span>
           </div>
-            <div className="flex items-center text-emerald-200 sm:col-span-2">
-              <Clock className="w-5 h-5 mr-2 text-emerald-400" />
+            <div className="flex items-center text-emerald-200 sm:col-span-2 text-xs sm:text-base">
+              <Clock className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-emerald-400" />
               <span>{currentDateObj > new Date(endDate) ? "Inscrições encerradas" : isOpen ? "Inscrições abertas:" : "Inscrições abrem em:"}</span>
             </div>
         </div>
@@ -126,12 +126,12 @@ const EventSection: React.FC<EventSectionProps> = ({
   {(!isOpen && currentDateObj <= new Date(endDate)) ? (
     <CountdownTimer targetDate={startDateObj} currentDate={currentDateObj} />
   ) : (
-    <div style={{visibility: 'hidden', height: '64px'}}>
+    <div style={{visibility: 'hidden', height: '40px'}}>
       <CountdownTimer targetDate={startDateObj} currentDate={currentDateObj} />
     </div>
   )}
         
-        <div className="mt-10 flex flex-col sm:flex-row gap-4 items-center justify-center">
+        <div className="mt-6 sm:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4 items-center justify-center w-full">
             <button 
               onClick={(e) => {
                 console.log('🔍 CLIQUE NO SAIBA MAIS!', eventName);
@@ -159,7 +159,7 @@ const EventSection: React.FC<EventSectionProps> = ({
                   window.location.href = `/event/${encodeURIComponent(eventName)}`;
                 }, 100);
               }}
-              className="w-full sm:w-auto px-8 py-3 bg-white/10 backdrop-blur-sm text-emerald-200 border border-emerald-400/20 font-medium rounded-lg shadow-lg hover:bg-emerald-500/20 transition-all duration-300"
+              className="w-full sm:w-auto px-5 sm:px-8 py-2 sm:py-3 text-xs sm:text-base bg-white/10 backdrop-blur-sm text-emerald-200 border border-emerald-400/20 font-medium rounded-lg shadow-lg hover:bg-emerald-500/20 transition-all duration-300"
             >
               Saiba mais
             </button>
@@ -170,19 +170,16 @@ const EventSection: React.FC<EventSectionProps> = ({
                 e.stopPropagation();
                 handleEventClick();
               }}
-              className="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
+              className="w-full sm:w-auto px-5 sm:px-8 py-2 sm:py-3 text-xs sm:text-base bg-gradient-to-r from-emerald-500 to-teal-400 text-white font-medium rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1"
             >
               {isOpen ? "Inscrição" : "Atualize seus dados"}
             </button>
         </div>
       </div>
-      <div className="mt-10">
-        <TipsCarousel />
+      <div className="mt-6 sm:mt-10">
+
       </div>
-        <iframe style={{borderRadius: "12px", marginTop: "50px", zIndex: "20", position: "relative"}}
-        src="https://open.spotify.com/embed/playlist/58hinm29pkP3W3HUznd1TL?utm_source=generator" width="100%" height="152" frameBorder="0"
-        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
-        loading="lazy"></iframe>
+
     </div>
   );
 };

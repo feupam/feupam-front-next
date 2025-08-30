@@ -18,14 +18,7 @@ const carouselImages = [
   'https://federa-acamps.pages.dev/images/carousel/bg%20(9).jpeg',
 ];
 
-interface CountdownPageProps {
-  params: {
-    uuid: string;
-  };
-}
-
-export default function CountdownStandalone({ params }: CountdownPageProps) {
-  const { uuid } = params;
+export default function HomePage() {
   const { setCurrentEventFromData } = useCurrentEventContext();
   const [currentDate, setCurrentDate] = useState<string | null>(null);
   const [events, setEvents] = useState<EventData[]>([]);
@@ -37,8 +30,8 @@ export default function CountdownStandalone({ params }: CountdownPageProps) {
   const handleEventSelect = (index: number) => {
     setSelectedEventIndex(index);
     if (events[index]) {
-      console.log('[Countdown] Usuário selecionou evento:', events[index].name, 'index:', index);
-      console.log('[Countdown] Definindo no contexto:', events[index]);
+      console.log('[Home] Usuário selecionou evento:', events[index].name, 'index:', index);
+      console.log('[Home] Definindo no contexto:', events[index]);
       setCurrentEventFromData(events[index]);
     }
   };
@@ -47,15 +40,17 @@ export default function CountdownStandalone({ params }: CountdownPageProps) {
     async function fetchData() {
       setLoading(true);
       try {
-        const response = await eventService.getEventStatus(uuid);
+        const response = await eventService.getEventStatus('federa');
         console.log("API response:", response);
 
         setCurrentDate(response.currentDate || null);
         setEvents(response.events ?? []);
         
-        // NÃO define evento inicial automaticamente
-        // Contexto permanece vazio até usuário clicar
-        console.log('[Countdown] Dados carregados, aguardando seleção do usuário');
+        // Define o primeiro evento como padrão
+        if (response.events && response.events.length > 0 && response.events[0]) {
+          console.log('[Home] Definindo primeiro evento no contexto:', response.events[0].name);
+          setCurrentEventFromData(response.events[0]);
+        }
       } catch (err) {
         console.error(err);
         setError('Não foi possível carregar os dados do evento');
@@ -64,7 +59,7 @@ export default function CountdownStandalone({ params }: CountdownPageProps) {
       }
     }
     fetchData();
-  }, [uuid]); // Remove setCurrentEventFromData das dependências para evitar loop
+  }, [setCurrentEventFromData]);
 
   // loading state
   if (loading) {

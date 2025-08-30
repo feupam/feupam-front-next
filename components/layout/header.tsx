@@ -22,8 +22,8 @@ export default function Header() {
   }, [currentEvent]);
 
   const navigation = [
-    { name: 'Home', href: '/countdown/federa', icon: Home },
-    { name: currentEvent?.name || 'Evento', href: currentEvent ? `/event/${encodeURIComponent(currentEvent.name)}` : '/countdown/federa', icon: Ticket },
+    { name: 'Home', href: '/home', icon: Home },
+    { name: currentEvent?.name || 'Evento', href: currentEvent ? `/event/${encodeURIComponent(currentEvent.name)}` : '/home', icon: Ticket },
     { name: 'Perfil', href: '/perfil' },
   ];
 
@@ -52,7 +52,7 @@ export default function Header() {
         <div className="flex lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2 min-w-0">
             <Ticket className="h-5 w-5 sm:h-6 sm:w-6 text-primary flex-shrink-0" />
-            <span className="font-bold text-base sm:text-lg text-foreground truncate">EventFlow</span>
+            <span className="font-bold text-base sm:text-lg text-foreground truncate">Feupam</span>
           </Link>
         </div>
         

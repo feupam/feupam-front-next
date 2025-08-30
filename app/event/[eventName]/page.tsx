@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { eventService } from '@/services/eventService';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,9 @@ interface EventDetails {
 export default function EventPage() {
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const eventName = params.eventName as string;
+  const fromProfile = searchParams.get('fromProfile') === 'true';
   const { currentEvent, setCurrentEventFromData } = useCurrentEventContext();
   
   const [eventDetails, setEventDetails] = useState<EventDetails | null>(null);
@@ -101,6 +103,19 @@ export default function EventPage() {
     }
   }, [eventName, currentEvent, setCurrentEventFromData]);
 
+  // Mostrar diálogo automaticamente apenas se veio do ProfileForm e evento fechado
+  useEffect(() => {
+    if (eventDetails && !eventDetails.isOpen && fromProfile) {
+      console.log('[EventPage] Mostrando diálogo - evento fechado e veio do ProfileForm');
+      // Pequeno delay para garantir que a página carregou completamente
+      const timer = setTimeout(() => {
+        setShowDialog(true);
+      }, 500);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [eventDetails, fromProfile]);
+
   if (loading) {
     return <LoadingPage text="Carregando evento..." />;
   }
@@ -110,7 +125,7 @@ export default function EventPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-red-600 mb-4">Evento não encontrado</h2>
-          <Button onClick={() => router.push('/countdown/federa')}>Voltar para Home</Button>
+          <Button onClick={() => router.push('/home')}>Voltar para Home</Button>
         </div>
       </div>
     );

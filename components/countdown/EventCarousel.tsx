@@ -35,7 +35,10 @@ export default function EventCarousel({
   const scrollLeft = useCallback(() => {
     const container = document.getElementById('event-carousel');
     if (container) {
-      const newIndex = Math.max(0, selectedIndex - 1);
+      let newIndex = selectedIndex - 1;
+      if (newIndex < 0) {
+        newIndex = events.length - 1; // Loop para o último
+      }
       container.scrollTo({
         left: container.offsetWidth * newIndex,
         behavior: 'smooth'
@@ -43,12 +46,15 @@ export default function EventCarousel({
       onEventSelect(newIndex);
       setScrollPosition(newIndex);
     }
-  }, [selectedIndex, onEventSelect]);
+  }, [selectedIndex, onEventSelect, events.length]);
 
   const scrollRight = useCallback(() => {
     const container = document.getElementById('event-carousel');
     if (container) {
-      const newIndex = Math.min(events.length - 1, selectedIndex + 1);
+      let newIndex = selectedIndex + 1;
+      if (newIndex > events.length - 1) {
+        newIndex = 0; // Loop para o primeiro
+      }
       container.scrollTo({
         left: container.offsetWidth * newIndex,
         behavior: 'smooth'
@@ -82,9 +88,9 @@ export default function EventCarousel({
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Navigation Menu */}
-      <div className="w-full mb-8">
-        <div className="flex justify-center gap-2 md:gap-4">
+      {/* Navigation Menu - responsivo sem scroll */}
+      <div className="w-full mb-6 sm:mb-8">
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-4 px-2 sm:px-0">
           {events.map((event, index) => (
             <button
               key={event.id}
@@ -103,11 +109,12 @@ export default function EventCarousel({
                   });
                 }
               }}
-              className={`text-sm px-4 py-2 rounded-full transition-all transform hover:scale-105 ${
+              className={`text-xs sm:text-sm px-3 sm:px-4 py-1 sm:py-2 rounded-full transition-all transform hover:scale-105 ${
                 selectedIndex === index
                   ? 'bg-emerald-400 text-white shadow-lg bg-emerald-200/50'
                   : 'bg-black/50 text-emerald-200 hover:bg-emerald-400 hover:text-white'
               }`}
+              style={{ minWidth: '70px' }}
             >
               {event.name}
             </button>

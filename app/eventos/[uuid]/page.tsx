@@ -11,9 +11,14 @@ export async function generateStaticParams() {
     }));
   } catch (error) {
     console.error('Erro ao gerar parâmetros estáticos:', error);
+    // Retorna array vazio para evitar falha no build
+    // As páginas serão geradas sob demanda (fallback)
     return [];
   }
 }
+
+// Habilita geração sob demanda para páginas não pré-geradas
+export const dynamicParams = true;
 
 interface PageProps {
   params: {

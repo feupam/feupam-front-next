@@ -1,5 +1,0 @@
-{
-  "/not-found": "app/not-found.js",
-  "/event/[eventName]/page": "app/event/[eventName]/page.js",
-  "/countdown/[uuid]/page": "app/countdown/[uuid]/page.js"
-}

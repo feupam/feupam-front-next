@@ -3,6 +3,7 @@
 import { ErrorBoundary } from '@/components/error-boundary';
 import { OfflineNotice } from '@/components/ui/offline-notice';
 import { Toaster } from '@/components/ui/toaster';
+import OpenInBrowserNotice from '@/components/shared/OpenInBrowserNotice';
 import { Suspense } from 'react';
 import Header from '@/components/layout/header';
 
@@ -14,6 +15,7 @@ export function ClientLayout({ children }: ClientLayoutProps) {
   return (
     <ErrorBoundary>
       <Suspense fallback={<div>Carregando...</div>}>
+        <OpenInBrowserNotice />
         <div className="relative flex min-h-screen flex-col overflow-x-hidden">
           <Header />
           <OfflineNotice />

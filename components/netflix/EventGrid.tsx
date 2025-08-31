@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button"
 import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
 
 interface EventGridProps {
   events: EventData[]
@@ -15,7 +14,6 @@ interface EventGridProps {
 
 export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridProps) {
   const { setCurrentEventFromData } = useCurrentEventContext()
-  const { signInWithGoogle } = useAuth()
   const router = useRouter()
 
   const handleEventClick = async (event: EventData) => {
@@ -23,16 +21,9 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     setCurrentEventFromData(event);
     
     if (event.isOpen) {
-      // Sempre força login do Google antes de ir para o perfil
-      console.log('[EventGrid] Forçando login do Google...');
-      const loginSuccess = await signInWithGoogle();
-      
-      if (loginSuccess) {
-        console.log('[EventGrid] Login bem-sucedido, redirecionando para perfil...');
-        router.push('/perfil');
-      } else {
-        console.log('[EventGrid] Login cancelado ou falhou');
-      }
+      // Redireciona para a página de login em vez de abrir o modal do Google
+      console.log('[EventGrid] Redirecionando para página de login...');
+      router.push('/login');
     } else {
       router.push(`/event/${encodeURIComponent(event.name)}?fromProfile=true`);
     }

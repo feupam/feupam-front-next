@@ -29,6 +29,12 @@ export function useAuth() {
     try {
       setLoading(true);
       const provider = new GoogleAuthProvider();
+      
+      // Força a seleção de conta - sempre mostra lista de contas disponíveis
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
       const result = await signInWithPopup(auth, provider);
       return !!result.user; // Retorna true se o login foi bem sucedido
     } catch (error) {

@@ -1,22 +1,11 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import BackgroundCarousel from '@/components/countdown/BackgroundCarousel';
-import EventCarousel from '@/components/countdown/EventCarousel';
+import { HeroCarousel } from '@/components/netflix/HeroCarousel';
+import { EventGrid } from '@/components/netflix/EventGrid';
+import { NetflixHeader } from '@/components/netflix/NetflixHeader';
 import { eventService, EventData } from '@/services/eventService';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
-
-const carouselImages = [
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(1).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(2).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(3).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(4).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(5).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(6).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(7).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(8).jpeg',
-  'https://federa-acamps.pages.dev/images/carousel/bg%20(9).jpeg',
-];
 
 export default function HomePage() {
   const { setCurrentEventFromData } = useCurrentEventContext();
@@ -89,13 +78,13 @@ export default function HomePage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-black overflow-hidden">
-      <BackgroundCarousel images={carouselImages} transitionTime={6000} overlayOpacity="bg-black/30" />
-      <div className="w-full max-w-5xl p-8 z-10">
-        <div className="flex flex-col items-center justify-center">
-          {currentDate && (
-            <EventCarousel
-              currentDate={currentDate}
+    <div className="min-h-screen bg-black">
+      <NetflixHeader />
+      {/* Espaçamento para compensar o header fixo */}
+      <div className="pt-12">
+        {currentDate && events.length > 0 && (
+          <>
+            <HeroCarousel
               events={events.map(event => ({
                 ...event,
                 description: event.description ?? "",
@@ -103,8 +92,16 @@ export default function HomePage() {
               onEventSelect={handleEventSelect}
               selectedIndex={selectedEventIndex}
             />
-          )}
-        </div>
+            <EventGrid
+              events={events.map(event => ({
+                ...event,
+                description: event.description ?? "",
+              }))}
+              onEventSelect={handleEventSelect}
+              selectedIndex={selectedEventIndex}
+            />
+          </>
+        )}
       </div>
     </div>
   );

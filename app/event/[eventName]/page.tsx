@@ -27,8 +27,9 @@ interface EventDetails {
   startDate: string;
   endDate: string;
   isOpen: boolean;
+  image_capa?: string;
+  logo_evento?: string;
   price?: number;
-  image?: string;
   maxClientMale?: string;
   maxClientFemale?: string;
   cupons?: any[];
@@ -66,15 +67,11 @@ export default function EventPage() {
           
           if (event) {
             console.log('[EventPage] Evento encontrado:', event);
-            // Adiciona propriedades padrão para compatibilidade
+            // Usa os dados da API diretamente, apenas adiciona propriedades que não existem na API
             const eventWithDefaults = {
               ...event,
-              price: 0, // Valor padrão
-              image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30', // Imagem padrão
-              maxClientMale: '0', // Valor padrão
-              maxClientFemale: '0', // Valor padrão  
-              cupons: [], // Array vazio
-              tickets: [] // Array vazio
+              cupons: [], // Array vazio (não vem da API)
+              tickets: [] // Array vazio (não vem da API)
             };
             
             setEventDetails(eventWithDefaults);
@@ -154,7 +151,7 @@ export default function EventPage() {
       <section className="relative h-[60vh] md:h-[80vh] w-full">
         <div className="absolute inset-0">
           <Image
-            src={eventDetails.image || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30'}
+            src={eventDetails.image_capa || 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30'}
             alt={eventDetails.name}
             fill
             className="object-cover brightness-50"

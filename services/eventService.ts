@@ -9,6 +9,8 @@ export interface EventData {
   startDate: string;
   endDate: string;
   isOpen: boolean;
+  image_capa?: string;
+  logo_evento?: string;
 }
 
 export interface EventStatusResponse {

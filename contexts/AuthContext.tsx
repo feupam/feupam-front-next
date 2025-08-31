@@ -35,6 +35,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async () => {
     try {
       const provider = new GoogleAuthProvider();
+      
+      // Força a seleção de conta - sempre mostra lista de contas disponíveis
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
       await signInWithPopup(auth, provider);
     } catch (error) {
       console.error('Erro ao fazer login com Google:', error);

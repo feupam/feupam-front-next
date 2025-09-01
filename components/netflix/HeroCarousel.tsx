@@ -43,13 +43,13 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex }: HeroCarou
     setCurrentEventFromData(event);
     
     if (event.isOpen) {
-      // Sempre força login do Google antes de ir para o perfil
+      // Sempre força login do Google antes de ir para o formulário de inscrição
       console.log('[HeroCarousel] Forçando login do Google...');
       const loginSuccess = await signInWithGoogle();
       
       if (loginSuccess) {
-        console.log('[HeroCarousel] Login bem-sucedido, redirecionando para perfil...');
-        router.push('/perfil');
+        console.log('[HeroCarousel] Login bem-sucedido, redirecionando para formulário de inscrição...');
+        router.push('/formulario');
       } else {
         console.log('[HeroCarousel] Login cancelado ou falhou');
       }

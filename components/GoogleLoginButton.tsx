@@ -11,12 +11,18 @@ export function GoogleLoginButton() {
     : new URLSearchParams();
   
   const handleLogin = async () => {
+    console.log('[GoogleLoginButton] Iniciando login...');
     const success = await signInWithGoogle();
+    console.log('[GoogleLoginButton] Login success:', success);
+    
     if (success) {
       const redirect = searchParams.get('redirect') || '/';
+      console.log('[GoogleLoginButton] Parâmetros da URL:', Object.fromEntries(searchParams));
+      console.log('[GoogleLoginButton] Redirect para:', redirect);
       
       // Se há um parâmetro redirect, usa ele diretamente (já inclui todos os parâmetros)
       if (redirect && redirect !== '/') {
+        console.log('[GoogleLoginButton] Redirecionando para:', redirect);
         window.location.href = redirect;
       } else {
         // Fallback para o comportamento anterior
@@ -24,14 +30,19 @@ export function GoogleLoginButton() {
         const eventName = searchParams.get('eventName');
         const isOpen = searchParams.get('isOpen');
         
+        console.log('[GoogleLoginButton] Fallback - eventId:', eventId, 'eventName:', eventName, 'isOpen:', isOpen);
+        
         if (eventName) {
           const params = new URLSearchParams();
           if (eventId) params.set('eventId', eventId);
           if (eventName) params.set('eventName', eventName);
           if (isOpen) params.set('isOpen', isOpen);
           
-          window.location.href = `/perfil?${params.toString()}`;
+          const formularioUrl = `/formulario?${params.toString()}`;
+          console.log('[GoogleLoginButton] Redirecionando para formulário:', formularioUrl);
+          window.location.href = formularioUrl;
         } else {
+          console.log('[GoogleLoginButton] Redirecionando para home');
           window.location.href = '/';
         }
       }

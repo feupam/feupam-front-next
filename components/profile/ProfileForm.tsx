@@ -185,14 +185,14 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
           <FormLabel className={required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
             {label}
           </FormLabel>
-          <FormControl>
+          {/* <FormControl>
             <Textarea
               {...field}
               placeholder={placeholder}
               className={`resize-none ${hasError ? 'border-red-500' : ''}`}
               disabled={isLoading || isSubmitting}
             />
-          </FormControl>
+          </FormControl> */}
           <FormMessage />
         </FormItem>
       );
@@ -222,7 +222,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
         <FormLabel className={required ? "after:content-['*'] after:ml-0.5 after:text-red-500" : ""}>
           {label}
         </FormLabel>
-        <FormControl>
+        {/* <FormControl>
           <Input
             {...field}
             type={type}
@@ -230,7 +230,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
             className={hasError ? 'border-red-500' : ''}
             disabled={isLoading || isSubmitting}
           />
-        </FormControl>
+        </FormControl> */}
         <FormMessage />
       </FormItem>
     );

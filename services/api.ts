@@ -1,6 +1,5 @@
 import axios from 'axios';
 import { auth } from '@/lib/firebase';
-import { apiLogger } from '@/lib/debug';
 
 // Custom error type for payment errors
 interface PaymentError extends Error {
@@ -279,17 +278,6 @@ export const events = {
       return response.data;
     } catch (error: any) {
       console.error('[API Error] Failed to reserve spot:', error.message);
-      throw error;
-    }
-  },
-
-  // Direct to checkout after successful reservation
-  goToCheckout: async (eventId: string) => {
-    try {
-      const response = await api.get(`/events/${eventId}/checkout`);
-      return response.data;
-    } catch (error: any) {
-      console.error('[API Error] Failed to proceed to checkout:', error.message);
       throw error;
     }
   }

@@ -139,7 +139,7 @@ export default function EventPage() {
     setCurrentEventFromData(eventDetails);
     
     if (eventDetails.isOpen) {
-      router.push('/perfil');
+      router.push('/formulario');
     } else {
       setShowDialog(true);
     }

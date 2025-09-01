@@ -35,4 +35,25 @@ export interface Event {
   availability?: number;
   isHighDemand?: boolean;
   isOpen: boolean;
+}
+
+// Tipos de reserva
+export type ReservationStatus = boolean | {
+  isAvailable: boolean;
+  spotId?: string;
+  waitingList?: boolean;
+};
+
+export interface ReservationRequest {
+  eventId: string;
+  ticketKind: string;
+}
+
+export interface ReservationResponse {
+  spotId: string;
+  email: string;
+  eventId: string;
+  ticketKind: string;
+  userType: string;
+  status: string;
 } 

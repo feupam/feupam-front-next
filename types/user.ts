@@ -22,15 +22,40 @@ export interface UserProfile {
   alergia: string;
   medicamento: string;
   info_add?: string;
+  lgpdConsentAccepted: boolean;
+  wantShirt: boolean;
+  isStaff?: boolean;
+  staffPassword?: string;
+}
+
+export interface FormField {
+  label: string;
+  name: keyof UserProfile;
+  type: 'text' | 'tel' | 'number' | 'date' | 'select' | 'textarea' | 'radio';
+  required: boolean;
+  placeholder?: string;
+  mask?: string;
+  defaultValue?: string;
+  validation?: {
+    pattern?: RegExp;
+    message?: string;
+    validate?: (value: any) => boolean | string;
+  };
+  options?: { value: string; label: string; }[];
+  dependsOn?: {
+    field: keyof UserProfile;
+    value: any;
+  };
 }
 
 export interface UserFormFields {
   label: string;
   name: keyof UserProfile;
-  type: 'text' | 'tel' | 'number' | 'date' | 'select' | 'textarea';
+  type: 'text' | 'tel' | 'number' | 'date' | 'select' | 'textarea' | 'radio';
   required: boolean;
   placeholder?: string;
   mask?: string;
+  defaultValue?: string;
   validation?: {
     pattern?: RegExp;
     message?: string;
@@ -45,33 +70,23 @@ export interface UserFormFields {
 
 export interface FormSection {
   title: string;
-  fields: UserFormFields[];
+  fields: FormField[];
 }
 
 export const formSections: FormSection[] = [
   {
-    title: 'Dados Pessoais',
+    title: '👤 Dados Pessoais',
     fields: [
       {
         label: 'Nome Completo',
         name: 'name',
         type: 'text',
         required: true,
-        placeholder: 'Digite seu nome completo'
-      },
-      {
-        label: 'Igreja',
-        name: 'church',
-        type: 'text',
-        required: true,
-        placeholder: 'Digite o nome da sua igreja'
-      },
-      {
-        label: 'Pastor',
-        name: 'pastor',
-        type: 'text',
-        required: true,
-        placeholder: 'Digite o nome do seu pastor'
+        placeholder: 'Digite seu nome completo',
+        validation: {
+          pattern: /^[a-zA-ZÀ-ÿ\s]{2,}$/,
+          message: 'Nome deve ter pelo menos 2 caracteres e apenas letras'
+        }
       },
       {
         label: 'Gênero',
@@ -86,43 +101,58 @@ export const formSections: FormSection[] = [
       {
         label: 'Data de Nascimento',
         name: 'data_nasc',
-        type: 'text',
+        type: 'date',
         required: true,
-        mask: '00/00/0000',
-        placeholder: 'DD/MM/AAAA'
-      },
-      {
-        label: 'Idade',
-        name: 'idade',
-        type: 'number',
-        required: true,
-        placeholder: 'Digite sua idade'
+        placeholder: 'DD/MM/AAAA',
+        validation: {
+          validate: (value: string) => {
+            const date = new Date(value.split('/').reverse().join('-'));
+            const now = new Date();
+            const age = now.getFullYear() - date.getFullYear();
+            return age >= 6 && age <= 100 ? true : 'Idade deve estar entre 6 e 100 anos';
+          }
+        }
       }
     ]
   },
   {
-    title: 'Contato',
+    title: '⛪ Informações da Igreja',
     fields: [
       {
-        label: 'DDD',
-        name: 'ddd',
-        type: 'tel',
+        label: 'Igreja',
+        name: 'church',
+        type: 'text',
         required: true,
-        mask: '00',
-        placeholder: '00'
+        placeholder: 'Ex: Igreja Presbiteriana de São Paulo'
       },
       {
-        label: 'Celular',
+        label: 'Pastor',
+        name: 'pastor',
+        type: 'text',
+        required: true,
+        placeholder: 'Nome do pastor responsável'
+      }
+    ]
+  },
+  {
+    title: '📱 Contato',
+    fields: [
+      {
+        label: 'Telefone/Celular',
         name: 'cellphone',
         type: 'tel',
         required: true,
-        mask: '00000-0000',
-        placeholder: '00000-0000'
+        mask: '(00) 00000-0000',
+        placeholder: '(35) 99999-9999',
+        validation: {
+          pattern: /^\(\d{2}\)\s\d{4,5}-\d{4}$/,
+          message: 'Formato: (35) 99999-9999'
+        }
       }
     ]
   },
   {
-    title: 'Documentos',
+    title: '📄 Documentos',
     fields: [
       {
         label: 'CPF',
@@ -130,7 +160,16 @@ export const formSections: FormSection[] = [
         type: 'text',
         required: true,
         mask: '000.000.000-00',
-        placeholder: '000.000.000-00'
+        placeholder: '000.000.000-00',
+        validation: {
+          validate: (value: string) => {
+            const cpf = value.replace(/\D/g, '');
+            if (cpf.length !== 11) return 'CPF deve ter 11 dígitos';
+            // Validação básica de CPF
+            if (/^(\d)\1{10}$/.test(cpf)) return 'CPF inválido';
+            return true;
+          }
+        }
       },
       {
         label: 'CEP',
@@ -138,37 +177,46 @@ export const formSections: FormSection[] = [
         type: 'text',
         required: true,
         mask: '00.000-000',
-        placeholder: '00.000-000'
+        placeholder: '00.000-000',
+        validation: {
+          pattern: /^\d{2}\.\d{3}-\d{3}$/,
+          message: 'Formato: 12.345-678'
+        }
       }
     ]
   },
   {
-    title: 'Endereço',
+    title: '🏠 Endereço',
     fields: [
       {
-        label: 'Endereço',
+        label: 'Endereço Completo',
         name: 'address',
         type: 'text',
-        required: true
+        required: true,
+        placeholder: 'Rua, Avenida, número...'
       },
       {
         label: 'Complemento',
         name: 'complemento',
         type: 'text',
-        required: true
+        required: false,
+        placeholder: 'Apartamento, bloco, casa... (opcional)'
       },
       {
         label: 'Cidade',
         name: 'cidade',
         type: 'text',
-        required: true
+        required: true,
+        placeholder: 'Nome da cidade'
       },
       {
         label: 'Estado',
         name: 'estado',
         type: 'select',
         required: true,
+        defaultValue: 'MG',
         options: [
+          { value: 'MG', label: 'Minas Gerais' },
           { value: 'AC', label: 'Acre' },
           { value: 'AL', label: 'Alagoas' },
           { value: 'AP', label: 'Amapá' },
@@ -181,7 +229,6 @@ export const formSections: FormSection[] = [
           { value: 'MA', label: 'Maranhão' },
           { value: 'MT', label: 'Mato Grosso' },
           { value: 'MS', label: 'Mato Grosso do Sul' },
-          { value: 'MG', label: 'Minas Gerais' },
           { value: 'PA', label: 'Pará' },
           { value: 'PB', label: 'Paraíba' },
           { value: 'PR', label: 'Paraná' },
@@ -201,17 +248,14 @@ export const formSections: FormSection[] = [
     ]
   },
   {
-    title: 'Responsável (Todos devem ter um responsável)',
+    title: '👨‍👩‍👧‍👦 Responsável',
     fields: [
       {
         label: 'Nome do Responsável',
         name: 'responsavel',
         type: 'text',
         required: true,
-        dependsOn: {
-          field: 'idade',
-          value: (idade: number) => idade < 18
-        }
+        placeholder: 'Nome completo do responsável'
       },
       {
         label: 'CPF do Responsável',
@@ -219,63 +263,62 @@ export const formSections: FormSection[] = [
         type: 'text',
         required: true,
         mask: '000.000.000-00',
-        dependsOn: {
-          field: 'idade',
-          value: (idade: number) => idade < 18
-        }
+        placeholder: '000.000.000-00'
       },
       {
-        label: 'DDD do Responsável',
-        name: 'ddd_responsavel',
-        type: 'tel',
-        required: true,
-        mask: '00',
-        dependsOn: {
-          field: 'idade',
-          value: (idade: number) => idade < 18
-        }
-      },
-      {
-        label: 'Celular do Responsável',
+        label: 'Telefone do Responsável',
         name: 'cellphone_responsavel',
         type: 'tel',
         required: true,
-        mask: '00000-0000',
-        dependsOn: {
-          field: 'idade',
-          value: (idade: number) => idade < 18
-        }
+        mask: '(00) 00000-0000',
+        placeholder: '(11) 99999-9999'
       }
     ]
   },
   {
-    title: 'Informações de Saúde',
+    title: '🏥 Informações de Saúde',
     fields: [
       {
-        label: 'Possui Alergia?',
+        label: 'Possui alguma alergia?',
         name: 'alergia',
         type: 'select',
         required: true,
         options: [
-          { value: 'Sim', label: 'Sim' },
-          { value: 'Não', label: 'Não' }
+          { value: 'Não', label: 'Não possuo alergias' },
+          { value: 'Sim', label: 'Sim, possuo alergias' }
         ]
       },
       {
-        label: 'Toma Medicamento?',
+        label: 'Faz uso de medicamentos?',
         name: 'medicamento',
         type: 'select',
         required: true,
         options: [
-          { value: 'Sim', label: 'Sim' },
-          { value: 'Não', label: 'Não' }
+          { value: 'Não', label: 'Não tomo medicamentos' },
+          { value: 'Sim', label: 'Sim, tomo medicamentos' }
         ]
       },
       {
-        label: 'Informações Adicionais',
+        label: 'Informações Adicionais sobre Saúde',
         name: 'info_add',
         type: 'textarea',
-        required: true
+        required: false,
+        placeholder: 'Descreva alergias, medicamentos, condições especiais... (opcional)'
+      }
+    ]
+  },
+  {
+    title: '📋 Termos e Condições',
+    fields: [
+      {
+        label: 'Aceito os termos da LGPD',
+        name: 'lgpdConsentAccepted',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'true', label: '✅ Sim, aceito o tratamento dos meus dados pessoais' },
+          { value: 'false', label: '❌ Não aceito' }
+        ]
       }
     ]
   }

@@ -33,10 +33,10 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     }
   }, [eventId, setCurrentEventByName]);
 
-  // Se o evento não estiver aberto, redirecionar para perfil
+  // Se o evento não estiver aberto, redirecionar para formulário
   useEffect(() => {
     if (currentEvent && !isCurrentEventOpen) {
-      console.log('[ReservationPage] Evento não está aberto, redirecionando para perfil');
+      console.log('[ReservationPage] Evento não está aberto, redirecionando para formulário');
       router.push('/perfil');
     }
   }, [currentEvent, isCurrentEventOpen, router]);

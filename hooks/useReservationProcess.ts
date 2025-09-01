@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { tickets, events, users } from '@/services/api';
 import { useToast } from '@/components/ui/use-toast';
-import { ReservationResponse } from '@/services/reservationService';
+import { ReservationResponse } from '@/types/event';
 import { auth } from '@/lib/firebase';
 
 type ReservationStatusType =
@@ -45,6 +45,7 @@ interface UseReservationProcessProps {
 }
 
 export interface ReservationData extends ReservationResponse {
+  price?: number | undefined;
   id?: string;
 }
 

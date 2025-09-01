@@ -72,9 +72,14 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.request.use(
   async (config: InternalAxiosRequestConfig) => {
     try {
+      console.log('[API Request] Obtendo token...');
       const token = await getCurrentToken();
+      console.log('[API Request] Token obtido:', token ? 'Token presente' : 'Sem token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
+        console.log('[API Request] Authorization header configurado');
+      } else {
+        console.log('[API Request] Nenhum token disponível');
       }
     } catch (error) {
       console.error('[API Request] Erro ao obter token:', error);
@@ -189,16 +194,26 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
 
 // Função para obter o token atual do usuário
 async function getCurrentToken() {
+  console.log('[getCurrentToken] Iniciando obtenção de token...');
   // Espera o estado de autenticação ser inicializado
   return new Promise<string | null>((resolve) => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       unsubscribe(); // Remove o listener após a primeira chamada
+      console.log('[getCurrentToken] Auth state changed, user:', user ? 'Presente' : 'Null');
       if (!user) {
+        console.log('[getCurrentToken] Nenhum usuário autenticado');
         resolve(null);
         return;
       }
-      const token = await user.getIdToken();
-      resolve(token);
+      try {
+        console.log('[getCurrentToken] Obtendo ID token...');
+        const token = await user.getIdToken();
+        console.log('[getCurrentToken] Token obtido com sucesso');
+        resolve(token);
+      } catch (error) {
+        console.error('[getCurrentToken] Erro ao obter token:', error);
+        resolve(null);
+      }
     });
   });
 }

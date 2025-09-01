@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, X, Ticket, Sun, Moon, Home } from 'lucide-react';
+import { Menu, X, Ticket, Sun, Moon, Home, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/UserMenu';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
@@ -25,6 +25,7 @@ export default function Header() {
     { name: 'Home', href: '/home', icon: Home },
     { name: currentEvent?.name || 'Evento', href: currentEvent ? `/event/${encodeURIComponent(currentEvent.name)}` : '/home', icon: Ticket },
     { name: 'Perfil', href: '/perfil' },
+    { name: 'Admin', href: '/admin', icon: Shield },
   ];
 
   console.log('[Header] Renderizando com evento:', currentEvent?.name || 'Nenhum evento');

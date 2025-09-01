@@ -21,11 +21,11 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     setCurrentEventFromData(event);
     
     if (event.isOpen) {
-      // Para eventos abertos, redireciona para login e depois para perfil
+      // Para eventos abertos, redireciona para login e depois para formulário de inscrição
       const loginParams = new URLSearchParams({
-        redirect: `/perfil?eventId=${event.id}&eventName=${encodeURIComponent(event.name)}&isOpen=true`
+        redirect: `/formulario?eventId=${event.id}&eventName=${encodeURIComponent(event.name)}&isOpen=true`
       });
-      console.log('[EventGrid] Redirecionando para login com redirect para perfil...');
+      console.log('[EventGrid] Redirecionando para login com redirect para formulário de inscrição...');
       router.push(`/login?${loginParams.toString()}`);
     } else {
       router.push(`/event/${encodeURIComponent(event.name)}?fromProfile=true`);

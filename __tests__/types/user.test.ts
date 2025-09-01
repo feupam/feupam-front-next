@@ -17,11 +17,21 @@ describe('User Types', () => {
         cpf: '123.456.789-00',
         data_nasc: '1990-01-01',
         idade: 34,
+        responsavel: '',
+        documento_responsavel: '',
+        ddd_responsavel: '',
+        cellphone_responsavel: '',
         address: 'Rua das Flores, 123',
+        complemento: '',
         cidade: 'São Paulo',
         estado: 'SP',
         alergia: 'Não',
-        medicamento: 'Não'
+        medicamento: 'Não',
+        info_add: '',
+        lgpdConsentAccepted: false,
+        wantShirt: false,
+        isStaff: false,
+        staffPassword: ''
       }
 
       expect(mockUserProfile.userType).toBe('client')
@@ -65,9 +75,10 @@ describe('User Types', () => {
       const numberField: UserFormFields['type'] = 'number'
       const telField: UserFormFields['type'] = 'tel'
       const textareaField: UserFormFields['type'] = 'textarea'
+      const radioField: UserFormFields['type'] = 'radio'
 
-      expect([textField, selectField, dateField, numberField, telField, textareaField])
-        .toEqual(['text', 'select', 'date', 'number', 'tel', 'textarea'])
+      expect([textField, selectField, dateField, numberField, telField, textareaField, radioField])
+        .toEqual(['text', 'select', 'date', 'number', 'tel', 'textarea', 'radio'])
     })
   })
 

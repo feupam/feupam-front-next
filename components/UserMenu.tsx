@@ -3,13 +3,20 @@
 import { useAuth } from '@/hooks/useAuth';
 import { LogoutButton } from './LogoutButton';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
+import { Sun, Moon } from 'lucide-react';
+import { useTheme } from 'next-themes';
 import Link from 'next/link';
 
 export function UserMenu() {
   const { user } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   if (!user) return null;
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <DropdownMenu>
@@ -31,6 +38,23 @@ export function UserMenu() {
             Meu Perfil
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
+          <div className="flex items-center gap-2">
+            {theme === 'light' ? (
+              <>
+                <Moon className="h-4 w-4" />
+                <span>Modo Escuro</span>
+              </>
+            ) : (
+              <>
+                <Sun className="h-4 w-4" />
+                <span>Modo Claro</span>
+              </>
+            )}
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
         <DropdownMenuItem className="p-0">
           <LogoutButton />
         </DropdownMenuItem>

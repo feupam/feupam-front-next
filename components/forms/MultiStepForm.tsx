@@ -287,7 +287,7 @@ export default function MultiStepForm({
                   value={option.value}
                   checked={value === option.value}
                   onChange={(e) => updateField(field.name, e.target.value)}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 focus:ring-blue-500 focus:ring-2"
+                  className="w-4 h-4 text-emerald-600 bg-muted border-border focus:ring-emerald-500 focus:ring-2"
                 />
                 <label
                   htmlFor={`${field.name}-${option.value}`}

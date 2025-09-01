@@ -33,17 +33,17 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
   return (
     <Card className="w-full">
       {/* Header com Avatar e Nome */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg">
+      <div className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white p-6 rounded-t-lg">
         <div className="flex items-center space-x-4">
           <Avatar className="h-16 w-16 border-2 border-white">
             <AvatarImage src={user?.photoURL || profile.photoURL || undefined} />
-            <AvatarFallback className="bg-white text-blue-600 text-lg font-semibold">
+            <AvatarFallback className="bg-white text-emerald-600 text-lg font-semibold">
               {getInitials(profile.name || user?.displayName || 'User')}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
             <h1 className="text-xl font-bold">{profile.name || 'Nome não informado'}</h1>
-            <p className="text-blue-100">{profile.email}</p>
+            <p className="text-emerald-100">{profile.email}</p>
             <Badge variant="secondary" className="mt-1 bg-white/20 text-white border-white/30">
               {profile.userType === 'client' ? 'Participante' : profile.userType}
             </Badge>
@@ -62,18 +62,18 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
       <CardContent className="p-6 space-y-4">
         {/* Informações Pessoais */}
         <div>
-          <h3 className="font-semibold mb-3 flex items-center text-gray-700">
+          <h3 className="font-semibold mb-3 flex items-center text-foreground">
             <User className="h-4 w-4 mr-2" />
             Informações Pessoais
           </h3>
           <div className="grid grid-cols-1 gap-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Nome:</span>
+              <span className="text-muted-foreground">Nome:</span>
               <span>{profile.name || 'Nome não informado'}</span>
             </div>
             {profile.idade && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Idade:</span>
+                <span className="text-muted-foreground">Idade:</span>
                 <span>{profile.idade} anos</span>
               </div>
             )}
@@ -82,18 +82,18 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
 
         {/* Contato */}
         <div>
-          <h3 className="font-semibold mb-3 flex items-center text-gray-700">
+          <h3 className="font-semibold mb-3 flex items-center text-foreground">
             <Phone className="h-4 w-4 mr-2" />
             Contato
           </h3>
           <div className="grid grid-cols-1 gap-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Email:</span>
+              <span className="text-muted-foreground">Email:</span>
               <span className="break-all">{profile.email}</span>
             </div>
             {(profile.ddd && profile.cellphone) && (
               <div className="flex justify-between">
-                <span className="text-gray-600">Telefone:</span>
+                <span className="text-muted-foreground">Telefone:</span>
                 <span>{formatPhone(profile.ddd, profile.cellphone)}</span>
               </div>
             )}
@@ -103,18 +103,18 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
         {/* Igreja */}
         {profile.church && (
           <div>
-            <h3 className="font-semibold mb-3 flex items-center text-gray-700">
+            <h3 className="font-semibold mb-3 flex items-center text-foreground">
               <HomeIcon className="h-4 w-4 mr-2" />
               Igreja
             </h3>
             <div className="grid grid-cols-1 gap-3 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-600">Igreja:</span>
+                <span className="text-muted-foreground">Igreja:</span>
                 <span className="text-right">{profile.church}</span>
               </div>
               {profile.pastor && (
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Pastor:</span>
+                  <span className="text-muted-foreground">Pastor:</span>
                   <span>{profile.pastor}</span>
                 </div>
               )}

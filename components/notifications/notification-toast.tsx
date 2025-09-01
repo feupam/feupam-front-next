@@ -25,14 +25,14 @@ const iconMap = {
 };
 
 const bgColorMap = {
-  info: 'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-700 text-blue-800 dark:text-blue-300',
+  info: 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300',
   success: 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700 text-green-800 dark:text-green-300',
   error: 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700 text-red-800 dark:text-red-300',
   warning: 'bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-700 text-amber-800 dark:text-amber-300',
 };
 
 const iconColorMap = {
-  info: 'text-blue-500 dark:text-blue-400',
+  info: 'text-emerald-500 dark:text-emerald-400',
   success: 'text-green-500 dark:text-green-400',
   error: 'text-red-500 dark:text-red-400',
   warning: 'text-amber-500 dark:text-amber-400',

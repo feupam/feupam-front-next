@@ -8,10 +8,11 @@ import { Menu, X, Ticket, Sun, Moon, Home, Shield } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/UserMenu';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
+import { useTheme } from 'next-themes';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const { user } = useAuth();
   const { currentEvent } = useCurrentEventContext();
@@ -30,21 +31,8 @@ export default function Header() {
 
   console.log('[Header] Renderizando com evento:', currentEvent?.name || 'Nenhum evento');
   
-  useEffect(() => {
-    // Verifica o tema salvo no localStorage ou a preferência do sistema
-    const savedTheme = localStorage.getItem('theme') as 'light' | 'dark';
-    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-    const initialTheme = savedTheme || systemTheme;
-    
-    setTheme(initialTheme);
-    document.documentElement.classList.toggle('dark', initialTheme === 'dark');
-  }, []);
-  
   const toggleTheme = () => {
-    const newTheme = theme === 'light' ? 'dark' : 'light';
-    setTheme(newTheme);
-    document.documentElement.classList.toggle('dark');
-    localStorage.setItem('theme', newTheme);
+    setTheme(theme === 'dark' ? 'light' : 'dark');
   };
   
   return (

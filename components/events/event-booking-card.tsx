@@ -70,7 +70,7 @@ export function EventBookingCard({ event }: EventBookingCardProps) {
       )}
 
       <Button 
-        className="w-full bg-blue-500 hover:bg-blue-600 text-white" 
+        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white" 
         size="lg"
         onClick={handleBooking}
         disabled={isCheckingProfile}

@@ -31,7 +31,12 @@ describe('User Types', () => {
         lgpdConsentAccepted: false,
         wantShirt: false,
         isStaff: false,
-        staffPassword: ''
+        staffPassword: '',
+        photoURL: undefined,
+        city: '',
+        number: '',
+        neighborhood: '',
+        state: ''
       }
 
       expect(mockUserProfile.userType).toBe('client')

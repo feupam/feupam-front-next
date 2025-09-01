@@ -49,7 +49,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
       case 'cancelado':
         return 'bg-red-100 text-red-800 border-red-200';
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+        return 'bg-muted text-muted-foreground border-border';
     }
   };
 
@@ -127,7 +127,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
       <Card>
         <CardContent className="p-6">
           <div className="flex items-center justify-center space-x-2">
-            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
             <span>Carregando suas compras...</span>
           </div>
         </CardContent>
@@ -188,7 +188,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
               onOpenChange={() => toggleExpanded(reservationId)}
             >
               <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-gray-50 transition-colors">
+                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-2">
@@ -223,7 +223,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
               <CollapsibleContent>
                 <CardContent className="pt-0 space-y-4">
                   {/* Detalhes da Reserva */}
-                  <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                  <div className="bg-muted p-4 rounded-lg space-y-3">
                     <h4 className="font-semibold text-sm">Detalhes da Reserva</h4>
                     
                     <div className="grid grid-cols-2 gap-3 text-sm">
@@ -248,7 +248,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
 
                   {/* Informações de Pagamento */}
                   {mainCharge && (
-                    <div className="bg-blue-50 p-4 rounded-lg space-y-3">
+                    <div className="bg-emerald-50 dark:bg-emerald-900/20 p-4 rounded-lg space-y-3">
                       <h4 className="font-semibold text-sm flex items-center">
                         <CreditCard className="h-4 w-4 mr-2" />
                         Pagamento

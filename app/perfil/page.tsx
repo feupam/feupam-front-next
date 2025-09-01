@@ -45,7 +45,7 @@ export default function ProfilePage() {
           </Card>
         </div>
       ) : (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-background">
           <div className="container mx-auto py-4 px-4 max-w-4xl">
             <div className="space-y-6">
               {/* Cartão do Perfil do Usuário */}

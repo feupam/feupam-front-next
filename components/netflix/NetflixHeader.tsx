@@ -2,6 +2,7 @@
 
 import { ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import Link from "next/link"
 
 export function NetflixHeader() {
   return (
@@ -14,14 +15,16 @@ export function NetflixHeader() {
 
         {/* Carrinho de compras - mais à direita */}
         <div className="flex items-center pr-4">
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-10 w-10 text-emerald-200 hover:text-emerald-400 hover:bg-emerald-500/20"
-          >
-            <ShoppingCart className="h-6 w-6" />
-            <span className="sr-only">Carrinho de compras</span>
-          </Button>
+          <Link href="/perfil">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-10 w-10 text-emerald-200 hover:text-emerald-400 hover:bg-emerald-500/20"
+            >
+              <ShoppingCart className="h-6 w-6" />
+              <span className="sr-only">Carrinho de compras</span>
+            </Button>
+          </Link>
         </div>
       </div>
     </header>

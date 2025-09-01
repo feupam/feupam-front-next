@@ -190,7 +190,19 @@ export default function MultiStepForm({
 
   const renderField = (field: FormField) => {
     const status = getFieldStatus(field.name);
-    const value = values[field.name] || '';
+    let value = values[field.name];
+    
+    // Se o campo não tem valor e tem defaultValue, usar o defaultValue e definir nos values
+    if (!value && field.defaultValue) {
+      value = field.defaultValue;
+      // Define o valor padrão nos values se ainda não foi definido
+      if (values[field.name] === undefined) {
+        updateField(field.name, field.defaultValue);
+      }
+    }
+    
+    // Fallback para string vazia se ainda não há valor
+    value = value || '';
 
     const fieldProps = {
       id: field.name,

@@ -21,9 +21,12 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     setCurrentEventFromData(event);
     
     if (event.isOpen) {
-      // Redireciona para a página de login em vez de abrir o modal do Google
-      console.log('[EventGrid] Redirecionando para página de login...');
-      router.push('/login');
+      // Para eventos abertos, redireciona para login e depois para perfil
+      const loginParams = new URLSearchParams({
+        redirect: `/perfil?eventId=${event.id}&eventName=${encodeURIComponent(event.name)}&isOpen=true`
+      });
+      console.log('[EventGrid] Redirecionando para login com redirect para perfil...');
+      router.push(`/login?${loginParams.toString()}`);
     } else {
       router.push(`/event/${encodeURIComponent(event.name)}?fromProfile=true`);
     }

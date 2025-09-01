@@ -192,10 +192,14 @@ export const users = {
   // Get user's reservations
   getReservations: async () => {
     try {
+      console.log('[API] Fazendo requisição para /users/reservations...');
       const response = await api.get('/users/reservations');
+      console.log('[API] Resposta de reservas:', response.data);
       return response.data;
     } catch (error: any) {
-      console.error('[API Error] Failed to get reservations:', error.message);
+      console.error('[API Error] Failed to get reservations:', error);
+      console.error('[API Error] Response status:', error.response?.status);
+      console.error('[API Error] Response data:', error.response?.data);
       throw error;
     }
   }

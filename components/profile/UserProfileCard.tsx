@@ -1,10 +1,11 @@
 'use client';
 
-import { User, Phone, Mail, MapPin, Calendar, Shield, Edit } from 'lucide-react';
+import { User, Phone, Shield, Edit, HomeIcon } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useAuth } from '@/hooks/useAuth';
 import type { UserProfile } from '@/types/user';
 
 interface UserProfileCardProps {
@@ -13,6 +14,8 @@ interface UserProfileCardProps {
 }
 
 export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps) {
+  const { user } = useAuth(); // Para pegar a foto do Firebase Auth
+  
   const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -20,11 +23,6 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
       .join('')
       .toUpperCase()
       .slice(0, 2);
-  };
-
-  const maskCPF = (cpf: string) => {
-    if (!cpf) return '';
-    return cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.***.***-**');
   };
 
   const formatPhone = (ddd: string, phone: string) => {
@@ -38,9 +36,9 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-6 rounded-t-lg">
         <div className="flex items-center space-x-4">
           <Avatar className="h-16 w-16 border-2 border-white">
-            <AvatarImage src={profile.photoURL} />
+            <AvatarImage src={user?.photoURL || profile.photoURL || undefined} />
             <AvatarFallback className="bg-white text-blue-600 text-lg font-semibold">
-              {getInitials(profile.name || 'User')}
+              {getInitials(profile.name || user?.displayName || 'User')}
             </AvatarFallback>
           </Avatar>
           <div className="flex-1">
@@ -70,25 +68,13 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
           </h3>
           <div className="grid grid-cols-1 gap-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">CPF:</span>
-              <span className="font-mono">{maskCPF(profile.cpf || '')}</span>
+              <span className="text-gray-600">Nome:</span>
+              <span>{profile.name || 'Nome não informado'}</span>
             </div>
-            {profile.data_nasc && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Data de Nascimento:</span>
-                <span>{new Date(profile.data_nasc).toLocaleDateString('pt-BR')}</span>
-              </div>
-            )}
             {profile.idade && (
               <div className="flex justify-between">
                 <span className="text-gray-600">Idade:</span>
                 <span>{profile.idade} anos</span>
-              </div>
-            )}
-            {profile.gender && (
-              <div className="flex justify-between">
-                <span className="text-gray-600">Gênero:</span>
-                <span>{profile.gender === 'male' ? 'Masculino' : 'Feminino'}</span>
               </div>
             )}
           </div>
@@ -114,47 +100,11 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
           </div>
         </div>
 
-        {/* Endereço */}
-        {(profile.cep || profile.address || profile.city) && (
-          <div>
-            <h3 className="font-semibold mb-3 flex items-center text-gray-700">
-              <MapPin className="h-4 w-4 mr-2" />
-              Endereço
-            </h3>
-            <div className="grid grid-cols-1 gap-3 text-sm">
-              {profile.address && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Logradouro:</span>
-                  <span className="text-right">{profile.address}, {profile.number}</span>
-                </div>
-              )}
-              {profile.neighborhood && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Bairro:</span>
-                  <span>{profile.neighborhood}</span>
-                </div>
-              )}
-              {profile.city && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Cidade:</span>
-                  <span>{profile.city} - {profile.state}</span>
-                </div>
-              )}
-              {profile.cep && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">CEP:</span>
-                  <span className="font-mono">{profile.cep}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
         {/* Igreja */}
         {profile.church && (
           <div>
             <h3 className="font-semibold mb-3 flex items-center text-gray-700">
-              <Shield className="h-4 w-4 mr-2" />
+              <HomeIcon className="h-4 w-4 mr-2" />
               Igreja
             </h3>
             <div className="grid grid-cols-1 gap-3 text-sm">

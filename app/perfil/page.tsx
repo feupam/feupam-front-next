@@ -1,12 +1,9 @@
 'use client';
 
-import { useState } from 'react';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { useUserReservations } from '@/hooks/useUserReservations';
 import { UserProfileCard } from '@/components/profile/UserProfileCard';
 import { UserReservationsList } from '@/components/profile/UserReservationsList';
-import { QuickActions } from '@/components/profile/QuickActions';
-import { ProfileForm } from '@/components/profile/ProfileForm';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingCard } from '@/components/shared/Loading';
@@ -19,14 +16,9 @@ export default function ProfilePage() {
   const { profile, loading: profileLoading, error: profileError } = useUserProfile();
   const { reservations, loading: reservationsLoading, error: reservationsError, refetch } = useUserReservations();
   const router = useRouter();
-  const [showEditForm, setShowEditForm] = useState(false);
 
   const handleEditProfile = () => {
-    setShowEditForm(true);
-  };
-
-  const handleCloseEditForm = () => {
-    setShowEditForm(false);
+    router.push('/formulario');
   };
 
   const handleLogout = async () => {
@@ -37,27 +29,6 @@ export default function ProfilePage() {
       console.error('Erro ao fazer logout:', error);
     }
   };
-
-  // Se estiver no modo de edição, mostra o formulário
-  if (showEditForm) {
-    return (
-      <ProtectedRoute>
-        <div className="container mx-auto py-4 px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="mb-4">
-              <Button variant="ghost" onClick={handleCloseEditForm}>
-                ← Voltar ao Perfil
-              </Button>
-            </div>
-            <ProfileForm 
-              initialData={profile} 
-              isOpen={true}
-            />
-          </div>
-        </div>
-      </ProtectedRoute>
-    );
-  }
 
   return (
     <ProtectedRoute>
@@ -84,12 +55,6 @@ export default function ProfilePage() {
                   onEditProfile={handleEditProfile}
                 />
               )}
-
-              {/* Ações Rápidas */}
-              <QuickActions 
-                onEditProfile={handleEditProfile}
-                onLogout={handleLogout}
-              />
 
               {/* Lista de Reservas/Compras */}
               <UserReservationsList

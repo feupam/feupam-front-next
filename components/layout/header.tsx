@@ -22,10 +22,10 @@ export default function Header() {
   }, [currentEvent]);
 
   const navigation = [
+    { name: 'Admin', href: '/admin', icon: Shield },
     { name: 'Home', href: '/home', icon: Home },
     { name: currentEvent?.name || 'Evento', href: currentEvent ? `/event/${encodeURIComponent(currentEvent.name)}` : '/home', icon: Ticket },
     { name: 'Perfil', href: '/perfil' },
-    { name: 'Admin', href: '/admin', icon: Shield },
   ];
 
   console.log('[Header] Renderizando com evento:', currentEvent?.name || 'Nenhum evento');

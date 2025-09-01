@@ -1,4 +1,9 @@
 export interface UserProfile {
+  photoURL: string | undefined;
+  city: string;
+  number: string;
+  neighborhood: string;
+  state: string;
   userType: 'client' | 'staff';
   name: string;
   email: string;

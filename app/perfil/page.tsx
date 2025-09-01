@@ -1,44 +1,104 @@
 'use client';
 
+import { useState } from 'react';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { useUserReservations } from '@/hooks/useUserReservations';
+import { UserProfileCard } from '@/components/profile/UserProfileCard';
+import { UserReservationsList } from '@/components/profile/UserReservationsList';
+import { QuickActions } from '@/components/profile/QuickActions';
 import { ProfileForm } from '@/components/profile/ProfileForm';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingCard } from '@/components/shared/Loading';
 import { useRouter } from 'next/navigation';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { signOut } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 
 export default function ProfilePage() {
-  const { profile, loading, error } = useUserProfile();
+  const { profile, loading: profileLoading, error: profileError } = useUserProfile();
+  const { reservations, loading: reservationsLoading, error: reservationsError, refetch } = useUserReservations();
   const router = useRouter();
-  const searchParams = new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '');
-  const eventId = searchParams.get('eventId');
-  const eventName = searchParams.get('eventName');
-  const isOpenParam = searchParams.get('isOpen');
-  const isOpen = isOpenParam === 'true';
+  const [showEditForm, setShowEditForm] = useState(false);
+
+  const handleEditProfile = () => {
+    setShowEditForm(true);
+  };
+
+  const handleCloseEditForm = () => {
+    setShowEditForm(false);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.push('/login');
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error);
+    }
+  };
+
+  // Se estiver no modo de edição, mostra o formulário
+  if (showEditForm) {
+    return (
+      <ProtectedRoute>
+        <div className="container mx-auto py-4 px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="mb-4">
+              <Button variant="ghost" onClick={handleCloseEditForm}>
+                ← Voltar ao Perfil
+              </Button>
+            </div>
+            <ProfileForm 
+              initialData={profile} 
+              isOpen={true}
+            />
+          </div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
 
   return (
     <ProtectedRoute>
-      {loading ? (
+      {profileLoading ? (
         <LoadingCard text="Carregando perfil..." />
-      ) : error ? (
-        <div className="flex min-h-screen items-center justify-center">
-          <Card className="p-6">
+      ) : profileError ? (
+        <div className="flex min-h-screen items-center justify-center p-4">
+          <Card className="p-6 max-w-md w-full">
             <h2 className="text-lg font-semibold text-red-600">Erro ao carregar perfil</h2>
-            <p className="mt-2 text-muted-foreground">{error}</p>
-            <Button onClick={() => router.refresh()} className="mt-4">
+            <p className="mt-2 text-muted-foreground">{profileError}</p>
+            <Button onClick={() => router.refresh()} className="mt-4 w-full">
               Tentar novamente
             </Button>
           </Card>
         </div>
       ) : (
-        <div className="container mx-auto py-10 px-4">
-          <div className="max-w-4xl mx-auto">
-            <ProfileForm 
-              initialData={profile} 
-              redirectToEvent={eventName || eventId || undefined}
-              isOpen={isOpen}
-            />
+        <div className="min-h-screen bg-gray-50">
+          <div className="container mx-auto py-4 px-4 max-w-4xl">
+            <div className="space-y-6">
+              {/* Cartão do Perfil do Usuário */}
+              {profile && (
+                <UserProfileCard 
+                  profile={profile} 
+                  onEditProfile={handleEditProfile}
+                />
+              )}
+
+              {/* Ações Rápidas */}
+              <QuickActions 
+                onEditProfile={handleEditProfile}
+                onLogout={handleLogout}
+              />
+
+              {/* Lista de Reservas/Compras */}
+              <UserReservationsList
+                reservations={reservations}
+                loading={reservationsLoading}
+                error={reservationsError}
+                onRefetch={refetch}
+              />
+            </div>
           </div>
         </div>
       )}

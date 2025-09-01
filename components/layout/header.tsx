@@ -12,10 +12,16 @@ import { useTheme } from 'next-themes';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
   const { user } = useAuth();
   const { currentEvent } = useCurrentEventContext();
+
+  // Evita problemas de hidratação
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Debug do contexto apenas
   useEffect(() => {
@@ -73,17 +79,19 @@ export default function Header() {
         </div>
         
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-3 xl:gap-4 min-w-0">
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-md text-foreground/80 hover:text-primary hover:bg-muted transition-colors flex-shrink-0"
-            aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-          >
-            {theme === 'light' ? (
-              <Moon className="h-4 w-4 sm:h-5 sm:w-5" />
-            ) : (
-              <Sun className="h-4 w-4 sm:h-5 sm:w-5" />
-            )}
-          </button>
+          {mounted && (
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-md text-foreground/80 hover:text-primary hover:bg-muted transition-colors flex-shrink-0"
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            >
+              {theme === 'light' ? (
+                <Moon className="h-4 w-4 sm:h-5 sm:w-5" />
+              ) : (
+                <Sun className="h-4 w-4 sm:h-5 sm:w-5" />
+              )}
+            </button>
+          )}
           
           <div className="min-w-0 flex-shrink-0">
             {user ? (
@@ -144,25 +152,27 @@ export default function Header() {
               </div>
               
               <div className="space-y-2 pt-4 border-t border-border">
-                <button
-                  onClick={() => {
-                    toggleTheme();
-                    setMobileMenuOpen(false);
-                  }}
-                  className="flex items-center gap-3 p-3 rounded-md text-base font-medium text-card-foreground hover:bg-muted transition-colors w-full text-left"
-                >
-                  {theme === 'light' ? (
-                    <>
-                      <Moon className="h-5 w-5 flex-shrink-0" />
-                      <span>Modo Escuro</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sun className="h-5 w-5 flex-shrink-0" />
-                      <span>Modo Claro</span>
-                    </>
-                  )}
-                </button>
+                {mounted && (
+                  <button
+                    onClick={() => {
+                      toggleTheme();
+                      setMobileMenuOpen(false);
+                    }}
+                    className="flex items-center gap-3 p-3 rounded-md text-base font-medium text-card-foreground hover:bg-muted transition-colors w-full text-left"
+                  >
+                    {theme === 'light' ? (
+                      <>
+                        <Moon className="h-5 w-5 flex-shrink-0" />
+                        <span>Modo Escuro</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sun className="h-5 w-5 flex-shrink-0" />
+                        <span>Modo Claro</span>
+                      </>
+                    )}
+                  </button>
+                )}
                 
                 {user ? (
                   <div className="p-3 rounded-md bg-muted/50">

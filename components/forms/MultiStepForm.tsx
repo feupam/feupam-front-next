@@ -317,17 +317,17 @@ export default function MultiStepForm({
     <div className="w-full max-w-4xl mx-auto space-y-6">
       {/* Header com progresso */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Formulário de Inscrição</h1>
-          <Badge variant="outline">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <h1 className="text-xl sm:text-2xl font-bold">Formulário de Inscrição</h1>
+          <Badge variant="outline" className="self-start sm:self-auto">
             Etapa {currentStep + 1} de {formSections.length}
           </Badge>
         </div>
         
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Progresso geral</span>
-            <span>{Math.round(progress)}%</span>
+        <div className="space-y-3">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
+            <span className="text-sm text-muted-foreground">Progresso geral</span>
+            <span className="text-sm font-medium text-foreground">{Math.round(progress)}%</span>
           </div>
           <Progress value={progress} className="w-full" />
         </div>
@@ -356,27 +356,30 @@ export default function MultiStepForm({
         )}
 
         {/* Steps indicator */}
-        <div className="flex justify-center space-x-2 overflow-x-auto pb-2">
-          {formSections.map((section, index) => (
-            <button
-              key={index}
-              onClick={() => setCurrentStep(index)}
-              className={cn(
-                "flex items-center space-x-2 px-3 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
-                index === currentStep && "bg-primary text-primary-foreground",
-                index < currentStep && "bg-green-100 text-green-700",
-                index > currentStep && "bg-muted text-muted-foreground",
-                completedSteps.has(index) && index !== currentStep && "bg-green-100 text-green-700"
-              )}
-            >
-              {completedSteps.has(index) ? (
-                <CheckCircle2 className="w-4 h-4" />
-              ) : (
-                <span className="w-4 h-4 rounded-full bg-current opacity-20" />
-              )}
-              <span className="hidden sm:inline">{section.title}</span>
-            </button>
-          ))}
+        <div className="w-full">
+          <div className="flex overflow-x-auto pb-2 px-1 scrollbar-hide">
+            {formSections.map((section, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentStep(index)}
+                className={cn(
+                  "flex-1 flex items-center justify-center px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm font-medium transition-all whitespace-nowrap",
+                  index === currentStep && "bg-primary text-primary-foreground",
+                  index < currentStep && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300",
+                  index > currentStep && "bg-muted text-muted-foreground",
+                  completedSteps.has(index) && index !== currentStep && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
+                )}
+              >
+                {completedSteps.has(index) ? (
+                  <CheckCircle2 className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                ) : (
+                  <span className="w-3 h-3 sm:w-4 sm:h-4 rounded-full bg-current opacity-20 flex-shrink-0" />
+                )}
+                <span className="hidden md:inline ml-2">{section.title}</span>
+                <span className="md:hidden ml-2">{index + 1}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -447,24 +450,24 @@ export default function MultiStepForm({
         </Card>
 
         {/* Navigation buttons */}
-        <div className="flex justify-between items-center mt-6">
+        <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-4 mt-6">
           <Button
             type="button"
             variant="outline"
             onClick={prevStep}
             disabled={currentStep === 0}
-            className="flex items-center space-x-2"
+            className="flex items-center justify-center space-x-2 w-full sm:w-auto"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Anterior</span>
           </Button>
 
-          <div className="flex space-x-2">
+          <div className="flex justify-end w-full sm:w-auto">
             {currentStep < formSections.length - 1 ? (
               <Button
                 type="button"
                 onClick={nextStep}
-                className="flex items-center space-x-2"
+                className="flex items-center justify-center space-x-2 w-full sm:w-auto"
                 disabled={!isStepComplete(currentStep)}
               >
                 <span>Próximo</span>
@@ -473,31 +476,31 @@ export default function MultiStepForm({
             ) : (
               // Verifica se está na seção dos termos LGPD e se foi rejeitado
               currentStep === formSections.length - 1 && values.lgpdConsentAccepted === 'false' ? (
-                <div className="flex flex-col items-end space-y-2">
-                  <div className="text-red-600 text-sm font-medium text-right">
+                <div className="flex flex-col items-center sm:items-end space-y-2 w-full sm:w-auto">
+                  <div className="text-red-600 text-sm font-medium text-center sm:text-right">
                     ⚠️ Para continuar, é necessário aceitar os termos da LGPD
                   </div>
                   <Button
                     type="button"
                     disabled={true}
-                    className="flex items-center space-x-2 min-w-[140px] opacity-50 cursor-not-allowed"
+                    className="flex items-center justify-center space-x-2 w-full sm:min-w-[140px] opacity-50 cursor-not-allowed"
                   >
-                    ❌ Não é possível continuar
+                    <span>❌ Não é possível continuar</span>
                   </Button>
                 </div>
               ) : (
                 <Button
                   type="submit"
                   disabled={currentStep === formSections.length - 1 && values.lgpdConsentAccepted !== 'true'}
-                  className="flex items-center space-x-2 min-w-[140px]"
+                  className="flex items-center justify-center space-x-2 w-full sm:min-w-[140px]"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isExistingUser ? 'Atualizando...' : 'Enviando...'}
+                      <span>{isExistingUser ? 'Atualizando...' : 'Enviando...'}</span>
                     </>
                   ) : (
-                    isExistingUser ? 'Atualizar Dados' : 'Finalizar Inscrição'
+                    <span>{isExistingUser ? 'Atualizar Dados' : 'Finalizar Inscrição'}</span>
                   )}
                 </Button>
               )

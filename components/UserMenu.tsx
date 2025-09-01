@@ -6,11 +6,18 @@ import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 
 export function UserMenu() {
   const { user } = useAuth();
   const { theme, setTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  // Evita problemas de hidratação
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   if (!user) return null;
 
@@ -39,21 +46,23 @@ export function UserMenu() {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
-          <div className="flex items-center gap-2">
-            {theme === 'light' ? (
-              <>
-                <Moon className="h-4 w-4" />
-                <span>Modo Escuro</span>
-              </>
-            ) : (
-              <>
-                <Sun className="h-4 w-4" />
-                <span>Modo Claro</span>
-              </>
-            )}
-          </div>
-        </DropdownMenuItem>
+        {mounted && (
+          <DropdownMenuItem onClick={toggleTheme} className="cursor-pointer">
+            <div className="flex items-center gap-2">
+              {theme === 'light' ? (
+                <>
+                  <Moon className="h-4 w-4" />
+                  <span>Modo Escuro</span>
+                </>
+              ) : (
+                <>
+                  <Sun className="h-4 w-4" />
+                  <span>Modo Claro</span>
+                </>
+              )}
+            </div>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem className="p-0">
           <LogoutButton />

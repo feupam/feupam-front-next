@@ -134,7 +134,7 @@ export default function FormularioInscricaoPage() {
   // Loading state para dados do usuário
   if (userDataLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8">
           <div className="flex items-center space-x-3">
             <Loader2 className="h-6 w-6 animate-spin" />
@@ -148,7 +148,7 @@ export default function FormularioInscricaoPage() {
   // Error state
   if (userDataError) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8">
           <h2 className="text-lg font-semibold text-red-600 mb-2">Erro ao carregar dados</h2>
           <p className="text-muted-foreground mb-4">{userDataError}</p>
@@ -167,20 +167,20 @@ export default function FormularioInscricaoPage() {
   console.log('Valores iniciais do formulário:', formInitialValues);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+          <h1 className="text-4xl font-bold text-foreground mb-4">
             {isExistingUser ? 'Atualizar Dados' : 'Formulário de Inscrição'}
           </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
             {isExistingUser 
               ? 'Atualize suas informações para o evento. Seus dados atuais estão pré-preenchidos.'
               : 'Complete suas informações para finalizar a inscrição no evento. Você pode salvar o progresso e continuar depois.'
             }
           </p>
           {isExistingUser && (
-            <div className="mt-4 p-3 bg-blue-100 text-blue-800 rounded-lg inline-block">
+            <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 rounded-lg inline-block">
               ✅ Usuário cadastrado - Modo atualização
             </div>
           )}

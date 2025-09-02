@@ -253,17 +253,17 @@ export const formSections: FormSection[] = [
     ]
   },
   {
-    title: '👨‍👩‍👧‍👦 Responsável',
+    title: '👨‍👩‍👧‍👦 Contato de Emergência',
     fields: [
       {
-        label: 'Nome do Responsável',
+        label: 'Nome para o contato de emergência',
         name: 'responsavel',
         type: 'text',
         required: true,
-        placeholder: 'Nome completo do responsável'
+        placeholder: 'Nome completo do conto de emergência'
       },
       {
-        label: 'CPF do Responsável',
+        label: 'CPF do contato de emergência',
         name: 'documento_responsavel',
         type: 'text',
         required: true,
@@ -271,7 +271,7 @@ export const formSections: FormSection[] = [
         placeholder: '000.000.000-00'
       },
       {
-        label: 'Telefone do Responsável',
+        label: 'Telefone do contato de emergência',
         name: 'cellphone_responsavel',
         type: 'tel',
         required: true,

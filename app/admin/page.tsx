@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { EventManagement } from '@/components/admin/EventManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { SpotManagement } from '@/components/admin/SpotManagement';
+import { UserConsultation } from '@/components/admin/UserConsultation';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -43,10 +44,11 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="events" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="events">Eventos</TabsTrigger>
           <TabsTrigger value="users">Usuários</TabsTrigger>
           <TabsTrigger value="spots">Vagas</TabsTrigger>
+          <TabsTrigger value="consultations">Consultas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="events">
@@ -87,6 +89,20 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <SpotManagement />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="consultations">
+          <Card>
+            <CardHeader>
+              <CardTitle>Consultas de Usuários e Reservas</CardTitle>
+              <CardDescription>
+                Consultar usuários e suas reservas por evento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <UserConsultation />
             </CardContent>
           </Card>
         </TabsContent>

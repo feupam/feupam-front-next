@@ -164,10 +164,11 @@ export default function MyTicketsPage() {
 
   return (
     <ProtectedRoute>
-      <div className="container py-8">
-        <h1 className="text-3xl font-bold mb-6">Meus Ingressos</h1>
-        
-        <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
+      <div className="w-full space-y-6">
+        <div className="max-w-6xl mx-auto px-4 py-8">
+          <h1 className="text-3xl font-bold mb-6">Meus Ingressos</h1>
+          
+          <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="todos">Todos</TabsTrigger>
             <TabsTrigger value="pendentes">Pendentes</TabsTrigger>
@@ -311,6 +312,7 @@ export default function MyTicketsPage() {
             )}
           </TabsContent>
         </Tabs>
+        </div>
       </div>
       
       {/* Dialog para exibir QR Code do PIX */}

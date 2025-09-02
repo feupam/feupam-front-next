@@ -294,6 +294,20 @@ export const api = {
         console.error(`[API] Erro ao buscar parcelamento:`, error);
         throw error;
       }
+    },
+    getReservations: async (eventId: string) => {
+      const token = await getCurrentToken();
+      console.log(`[API] Buscando reservas para evento ${eventId}`);
+      try {
+        const response = await axiosInstance.get(`/events/${eventId}/reservations`, 
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        console.log(`[API] Resposta das reservas: ${JSON.stringify(response.data)}`);
+        return response.data;
+      } catch (error) {
+        console.error(`[API] Erro ao buscar reservas:`, error);
+        throw error;
+      }
     }
   },
 
@@ -361,6 +375,13 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(data)
       });
+    },
+    listUsers: async () => {
+      const token = await getCurrentToken();
+      const response = await axiosInstance.get('/users/list-users', 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
     },
     getReservations: async () => {
       const token = await getCurrentToken();

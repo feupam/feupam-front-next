@@ -40,23 +40,7 @@ export function validateJpgImage(file: File): ImageValidationResult {
     };
   }
 
-  // Verifica o tamanho do arquivo (máximo 5MB)
-  const maxSizeInBytes = 5 * 1024 * 1024; // 5MB
-  if (file.size > maxSizeInBytes) {
-    return {
-      isValid: false,
-      error: 'Arquivo deve ter no máximo 5MB'
-    };
-  }
-
-  // Verifica o tamanho mínimo (pelo menos 1KB)
-  const minSizeInBytes = 1024; // 1KB
-  if (file.size < minSizeInBytes) {
-    return {
-      isValid: false,
-      error: 'Arquivo muito pequeno'
-    };
-  }
+  // Limitadores de tamanho removidos para permitir testar qualquer imagem
 
   return {
     isValid: true
@@ -134,26 +118,10 @@ export function validateImageDimensions(
     img.onload = () => {
       URL.revokeObjectURL(url);
       
-      const requirements = IMAGE_REQUIREMENTS[imageType];
-      const { width, height } = img;
-      
-      // Permite uma tolerância de 20% nas dimensões
-      const tolerance = 0.2;
-      const minWidth = requirements.recommendedWidth * (1 - tolerance);
-      const maxWidth = requirements.recommendedWidth * (1 + tolerance);
-      const minHeight = requirements.recommendedHeight * (1 - tolerance);
-      const maxHeight = requirements.recommendedHeight * (1 + tolerance);
-      
-      if (width < minWidth || width > maxWidth || height < minHeight || height > maxHeight) {
-        resolve({
-          isValid: false,
-          error: `${requirements.name}: Dimensões recomendadas ${requirements.recommendedWidth}x${requirements.recommendedHeight}px. Imagem atual: ${width}x${height}px`
-        });
-      } else {
-        resolve({
-          isValid: true
-        });
-      }
+      // Limitadores de dimensão removidos para permitir testar qualquer imagem
+      resolve({
+        isValid: true
+      });
     };
     
     img.onerror = () => {

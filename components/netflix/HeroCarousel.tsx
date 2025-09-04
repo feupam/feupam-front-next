@@ -104,7 +104,7 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex }: HeroCarou
 
   return (
     <div 
-      className="relative w-full h-[50vh] md:h-[65vh] overflow-hidden"
+      className="relative w-full h-[45vh] sm:h-[55vh] md:h-[70vh] lg:h-[75vh] xl:h-[80vh] overflow-hidden"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}

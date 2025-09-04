@@ -103,10 +103,10 @@ export function createImagePreview(file: File): Promise<string> {
 export const IMAGE_REQUIREMENTS = {
   logo_evento: {
     name: 'Logo do Evento',
-    recommendedWidth: 400,
-    recommendedHeight: 400,
+    recommendedWidth: 600,
+    recommendedHeight: 800,
     aspectRatio: '1:1',
-    description: 'Logo quadrado do evento (400x400px recomendado)'
+    description: 'Logo quadrado do evento (600x800 recomendado)'
   },
   image_capa: {
     name: 'Imagem de Capa',

@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ImageUpload } from '@/components/ui/image-upload';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
@@ -35,6 +36,21 @@ export function EventManagement() {
     price: '5000'
   });
 
+  // Image files
+  const [imageFiles, setImageFiles] = useState<{
+    logo_evento: File | null;
+    image_capa: File | null;
+  }>({
+    logo_evento: null,
+    image_capa: null
+  });
+
+  // Image validation errors
+  const [imageErrors, setImageErrors] = useState<{
+    logo_evento?: string;
+    image_capa?: string;
+  }>({});
+
   // Update/Delete Event Form
   const [eventId, setEventId] = useState<string>('');
   const [updateEventData, setUpdateEventData] = useState({
@@ -51,15 +67,45 @@ export function EventManagement() {
     setLoading(true);
 
     try {
+      // Validar se as imagens obrigatórias foram enviadas
+      if (!imageFiles.logo_evento) {
+        setImageErrors({ ...imageErrors, logo_evento: 'Logo do evento é obrigatório' });
+        setLoading(false);
+        return;
+      }
+
+      if (!imageFiles.image_capa) {
+        setImageErrors({ ...imageErrors, image_capa: 'Imagem de capa é obrigatória' });
+        setLoading(false);
+        return;
+      }
+
       const token = await user?.getIdToken();
       
+      // Criar FormData para envio multipart
+      const formData = new FormData();
+      
+      // Adicionar dados do evento
+      Object.entries(createEventData).forEach(([key, value]) => {
+        formData.append(key, value);
+      });
+
+      // Adicionar imagens
+      if (imageFiles.logo_evento) {
+        formData.append('logo_evento', imageFiles.logo_evento);
+      }
+      
+      if (imageFiles.image_capa) {
+        formData.append('image_capa', imageFiles.image_capa);
+      }
+
       const response = await fetch('/api/admin/create-event', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
+          // Note: Não incluir Content-Type para FormData, o browser define automaticamente
         },
-        body: JSON.stringify(createEventData)
+        body: formData
       });
 
       if (response.ok) {
@@ -85,13 +131,21 @@ export function EventManagement() {
           endDate: '',
           price: '5000'
         });
+        // Reset images
+        setImageFiles({
+          logo_evento: null,
+          image_capa: null
+        });
+        setImageErrors({});
       } else {
-        throw new Error('Erro ao criar evento');
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Erro ao criar evento');
       }
     } catch (error) {
+      console.error('Erro ao criar evento:', error);
       toast({
         title: "Erro",
-        description: "Erro ao criar evento",
+        description: error instanceof Error ? error.message : "Erro ao criar evento",
         variant: "destructive",
       });
     } finally {
@@ -329,6 +383,43 @@ export function EventManagement() {
                     onChange={(e) => setCreateEventData({ ...createEventData, endDate: e.target.value })}
                     required
                   />
+                </div>
+              </div>
+
+              {/* Upload de Imagens */}
+              <div className="space-y-6">
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-medium mb-4">Imagens do Evento</h3>
+                  
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ImageUpload
+                      label="Logo do Evento"
+                      imageType="logo_evento"
+                      value={imageFiles.logo_evento}
+                      onChange={(file) => {
+                        setImageFiles({ ...imageFiles, logo_evento: file });
+                        if (file) {
+                          setImageErrors({ ...imageErrors, logo_evento: undefined });
+                        }
+                      }}
+                      error={imageErrors.logo_evento}
+                      required
+                    />
+                    
+                    <ImageUpload
+                      label="Imagem de Capa"
+                      imageType="image_capa"
+                      value={imageFiles.image_capa}
+                      onChange={(file) => {
+                        setImageFiles({ ...imageFiles, image_capa: file });
+                        if (file) {
+                          setImageErrors({ ...imageErrors, image_capa: undefined });
+                        }
+                      }}
+                      error={imageErrors.image_capa}
+                      required
+                    />
+                  </div>
                 </div>
               </div>
 

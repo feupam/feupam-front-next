@@ -105,7 +105,7 @@ export const IMAGE_REQUIREMENTS = {
     name: 'Logo do Evento',
     recommendedWidth: 600,
     recommendedHeight: 800,
-    aspectRatio: '1:1',
+    aspectRatio: '3:4',
     description: 'Logo quadrado do evento (600x800 recomendado)'
   },
   image_capa: {

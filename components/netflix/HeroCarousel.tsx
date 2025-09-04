@@ -122,12 +122,30 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex }: HeroCarou
               alt={event.name} 
               className="w-full h-full object-cover" 
             />
+            
+            {/* Botão Saiba Mais - sempre visível */}
+            <div className="absolute bottom-4 left-4 md:bottom-8 md:left-8">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-black/50 backdrop-blur-sm border-emerald-400 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleMoreInfo(event);
+                }}
+              >
+                <Info className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                Saiba mais
+              </Button>
+            </div>
+
             {!event.image_capa && (
               <>
                 <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/20 to-transparent" />
 
                 <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8">
-                  <div className="max-w-2xl ml-4 mr-4 md:ml-16 md:mr-0 mb-12 md:mb-0">
+                  <div className="max-w-2xl ml-4 mr-4 md:ml-16 md:mr-0 mb-16 md:mb-20">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs md:text-sm text-muted-foreground">
                         {new Date(event.startDate).getFullYear()}
@@ -141,22 +159,6 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex }: HeroCarou
                     <p className="text-xs md:text-lg text-emerald-200 mb-3 md:mb-4 text-pretty line-clamp-2">
                       {event.description}
                     </p>
-
-                    <div className="flex gap-2 md:gap-4">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="bg-transparent border-emerald-400 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          handleMoreInfo(event);
-                        }}
-                      >
-                        <Info className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                        Saiba mais
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </>

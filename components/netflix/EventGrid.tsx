@@ -68,6 +68,15 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
               }}
             >
               <div className="relative">
+                {/* Faixa de Inscrições Abertas */}
+                {event.isOpen && (
+                  <div className="absolute top-0 right-0 z-10">
+                    <div className="bg-emerald-500 text-white text-xs font-bold px-2 py-1 rounded-bl-lg shadow-lg">
+                      INSCREVA-SE
+                    </div>
+                  </div>
+                )}
+                
                 {event.logo_evento ? (
                   <img
                     src={event.logo_evento}

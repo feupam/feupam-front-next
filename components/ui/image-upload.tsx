@@ -38,6 +38,7 @@ export function ImageUpload({
   const requirements = IMAGE_REQUIREMENTS[imageType];
 
   const handleFileSelect = useCallback(async (file: File) => {
+    console.log(`[ImageUpload] Selecionando arquivo: ${file.name}, tipo: ${file.type}, tamanho: ${file.size} bytes`);
     setIsValidating(true);
     setValidationError(null);
 
@@ -45,6 +46,7 @@ export function ImageUpload({
       // Validação básica de JPG
       const basicValidation = validateJpgImage(file);
       if (!basicValidation.isValid) {
+        console.error(`[ImageUpload] Validação básica falhou: ${basicValidation.error}`);
         setValidationError(basicValidation.error || 'Arquivo inválido');
         setIsValidating(false);
         return;
@@ -53,6 +55,7 @@ export function ImageUpload({
       // Validação de dimensões
       const dimensionValidation = await validateImageDimensions(file, imageType);
       if (!dimensionValidation.isValid) {
+        console.error(`[ImageUpload] Validação de dimensões falhou: ${dimensionValidation.error}`);
         setValidationError(dimensionValidation.error || 'Dimensões inválidas');
         setIsValidating(false);
         return;
@@ -60,12 +63,14 @@ export function ImageUpload({
 
       // Criar prévia
       const previewUrl = await createImagePreview(file);
+      console.log(`[ImageUpload] Prévia criada com sucesso para: ${file.name}`);
       setPreview(previewUrl);
       onChange(file);
+      console.log(`[ImageUpload] Arquivo ${file.name} aceito e enviado para o componente pai`);
       
     } catch (err) {
+      console.error('[ImageUpload] Erro ao processar imagem:', err);
       setValidationError('Erro ao processar imagem');
-      console.error('Erro no upload:', err);
     } finally {
       setIsValidating(false);
     }
@@ -128,7 +133,7 @@ export function ImageUpload({
                 <span className="font-medium">Clique para selecionar</span> ou arraste a imagem
               </div>
               <div className="text-xs text-muted-foreground mt-1">
-                JPG/JPEG até 5MB
+                JPG/JPEG - Qualquer tamanho
               </div>
             </CardContent>
           </Card>
@@ -172,15 +177,6 @@ export function ImageUpload({
                       <Upload className="h-3 w-3 mr-1" />
                       Trocar
                     </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(preview, '_blank')}
-                    >
-                      <Eye className="h-3 w-3 mr-1" />
-                      Ver
-                    </Button>
                   </div>
                 </div>
               </div>
@@ -204,10 +200,10 @@ export function ImageUpload({
 
         {/* Informações de requisitos */}
         <div className="text-xs text-muted-foreground bg-muted p-3 rounded">
-          <div className="font-medium mb-1">Requisitos:</div>
+          <div className="font-medium mb-1">Recomendação:</div>
           <ul className="space-y-1">
             <li>• Formato: JPG/JPEG</li>
-            <li>• Tamanho máximo: 5MB</li>
+            <li>• Tamanho: Sem limitação</li>
             <li>• Dimensões recomendadas: {requirements.recommendedWidth}x{requirements.recommendedHeight}px</li>
             <li>• Proporção: {requirements.aspectRatio}</li>
           </ul>

@@ -51,31 +51,41 @@ export function EventManagement() {
     image_capa?: string;
   }>({});
 
+  // Feedback visual de status
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: 'idle' | 'success' | 'error';
+    message: string;
+  }>({
+    type: 'idle',
+    message: ''
+  });
+
   // Update/Delete Event Form
   const [eventId, setEventId] = useState<string>('');
   const [updateEventData, setUpdateEventData] = useState({
     name: ''
   });
 
-  // Debug para verificar se o eventId está sendo setado
-  useEffect(() => {
-    console.log('EventId atual:', eventId);
-  }, [eventId]);
-
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSubmitStatus({ type: 'idle', message: '' });
 
     try {
+      console.log('[EventManagement] Criando evento:', createEventData.name);
+
       // Validar se as imagens obrigatórias foram enviadas
       if (!imageFiles.logo_evento) {
         setImageErrors({ ...imageErrors, logo_evento: 'Logo do evento é obrigatório' });
+        setSubmitStatus({ type: 'error', message: 'Logo do evento é obrigatório' });
         setLoading(false);
         return;
       }
 
       if (!imageFiles.image_capa) {
+        console.error('[EventManagement] Imagem de capa não foi selecionada');
         setImageErrors({ ...imageErrors, image_capa: 'Imagem de capa é obrigatória' });
+        setSubmitStatus({ type: 'error', message: 'Imagem de capa é obrigatória' });
         setLoading(false);
         return;
       }
@@ -85,20 +95,34 @@ export function EventManagement() {
       // Criar FormData para envio multipart
       const formData = new FormData();
       
+      // Preparar dados do evento com formatação correta
+      const eventDataForAPI = {
+        ...createEventData,
+        // Converter datas para formato ISO sem milissegundos (como na requisição que funciona)
+        startDate: createEventData.startDate ? 
+          new Date(createEventData.startDate).toISOString().replace('.000Z', 'Z') : '',
+        endDate: createEventData.endDate ? 
+          new Date(createEventData.endDate).toISOString().replace('.000Z', 'Z') : ''
+      };
+      
       // Adicionar dados do evento
-      Object.entries(createEventData).forEach(([key, value]) => {
-        formData.append(key, value);
+      Object.entries(eventDataForAPI).forEach(([key, value]) => {
+        if (value !== '') {
+          formData.append(key, value.toString());
+        }
       });
 
       // Adicionar imagens
       if (imageFiles.logo_evento) {
-        formData.append('logo_evento', imageFiles.logo_evento);
+        formData.append('logo_evento', imageFiles.logo_evento, imageFiles.logo_evento.name);
       }
       
       if (imageFiles.image_capa) {
-        formData.append('image_capa', imageFiles.image_capa);
+        formData.append('image_capa', imageFiles.image_capa, imageFiles.image_capa.name);
       }
 
+      console.log('[EventManagement] Enviando evento para criação...');
+      
       const response = await fetch('/api/admin/create-event', {
         method: 'POST',
         headers: {
@@ -109,10 +133,24 @@ export function EventManagement() {
       });
 
       if (response.ok) {
-        toast({
-          title: "Sucesso",
-          description: "Evento criado com sucesso!",
+        const responseData = await response.json();
+        console.log('[EventManagement] Evento criado:', responseData.name || responseData.uuid);
+        
+        // Define status de sucesso
+        setSubmitStatus({ 
+          type: 'success', 
+          message: 'Evento criado com sucesso! 🎉' 
         });
+        
+        // Força o toast de sucesso
+        setTimeout(() => {
+          toast({
+            title: "✅ Sucesso!",
+            description: "Evento criado com sucesso!",
+            duration: 5000,
+          });
+        }, 100);
+        
         // Atualiza a lista de eventos
         refetch();
         // Reset form
@@ -139,14 +177,149 @@ export function EventManagement() {
         setImageErrors({});
       } else {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Erro ao criar evento');
+        console.error('[EventManagement] Erro na resposta:', errorData);
+        
+        // Define status de erro
+        setSubmitStatus({ 
+          type: 'error', 
+          message: `Erro: ${errorData.error || errorData.message || 'Falha ao criar evento'}` 
+        });
+        
+        // Força o toast de erro
+        setTimeout(() => {
+          toast({
+            title: "❌ Erro!",
+            description: errorData.error || errorData.message || 'Erro ao criar evento',
+            variant: "destructive",
+            duration: 7000,
+          });
+        }, 100);
+        
+        throw new Error(errorData.error || errorData.message || 'Erro ao criar evento');
       }
     } catch (error) {
-      console.error('Erro ao criar evento:', error);
-      toast({
-        title: "Erro",
-        description: error instanceof Error ? error.message : "Erro ao criar evento",
-        variant: "destructive",
+      console.error('[EventManagement] Erro ao criar evento:', error);
+      
+      // Define status de erro
+      setSubmitStatus({ 
+        type: 'error', 
+        message: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}` 
+      });
+      
+      // Força o toast de erro
+      setTimeout(() => {
+        toast({
+          title: "❌ Erro!",
+          description: error instanceof Error ? error.message : "Erro ao criar evento",
+          variant: "destructive",
+          duration: 7000,
+        });
+      }, 100);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTestEvent = async () => {
+    if (!imageFiles.logo_evento || !imageFiles.image_capa) {
+      setSubmitStatus({ 
+        type: 'error', 
+        message: 'Selecione as imagens primeiro para testar' 
+      });
+      return;
+    }
+
+    setLoading(true);
+    setSubmitStatus({ type: 'idle', message: '' });
+
+    try {
+      console.log('[EventManagement] Testando criação de evento...');
+      
+      const token = await user?.getIdToken();
+      const formData = new FormData();
+      formData.append('logo_evento', imageFiles.logo_evento);
+      formData.append('image_capa', imageFiles.image_capa);
+
+      const response = await fetch('/api/admin/test-event', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('[EventManagement] Teste de evento bem-sucedido:', responseData);
+        setSubmitStatus({ 
+          type: 'success', 
+          message: 'Teste realizado com sucesso! 🎉 A API está funcionando.' 
+        });
+        refetch();
+      } else {
+        const errorData = await response.json();
+        console.error('[EventManagement] Erro no teste:', errorData);
+        setSubmitStatus({ 
+          type: 'error', 
+          message: `Teste falhou: ${errorData.error || 'Erro desconhecido'}` 
+        });
+      }
+    } catch (error) {
+      console.error('[EventManagement] Erro no teste:', error);
+      setSubmitStatus({ 
+        type: 'error', 
+        message: `Erro no teste: ${error instanceof Error ? error.message : 'Erro desconhecido'}` 
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRealTestEvent = async () => {
+    if (!imageFiles.logo_evento || !imageFiles.image_capa) {
+      setSubmitStatus({ 
+        type: 'error', 
+        message: 'Selecione as imagens primeiro para testar' 
+      });
+      return;
+    }
+
+    setLoading(true);
+    setSubmitStatus({ type: 'idle', message: '' });
+
+    try {
+      console.log('[EventManagement] Testando com token real...');
+      
+      const formData = new FormData();
+      formData.append('logo_evento', imageFiles.logo_evento);
+      formData.append('image_capa', imageFiles.image_capa);
+
+      const response = await fetch('/api/admin/real-test-event', {
+        method: 'POST',
+        body: formData
+      });
+
+      if (response.ok) {
+        const responseData = await response.json();
+        console.log('[EventManagement] Teste real bem-sucedido:', responseData);
+        setSubmitStatus({ 
+          type: 'success', 
+          message: 'Teste com token real bem-sucedido! 🎉 A API funciona!' 
+        });
+        refetch();
+      } else {
+        const errorData = await response.json();
+        console.error('[EventManagement] Erro no teste real:', errorData);
+        setSubmitStatus({ 
+          type: 'error', 
+          message: `Teste real falhou: ${errorData.error || 'Erro desconhecido'}` 
+        });
+      }
+    } catch (error) {
+      console.error('[EventManagement] Erro no teste real:', error);
+      setSubmitStatus({ 
+        type: 'error', 
+        message: `Erro no teste real: ${error instanceof Error ? error.message : 'Erro desconhecido'}` 
       });
     } finally {
       setLoading(false);
@@ -423,9 +596,55 @@ export function EventManagement() {
                 </div>
               </div>
 
-              <Button type="submit" disabled={loading}>
-                {loading ? 'Criando...' : 'Criar Evento'}
-              </Button>
+              {/* Status Visual */}
+              {submitStatus.type !== 'idle' && (
+                <div className={`p-4 rounded-lg border ${
+                  submitStatus.type === 'success' 
+                    ? 'bg-green-50 border-green-200 text-green-800' 
+                    : 'bg-red-50 border-red-200 text-red-800'
+                }`}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <div className={`w-4 h-4 rounded-full ${
+                        submitStatus.type === 'success' ? 'bg-green-500' : 'bg-red-500'
+                      }`}></div>
+                      <p className="font-medium">{submitStatus.message}</p>
+                    </div>
+                    <button 
+                      onClick={() => setSubmitStatus({ type: 'idle', message: '' })}
+                      className="text-sm underline hover:no-underline"
+                    >
+                      Fechar
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Status do upload */}
+              {loading && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                    <div>
+                      <p className="text-sm font-medium text-blue-800">Enviando dados...</p>
+                      <p className="text-xs text-blue-600">Isso pode levar alguns segundos</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              <div className="flex gap-2">                
+                <Button type="submit" disabled={loading} className="flex-1">
+                  {loading ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Criando evento...
+                    </>
+                  ) : (
+                    'Criar Evento'
+                  )}
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>

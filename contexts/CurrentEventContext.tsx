@@ -56,7 +56,7 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
       setError(null);
       
       console.log('[CurrentEventContext] Atualizando status do evento:', currentEvent.name);
-      const response = await eventService.getEventStatus('federa');
+      const response = await eventService.getEventStatus(currentEvent.name);
       
       if (response.events && response.events.length > 0) {
         // Busca o evento atual na resposta
@@ -137,7 +137,7 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
       setError(null);
       
       console.log('[CurrentEventContext] Buscando evento por nome:', eventName);
-      const response = await eventService.getEventStatus('federa');
+      const response = await eventService.getEventStatus(eventName);
       
       if (response.events && response.events.length > 0) {
         const eventData = response.events.find(e => 

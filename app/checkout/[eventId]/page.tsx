@@ -18,6 +18,7 @@ import { auth } from '@/lib/firebase';
 import { cn } from '@/lib/utils';
 import { useInstallments } from '@/components/providers';
 import { EventsProvider } from '@/contexts/EventsContext';
+import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 
 interface CheckoutPageProps {
   params: {
@@ -51,7 +52,7 @@ const TIME_LIMIT_SECONDS = 10 * 60;
 export default function CheckoutPage({ params, searchParams }: CheckoutPageProps) {
   const router = useRouter();
   const notificationRef = useRef<NotificationToastRef>(null);
-  const [event, setEvent] = useState<Event | null>(null);
+  const { currentEvent, setCurrentEventByName, loading: eventLoading } = useCurrentEventContext();
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [processingPix, setProcessingPix] = useState(false);
@@ -98,10 +99,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       
       // Busca todas as reservas do usuário
       const reservations = await api.users.getReservations();
-      const currentReservation = reservations.find((res: any) => res.eventId === params.eventId);
+      const eventIdToCheck = currentEvent?.name || params.eventId;
+      const currentReservation = reservations.find((res: any) => res.eventId === eventIdToCheck);
       
       // Limpa os dados do PIX no localStorage
-      const pixDataKey = `pixData-${params.eventId}`;
+      const pixDataKey = `pixData-${eventIdToCheck}`;
       localStorage.removeItem(pixDataKey);
       
       if (currentReservation && currentReservation.status === 'Pago') {
@@ -153,7 +155,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         
         // Redireciona para a página de reserva
         setTimeout(() => {
-          router.push(`/reserva/${params.eventId}/${searchParams.ticket || 'full'}`);
+          const eventIdForRedirect = currentEvent?.name || params.eventId;
+          router.push(`/reserva/${eventIdForRedirect}/${searchParams.ticket || 'full'}`);
         }, 3000);
       }
     } catch (error) {
@@ -164,7 +167,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         'error'
       );
       setTimeout(() => {
-        router.push(`/reserva/${params.eventId}/${searchParams.ticket || 'full'}`);
+        const eventIdForFallback = currentEvent?.name || params.eventId;
+        router.push(`/reserva/${eventIdForFallback}/${searchParams.ticket || 'full'}`);
       }, 3000);
     } finally {
       isHandlingExpiredTimer.current = false;
@@ -178,7 +182,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     try {
       // Busca todas as reservas do usuário
       const reservations = await api.users.getReservations();
-      const currentReservation = reservations.find((res: any) => res.eventId === params.eventId);
+      const eventIdToCheck = currentEvent?.name || params.eventId;
+      const currentReservation = reservations.find((res: any) => res.eventId === eventIdToCheck);
       
       if (currentReservation && currentReservation.status === 'Pago') {
         // Já está pago, redireciona para ingressos
@@ -188,7 +193,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         );
         
         // Limpa dados do localStorage
-        const pixDataKey = `pixData-${params.eventId}`;
+        const pixDataKey = `pixData-${eventIdToCheck}`;
         localStorage.removeItem(pixDataKey);
         localStorage.removeItem('reservationData');
         localStorage.removeItem('reservationTimestamp');
@@ -214,10 +219,10 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           const updatedData: ReservationData = {
             spotId: currentReservation.spotId || searchParams.spotId || '',
             email: currentReservation.email || auth.currentUser?.email || '',
-            eventId: params.eventId,
+            eventId: eventIdToCheck,
             userType: currentReservation.userType || 'client',
             status: currentReservation.status || 'reserved',
-            price: currentReservation.price || event?.price,
+            price: currentReservation.price || currentEvent?.price,
             id: currentReservation.id
           };
           
@@ -241,16 +246,32 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
   };
 
   useEffect(() => {
-    async function fetchEvent() {
+    async function loadEventFromContext() {
       // Se já buscou o evento, não busca novamente
       if (eventFetched.current) return;
       eventFetched.current = true;
       
       try {
-        const data = await api.events.get(params.eventId);
-        setEvent(data);
+        // Primeiro tenta buscar pelo ID numérico (params.eventId = "7")
+        const eventData = await api.events.get(params.eventId);
+        
+        // Se encontrou o evento, usa o nome do evento para setar no contexto
+        if (eventData && eventData.name) {
+          await setCurrentEventByName(eventData.name);
+        } else {
+          // Se não conseguiu pelo ID, tenta diretamente pelo nome (fallback)
+          await setCurrentEventByName(params.eventId);
+        }
       } catch (e: any) {
-        setError('Evento não encontrado ou acesso expirado.');
+        console.error('Erro ao carregar evento:', e);
+        
+        // Fallback: tenta buscar diretamente pelo nome do eventId
+        try {
+          await setCurrentEventByName(params.eventId);
+        } catch (fallbackError: any) {
+          console.error('Erro no fallback:', fallbackError);
+          setError('Evento não encontrado ou acesso expirado.');
+        }
       } finally {
         setLoading(false);
       }
@@ -262,7 +283,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         const savedData = localStorage.getItem('reservationData');
         if (savedData) {
           const parsedData = JSON.parse(savedData);
-          if (parsedData.eventId === params.eventId) {
+          const eventIdToCheck = currentEvent?.name || params.eventId;
+          if (parsedData.eventId === eventIdToCheck) {
             setReservationData(parsedData);
             
             // Verifica se o tempo já expirou localmente
@@ -295,7 +317,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           
           if (!syncSuccess) {
             // Se não conseguiu obter os dados pela rota /retry, usa o método anterior
-            const response = await api.tickets.purchase(params.eventId);
+            const eventIdToUse = currentEvent?.name || params.eventId;
+            const response = await api.tickets.purchase(eventIdToUse);
             
             // Monta os dados da reserva
             const reservationStatus = typeof response === 'string' ? response : response?.status || 'reserved';
@@ -317,7 +340,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                 'error'
               );
               setTimeout(() => {
-                router.push(`/reserva/${params.eventId}/${searchParams.ticket || 'full'}`);
+                router.push(`/reserva/${eventIdToUse}/${searchParams.ticket || 'full'}`);
               }, 3000);
               return;
             }
@@ -326,10 +349,10 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
             setReservationData({
               spotId: searchParams.spotId,
               email: auth.currentUser?.email || '',
-              eventId: params.eventId,
+              eventId: eventIdToUse,
               userType: 'client',
               status: reservationStatus,
-              price: event?.price
+              price: currentEvent?.price
             });
             
             // Usa o tempo padrão de 10 minutos
@@ -338,13 +361,14 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
             setTimerProgress(100);
             
             // Salva os dados no localStorage
+            const eventIdToSave = currentEvent?.name || params.eventId;
             localStorage.setItem('reservationData', JSON.stringify({
               spotId: searchParams.spotId,
               email: auth.currentUser?.email || '',
-              eventId: params.eventId,
+              eventId: eventIdToSave,
               userType: 'client',
               status: reservationStatus,
-              price: event?.price
+              price: currentEvent?.price
             }));
             localStorage.setItem('reservationTimestamp', new Date().toISOString());
           }
@@ -364,13 +388,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       }
       
       // Busca os dados em paralelo para reduzir tempo de carregamento
-      fetchEvent();
+      loadEventFromContext();
       fetchReservationData();
-      
-      // Buscar opções de parcelamento usando o contexto somente uma vez
-      if (params.eventId && !eventFetched.current) {
-        fetchInstallments(params.eventId);
-      }
     });
     
     // Configura um contador para o timer
@@ -410,7 +429,15 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       clearInterval(timerInterval);
       clearInterval(syncInterval);
     };
-  }, [params.eventId, searchParams.spotId, fetchInstallments]);
+  }, [params.eventId, searchParams.spotId]);
+
+  // UseEffect separado para buscar installments quando o evento estiver carregado
+  useEffect(() => {
+    if (currentEvent && currentEvent.name && !loadingInstallments) {
+      console.log(`[Checkout] Buscando installments para evento: ${currentEvent.name}`);
+      fetchInstallments(currentEvent.name);
+    }
+  }, [currentEvent, fetchInstallments, loadingInstallments]);
 
   // Função para lidar com o pagamento via PIX
   const handlePixPayment = async () => {
@@ -422,7 +449,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       // Primeiro verificamos o status da reserva usando a rota /retry
       try {
         console.log("Verificando status da reserva antes de gerar PIX...");
-        const reservationStatus = await api.tickets.retryPurchase(params.eventId);
+        const eventNameForAPI = currentEvent?.name || params.eventId;
+        const reservationStatus = await api.tickets.retryPurchase(eventNameForAPI);
         
         // Verifica se o status é válido para continuar com o pagamento
         if (reservationStatus && reservationStatus.status === "expired") {
@@ -467,7 +495,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       }
       
       // Garante que usamos o valor correto para o pagamento
-      const eventPrice = reservationData.price || (event?.price || 0);
+      const eventPrice = reservationData.price || (currentEvent?.price || 0);
       const valueToUse = installmentOptions.length > 0 
         ? Math.max(installmentOptions[0].valueInCents, eventPrice) 
         : eventPrice;
@@ -475,7 +503,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       const paymentData = {
         items: [{
           amount: valueToUse,
-          description: params.eventId
+          description: currentEvent?.name || params.eventId
         }],
         customer: {
           email: reservationData.email || auth.currentUser?.email || '',
@@ -496,7 +524,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           setPixQrCode(response.qrcodePix);
           setPixCopiaECola(response.payLink);
           // Salva no localStorage
-          const pixDataKey = `pixData-${params.eventId}`;
+          const eventNameForStorage = currentEvent?.name || params.eventId;
+          const pixDataKey = `pixData-${eventNameForStorage}`;
           localStorage.setItem(pixDataKey, JSON.stringify({
             qrCode: response.qrcodePix,
             copiaECola: response.payLink
@@ -593,7 +622,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     return 'text-green-600'; // Resto do tempo em verde
   };
 
-  if (loading) {
+  if (loading || eventLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-4">
@@ -604,7 +633,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     );
   }
 
-  if (error || !event) {
+  if (error || !currentEvent) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="bg-card rounded-lg border border-border p-8 max-w-md w-full text-center space-y-4">
@@ -656,15 +685,15 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                     <Ticket className="h-6 w-6 text-primary" />
                   </div>
                   <div>
-                    <h2 className="font-semibold">{event.name}</h2>
-                    <p className="text-sm text-muted-foreground">{event.location}</p>
+                    <h2 className="font-semibold">{currentEvent.name}</h2>
+                    <p className="text-sm text-muted-foreground">{currentEvent.location}</p>
                   </div>
                 </div>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
-                      {new Date(event.date).toLocaleDateString('pt-BR', {
+                      {new Date(currentEvent.date).toLocaleDateString('pt-BR', {
                         day: 'numeric',
                         month: 'long',
                         year: 'numeric',
@@ -675,7 +704,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                   </div>
                   <div className="flex items-center space-x-2">
                     <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{event.location}</span>
+                    <span className="text-sm">{currentEvent.location}</span>
                   </div>
                 </div>
                 <div className="pt-4 border-t border-border">
@@ -684,7 +713,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                     <span className="font-semibold">
                       {installmentOptions.length > 0 
                         ? formatCurrency(installmentOptions[0].valueInCents / 100) 
-                        : formatCurrency(event.price)}
+                        : formatCurrency(currentEvent.price)}
                     </span>
                   </div>
                 </div>
@@ -759,7 +788,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                   
                   <TabsContent value="cartao">
                     <PaymentForm
-                      event={event}
+                      event={currentEvent}
                       spotId={searchParams.spotId}
                       reservationData={reservationData ? reservationData : undefined}
                       onSubmit={handleProcessPayment}
@@ -781,7 +810,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                           <span className="text-lg text-blue-800 dark:text-blue-300">
                             {installmentOptions.length > 0 
                               ? formatCurrency(installmentOptions[0].valueInCents / 100) 
-                              : formatCurrency(event.price)}
+                              : formatCurrency(currentEvent.price)}
                           </span>
                         </div>
                       </div>

@@ -44,7 +44,8 @@ export function UserManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch('/api/admin/fast-user', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/admin/fast-user`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -80,7 +81,8 @@ export function UserManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch('/api/admin/set-staff', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/admin/set-staff`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -116,7 +118,8 @@ export function UserManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch('/api/admin/update-email', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/admin/update-email`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

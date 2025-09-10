@@ -81,8 +81,8 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
 
   // Carrega opções de parcelamento ao montar o componente
   useEffect(() => {
-    if (event && event.uuid) {
-      fetchInstallments(event.uuid);
+    if (event && event.name) {
+      fetchInstallments(event.name);
     }
   }, [event, fetchInstallments]);
 
@@ -119,7 +119,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
     try {
       // Verifica se há uma reserva existente para o evento
       const existingReservation = localStorage.getItem('reservationData');
-      const hasExistingReservation = existingReservation && JSON.parse(existingReservation).eventId === event.uuid;
+      const hasExistingReservation = existingReservation && JSON.parse(existingReservation).eventId === event.name;
       
       // Não precisamos mais verificar o status da reserva usando retry, já temos os dados necessários
       // para fazer o pagamento diretamente
@@ -139,7 +139,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
       const paymentData: PaymentData & { spotId?: string } = {
         items: [{
           amount: totalAmountInCents || Number(event.price),
-          description: event.uuid
+          description: event.name
         }],
         customer: {
           email: userEmail || reservationData?.email || '',

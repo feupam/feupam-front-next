@@ -56,13 +56,13 @@ export function SpotManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch('/api/admin/check-spot', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/events/${checkSpotEventId}/check-spot`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ eventId: checkSpotEventId })
+        }
       });
 
       const result = await response.json();
@@ -93,7 +93,8 @@ export function SpotManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch('/api/admin/discount', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/admin/discount`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -132,7 +133,8 @@ export function SpotManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch('/api/admin/free-event', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/admin/${freeEventData.eventId}/free-event`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

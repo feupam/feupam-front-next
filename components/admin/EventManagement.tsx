@@ -12,6 +12,7 @@ import { ImageUpload } from '@/components/ui/image-upload';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
+import { formatBrazilianDateTimeToISO, formatToBrazilianDisplay } from '@/lib/utils/brazilian-datetime';
 
 export function EventManagement() {
   const { user } = useAuth();
@@ -74,6 +75,21 @@ export function EventManagement() {
     try {
       console.log('[EventManagement] Criando evento:', createEventData.name);
 
+      // Validações de data
+      if (createEventData.startDate && createEventData.endDate) {
+        const startDate = new Date(createEventData.startDate);
+        const endDate = new Date(createEventData.endDate);
+        
+        if (startDate >= endDate) {
+          setSubmitStatus({ 
+            type: 'error', 
+            message: 'A data de início deve ser anterior à data de fim' 
+          });
+          setLoading(false);
+          return;
+        }
+      }
+
       // Validar se as imagens obrigatórias foram enviadas
       if (!imageFiles.logo_evento) {
         setImageErrors({ ...imageErrors, logo_evento: 'Logo do evento é obrigatório' });
@@ -95,35 +111,54 @@ export function EventManagement() {
       // Criar FormData para envio multipart
       const formData = new FormData();
       
-      // Preparar dados do evento com formatação correta
-      const eventDataForAPI = {
-        ...createEventData,
-        // Converter datas para formato ISO sem milissegundos (como na requisição que funciona)
-        startDate: createEventData.startDate ? 
-          new Date(createEventData.startDate).toISOString().replace('.000Z', 'Z') : '',
-        endDate: createEventData.endDate ? 
-          new Date(createEventData.endDate).toISOString().replace('.000Z', 'Z') : ''
-      };
+      // Adicionar campos na mesma ordem que funciona na requisição HTTP
+      formData.append('name', createEventData.name);
+      formData.append('date', createEventData.date);
+      formData.append('location', createEventData.location);
+      formData.append('description', createEventData.description);
+      formData.append('eventType', createEventData.eventType);
+      formData.append('maxClientMale', createEventData.maxClientMale);
+      formData.append('maxClientFemale', createEventData.maxClientFemale);
+      formData.append('maxStaffMale', createEventData.maxStaffMale);
+      formData.append('maxStaffFemale', createEventData.maxStaffFemale);
+      formData.append('maxGeneralSpots', createEventData.maxGeneralSpots);
       
-      // Adicionar dados do evento
-      Object.entries(eventDataForAPI).forEach(([key, value]) => {
-        if (value !== '') {
-          formData.append(key, value.toString());
-        }
-      });
+      // Converter datas para o formato correto
+      const startDateISO = createEventData.startDate ? formatBrazilianDateTimeToISO(createEventData.startDate) : '2024-08-19T00:00:00Z';
+      const endDateISO = createEventData.endDate ? formatBrazilianDateTimeToISO(createEventData.endDate) : '2024-09-21T23:59:59Z';
+      
+      formData.append('startDate', startDateISO);
+      formData.append('endDate', endDateISO);
+      formData.append('price', createEventData.price);
 
-      // Adicionar imagens
-      if (imageFiles.logo_evento) {
-        formData.append('logo_evento', imageFiles.logo_evento, imageFiles.logo_evento.name);
-      }
-      
+      // Adicionar imagens (SEMPRE no final)
       if (imageFiles.image_capa) {
         formData.append('image_capa', imageFiles.image_capa, imageFiles.image_capa.name);
       }
+      
+      if (imageFiles.logo_evento) {
+        formData.append('logo_evento', imageFiles.logo_evento, imageFiles.logo_evento.name);
+      }
+
+      // Log para debug
+      console.log('[EventManagement] FormData criado:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`[EventManagement] ${key}:`, value instanceof File ? `File: ${value.name}` : value);
+      }
 
       console.log('[EventManagement] Enviando evento para criação...');
+      console.log('[EventManagement] FormData preparado, iniciando fetch...');
       
-      const response = await fetch('/api/admin/create-event', {
+      // Chamar diretamente a API externa (pular a API route do Next.js)
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const targetUrl = `${API_URL}/events`;
+      
+      console.log('[EventManagement] URL de destino:', targetUrl);
+      console.log('[EventManagement] Token presente:', token ? 'SIM' : 'NÃO');
+      
+      // Fazer a requisição diretamente para a API externa
+      console.log('[EventManagement] Executando fetch para API externa...');
+      const response = await fetch(targetUrl, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -131,6 +166,8 @@ export function EventManagement() {
         },
         body: formData
       });
+      
+      console.log('[EventManagement] Fetch executado, response recebido:', response.status);
 
       if (response.ok) {
         const responseData = await response.json();
@@ -198,129 +235,23 @@ export function EventManagement() {
         throw new Error(errorData.error || errorData.message || 'Erro ao criar evento');
       }
     } catch (error) {
-      console.error('[EventManagement] Erro ao criar evento:', error);
+      console.error('[EventManagement] ERRO CAPTURADO:', error);
       
       // Define status de erro
       setSubmitStatus({ 
         type: 'error', 
-        message: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido'}` 
+        message: `Erro: ${error instanceof Error ? error.message : 'Erro desconhecido no frontend'}` 
       });
       
       // Força o toast de erro
       setTimeout(() => {
         toast({
           title: "❌ Erro!",
-          description: error instanceof Error ? error.message : "Erro ao criar evento",
+          description: error instanceof Error ? error.message : "Erro desconhecido no frontend",
           variant: "destructive",
           duration: 7000,
         });
       }, 100);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleTestEvent = async () => {
-    if (!imageFiles.logo_evento || !imageFiles.image_capa) {
-      setSubmitStatus({ 
-        type: 'error', 
-        message: 'Selecione as imagens primeiro para testar' 
-      });
-      return;
-    }
-
-    setLoading(true);
-    setSubmitStatus({ type: 'idle', message: '' });
-
-    try {
-      console.log('[EventManagement] Testando criação de evento...');
-      
-      const token = await user?.getIdToken();
-      const formData = new FormData();
-      formData.append('logo_evento', imageFiles.logo_evento);
-      formData.append('image_capa', imageFiles.image_capa);
-
-      const response = await fetch('/api/admin/test-event', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
-
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('[EventManagement] Teste de evento bem-sucedido:', responseData);
-        setSubmitStatus({ 
-          type: 'success', 
-          message: 'Teste realizado com sucesso! 🎉 A API está funcionando.' 
-        });
-        refetch();
-      } else {
-        const errorData = await response.json();
-        console.error('[EventManagement] Erro no teste:', errorData);
-        setSubmitStatus({ 
-          type: 'error', 
-          message: `Teste falhou: ${errorData.error || 'Erro desconhecido'}` 
-        });
-      }
-    } catch (error) {
-      console.error('[EventManagement] Erro no teste:', error);
-      setSubmitStatus({ 
-        type: 'error', 
-        message: `Erro no teste: ${error instanceof Error ? error.message : 'Erro desconhecido'}` 
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleRealTestEvent = async () => {
-    if (!imageFiles.logo_evento || !imageFiles.image_capa) {
-      setSubmitStatus({ 
-        type: 'error', 
-        message: 'Selecione as imagens primeiro para testar' 
-      });
-      return;
-    }
-
-    setLoading(true);
-    setSubmitStatus({ type: 'idle', message: '' });
-
-    try {
-      console.log('[EventManagement] Testando com token real...');
-      
-      const formData = new FormData();
-      formData.append('logo_evento', imageFiles.logo_evento);
-      formData.append('image_capa', imageFiles.image_capa);
-
-      const response = await fetch('/api/admin/real-test-event', {
-        method: 'POST',
-        body: formData
-      });
-
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('[EventManagement] Teste real bem-sucedido:', responseData);
-        setSubmitStatus({ 
-          type: 'success', 
-          message: 'Teste com token real bem-sucedido! 🎉 A API funciona!' 
-        });
-        refetch();
-      } else {
-        const errorData = await response.json();
-        console.error('[EventManagement] Erro no teste real:', errorData);
-        setSubmitStatus({ 
-          type: 'error', 
-          message: `Teste real falhou: ${errorData.error || 'Erro desconhecido'}` 
-        });
-      }
-    } catch (error) {
-      console.error('[EventManagement] Erro no teste real:', error);
-      setSubmitStatus({ 
-        type: 'error', 
-        message: `Erro no teste real: ${error instanceof Error ? error.message : 'Erro desconhecido'}` 
-      });
     } finally {
       setLoading(false);
     }
@@ -333,7 +264,8 @@ export function EventManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch(`/api/admin/update-event`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/events/${eventId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -370,13 +302,13 @@ export function EventManagement() {
     try {
       const token = await user?.getIdToken();
       
-      const response = await fetch(`/api/admin/delete-event`, {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/events/${eventId}`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({ eventId })
+        }
       });
 
       if (response.ok) {
@@ -427,7 +359,7 @@ export function EventManagement() {
                   />
                 </div>
                 <div>
-                  <Label htmlFor="date">Data</Label>
+                  <Label htmlFor="date">Data do Evento</Label>
                   <Input
                     id="date"
                     type="date"
@@ -435,6 +367,9 @@ export function EventManagement() {
                     onChange={(e) => setCreateEventData({ ...createEventData, date: e.target.value })}
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Use os campos de data/hora de início e fim para horários específicos
+                  </p>
                 </div>
               </div>
 
@@ -538,7 +473,7 @@ export function EventManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startDate">Data de Início</Label>
+                  <Label htmlFor="startDate">Data e Hora de Início</Label>
                   <Input
                     id="startDate"
                     type="datetime-local"
@@ -546,9 +481,14 @@ export function EventManagement() {
                     onChange={(e) => setCreateEventData({ ...createEventData, startDate: e.target.value })}
                     required
                   />
+                  {createEventData.startDate && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Preview: {formatToBrazilianDisplay(createEventData.startDate)}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <Label htmlFor="endDate">Data de Fim</Label>
+                  <Label htmlFor="endDate">Data e Hora de Fim</Label>
                   <Input
                     id="endDate"
                     type="datetime-local"
@@ -556,6 +496,11 @@ export function EventManagement() {
                     onChange={(e) => setCreateEventData({ ...createEventData, endDate: e.target.value })}
                     required
                   />
+                  {createEventData.endDate && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Preview: {formatToBrazilianDisplay(createEventData.endDate)}
+                    </p>
+                  )}
                 </div>
               </div>
 

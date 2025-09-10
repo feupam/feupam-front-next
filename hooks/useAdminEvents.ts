@@ -24,7 +24,8 @@ export function useAdminEvents() {
     try {
       const token = await user.getIdToken();
       
-      const response = await fetch('/api/admin/list-events', {
+      const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+      const response = await fetch(`${API_URL}/events`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

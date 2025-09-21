@@ -10,11 +10,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useLoading } from '@/contexts/LoadingContext';
 
 export function SpotManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { events, loading: eventsLoading } = useAdminEvents();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [loading, setLoading] = useState(false);
 
   // Check Spot  
@@ -52,6 +54,7 @@ export function SpotManagement() {
   const handleCheckSpot = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setGlobalLoading(true);
 
     try {
       const token = await user?.getIdToken();
@@ -83,12 +86,14 @@ export function SpotManagement() {
       });
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 
   const handleDiscount = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setGlobalLoading(true);
 
     try {
       const token = await user?.getIdToken();
@@ -123,12 +128,14 @@ export function SpotManagement() {
       });
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 
   const handleFreeEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setGlobalLoading(true);
 
     try {
       const token = await user?.getIdToken();
@@ -160,6 +167,7 @@ export function SpotManagement() {
       });
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 

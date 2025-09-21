@@ -18,6 +18,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { useRouter } from 'next/navigation';
+import { useLoading } from '@/contexts/LoadingContext';
 
 interface FormFieldProps {
   field: ControllerRenderProps<UserProfile, keyof UserProfile>;
@@ -41,6 +42,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
   const [isLoading, setIsLoading] = useState(false);
   const { currentEvent, isCurrentEventOpen, refreshCurrentEvent, setCurrentEventByName } = useCurrentEventContext();
   const router = useRouter();
+  const { setLoading } = useLoading();
   
   // Se não tem evento no contexto, busca o evento padrão
   useEffect(() => {
@@ -69,6 +71,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setFormError(null);
     
     // Verifica se há campos obrigatórios vazios
@@ -82,6 +85,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
         description: 'Alguns campos obrigatórios estão vazios. Verifique o formulário.',
         variant: 'destructive'
       });
+      setLoading(false);
       return;
     }
     
@@ -137,6 +141,7 @@ export function ProfileForm({ initialData, redirectToEvent, ticketKind = 'full',
       }
     } finally {
       setIsLoading(false);
+      setLoading(false);
     }
   };
 

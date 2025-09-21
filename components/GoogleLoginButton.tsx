@@ -3,14 +3,17 @@
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
+import { useLoading } from '@/contexts/LoadingContext';
 
 export function GoogleLoginButton() {
   const { signInWithGoogle, loading } = useAuth();
+  const { setLoading } = useLoading();
   const searchParams = typeof window !== 'undefined' 
     ? new URLSearchParams(window.location.search) 
     : new URLSearchParams();
   
   const handleLogin = async () => {
+    setLoading(true);
     console.log('[GoogleLoginButton] Iniciando login...');
     const success = await signInWithGoogle();
     console.log('[GoogleLoginButton] Login success:', success);
@@ -47,6 +50,7 @@ export function GoogleLoginButton() {
         }
       }
     }
+    setLoading(false);
   };
 
   return (

@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { UserReservation } from '@/hooks/useUserReservations';
+import { useLoading } from '@/contexts/LoadingContext';
 
 interface UserReservationsListProps {
   reservations: UserReservation[];
@@ -28,6 +29,13 @@ interface UserReservationsListProps {
 }
 
 export function UserReservationsList({ reservations, loading, error, onRefetch }: UserReservationsListProps) {
+  const { setLoading } = useLoading();
+
+  const handleRefetch = () => {
+    setLoading(true);
+    onRefetch();
+    setTimeout(() => setLoading(false), 1000);
+  };
   const [expandedReservations, setExpandedReservations] = useState<Set<string>>(new Set());
 
   const toggleExpanded = (reservationId: string) => {
@@ -143,7 +151,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
             <XCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-red-600 mb-2">Erro ao carregar compras</h3>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={onRefetch} variant="outline">
+            <Button onClick={handleRefetch} variant="outline">
               <RotateCcw className="h-4 w-4 mr-2" />
               Tentar novamente
             </Button>
@@ -171,7 +179,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">Minhas Compras</h2>
-        <Button variant="ghost" size="sm" onClick={onRefetch}>
+        <Button variant="ghost" size="sm" onClick={handleRefetch}>
           <RotateCcw className="h-4 w-4" />
         </Button>
       </div>

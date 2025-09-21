@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { formSections, FormField } from '@/types/user';
 import { useFormValidation } from '@/hooks/use-form-validation';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
+import { useLoading } from '@/contexts/LoadingContext';
 
 interface MultiStepFormProps {
   initialValues?: Record<string, any>;
@@ -38,6 +39,7 @@ export default function MultiStepForm({
   const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set()); // Inicia vazio, preenchido conforme progresso
   const [submitError, setSubmitError] = useState<string | null>(null); // Estado para erro de submissão
   const { currentEvent, isCurrentEventOpen, setCurrentEventByName } = useCurrentEventContext();
+  const { setLoading } = useLoading();
 
   // Se não tem evento no contexto, busca o evento padrão
   useEffect(() => {
@@ -120,6 +122,7 @@ export default function MultiStepForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     console.log('=== DEBUG SUBMIT ===');
     console.log('1. Evento prevenido');
     
@@ -182,9 +185,12 @@ export default function MultiStepForm({
         
         // Volta para o primeiro step para o usuário revisar os dados
         setCurrentStep(0);
+      } finally {
+        setLoading(false);
       }
     } else {
       console.log('5. Validação falhou, não executando submit');
+      setLoading(false);
     }
   };
 

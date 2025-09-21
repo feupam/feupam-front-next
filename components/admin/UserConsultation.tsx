@@ -11,6 +11,7 @@ import { Loader2, Search, Download, User, Mail, Phone, MapPin, Calendar, CreditC
 import { api } from '@/lib/api';
 import { auth } from '@/lib/firebase';
 import { toast } from '@/hooks/use-toast';
+import { useLoading } from '@/contexts/LoadingContext';
 
 // Função auxiliar para obter token
 async function getCurrentToken() {
@@ -103,6 +104,7 @@ interface ApiResponse {
 }
 
 export function UserConsultation() {
+  const { setLoading: setGlobalLoading } = useLoading();
   const [loading, setLoading] = useState(false);
   const [usersWithReservations, setUsersWithReservations] = useState<UserWithReservations[]>([]);
   const [filteredData, setFilteredData] = useState<UserWithReservations[]>([]);
@@ -151,6 +153,7 @@ export function UserConsultation() {
   const loadReservationReport = async (eventId: string, page: number = 1, limit: number = 50) => {
     try {
       setLoading(true);
+      setGlobalLoading(true);
       
       const token = await getCurrentToken();
       if (!token) {
@@ -216,6 +219,7 @@ export function UserConsultation() {
       });
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 

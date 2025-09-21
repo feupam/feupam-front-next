@@ -13,12 +13,14 @@ import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
 import { formatBrazilianDateTimeToISO, formatToBrazilianDisplay } from '@/lib/utils/brazilian-datetime';
+import { useLoading } from '@/contexts/LoadingContext';
 
 export function EventManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
   const { events, loading: eventsLoading, refetch } = useAdminEvents();
   const [loading, setLoading] = useState(false);
+  const { setLoading: setGlobalLoading } = useLoading();
 
   // Create Event Form
   const [createEventData, setCreateEventData] = useState({
@@ -70,6 +72,7 @@ export function EventManagement() {
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setGlobalLoading(true);
     setSubmitStatus({ type: 'idle', message: '' });
 
     try {

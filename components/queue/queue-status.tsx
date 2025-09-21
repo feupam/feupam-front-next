@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { api } from '@/services/api';
 import { auth } from '@/lib/firebase';
 import userService from '@/services/userService';
+import { useLoading } from '@/contexts/LoadingContext';
 
 interface QueueStatus {
   position: number;
@@ -29,6 +30,7 @@ interface QueueStatusProps {
 
 export default function QueueStatusComponent({ event, initialStatus }: QueueStatusProps) {
   const router = useRouter();
+  const { setLoading } = useLoading();
   const [status, setStatus] = useState<QueueStatus | null>(initialStatus || null);
   const [isReady, setIsReady] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState(600); // 10 minute window to purchase
@@ -115,14 +117,17 @@ export default function QueueStatusComponent({ event, initialStatus }: QueueStat
   }, [isReady]);
 
   const handleProceedToCheckout = () => {
+    setLoading(true);
     // Se o perfil não estiver completo, redireciona para a página de edição com retorno para checkout
     if (!profileIsComplete) {
       router.push(`/perfil/editar/${event.uuid}`);
+      setLoading(false);
       return;
     }
 
     // Se o perfil estiver completo, continua normalmente para o checkout
     router.push(`/checkout/${event.uuid}`);
+    setLoading(false);
   };
   
   // Format the remaining time

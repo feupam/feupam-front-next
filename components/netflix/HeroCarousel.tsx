@@ -14,6 +14,7 @@ interface CarouselImage {
   event: EventData
 }
 
+import { useLoading } from '@/contexts/LoadingContext'
 interface HeroCarouselProps {
   events: EventData[]
   onEventSelect: (index: number) => void
@@ -22,6 +23,7 @@ interface HeroCarouselProps {
 }
 
 export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 }: HeroCarouselProps) {
+  const { setLoading } = useLoading();
   const [mounted, setMounted] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const { setCurrentEventFromData } = useCurrentEventContext()
@@ -91,22 +93,16 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
       } else {
         console.log('[HeroCarousel] Login cancelado ou falhou');
       }
-    } else {
-      router.push(`/event/${encodeURIComponent(event.name)}?fromProfile=true`);
-    }
+    };
   };
 
   const handleMoreInfo = (event: EventData) => {
-    console.log('🔍 CLIQUE NO SAIBA MAIS!', event.name);
-    
-    // Define o evento no contexto
+    setLoading(true);
     setCurrentEventFromData(event);
-    
-    // Aguarda um pouco antes de navegar para garantir que o contexto foi definido
     setTimeout(() => {
-      console.log('[HeroCarousel] Navegando para página do evento...');
       router.push(`/event/${encodeURIComponent(event.name)}`);
-    }, 100);
+      setLoading(false);
+    }, 400);
   };
 
   if (!events || events.length === 0) {
@@ -143,6 +139,7 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
   
   // CSS personalizado para animação que funciona com qualquer número de imagens
   const keyframesName = `scrollLeft-${imageCount}`
+
 
   return (
   <div className="relative overflow-hidden h-[40vh] sm:h-[50vh] md:h-[65vh] lg:h-[70vh] xl:h-[75vh] bg-black p-2 md:p-4">

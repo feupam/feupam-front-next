@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
+import { useLoading } from '@/contexts/LoadingContext'
 
 interface EventGridProps {
   events: EventData[]
@@ -15,8 +16,10 @@ interface EventGridProps {
 export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridProps) {
   const { setCurrentEventFromData } = useCurrentEventContext()
   const router = useRouter()
+  const { setLoading } = useLoading()
 
   const handleEventClick = async (event: EventData) => {
+    setLoading(true);
     console.log('[EventGrid] Clique em inscrição para:', event.name);
     setCurrentEventFromData(event);
     
@@ -30,9 +33,11 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     } else {
       router.push(`/event/${encodeURIComponent(event.name)}?fromProfile=true`);
     }
+    setLoading(false);
   };
 
   const handleMoreInfo = (event: EventData) => {
+    setLoading(true);
     console.log('🔍 CLIQUE NO SAIBA MAIS!', event.name);
     
     // Define o evento no contexto
@@ -42,6 +47,7 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     setTimeout(() => {
       console.log('[EventGrid] Navegando para página do evento...');
       router.push(`/event/${encodeURIComponent(event.name)}`);
+      setLoading(false);
     }, 100);
   };
 

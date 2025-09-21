@@ -9,10 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/hooks/useAuth';
 import { useToast } from '@/hooks/use-toast';
+import { useLoading } from '@/contexts/LoadingContext';
 
 export function UserManagement() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { setLoading: setGlobalLoading } = useLoading();
   const [loading, setLoading] = useState(false);
 
   // Fast User Creation
@@ -40,6 +42,7 @@ export function UserManagement() {
   const handleFastUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setGlobalLoading(true);
 
     try {
       const token = await user?.getIdToken();
@@ -71,12 +74,15 @@ export function UserManagement() {
       });
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 
   const handleSetStaff = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setGlobalLoading(true);
+    setGlobalLoading(true);
 
     try {
       const token = await user?.getIdToken();
@@ -108,12 +114,14 @@ export function UserManagement() {
       });
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 
   const handleUpdateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setGlobalLoading(true);
 
     try {
       const token = await user?.getIdToken();
@@ -145,6 +153,7 @@ export function UserManagement() {
       });
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 

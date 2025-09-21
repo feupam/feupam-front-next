@@ -7,7 +7,7 @@ import { EventManagement } from '@/components/admin/EventManagement';
 import { UserManagement } from '@/components/admin/UserManagement';
 import { SpotManagement } from '@/components/admin/SpotManagement';
 import { UserConsultation } from '@/components/admin/UserConsultation';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 

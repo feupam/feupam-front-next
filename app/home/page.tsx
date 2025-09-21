@@ -79,7 +79,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-black">
-      <NetflixHeader />
+      <NetflixHeader events={events} />
       {/* Espaçamento para compensar o header fixo */}
       <div className="pt-12">
         {currentDate && events.length > 0 && (

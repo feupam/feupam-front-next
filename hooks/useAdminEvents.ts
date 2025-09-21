@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from './useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface AdminEvent {
   id: string;

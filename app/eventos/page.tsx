@@ -7,7 +7,7 @@ import { Filter } from 'lucide-react';
 import FilterBar from '@/components/events/filter-bar';
 import EventCard from '@/components/events/event-card';
 import { Event } from '@/types/event';
-import { useEvents } from '@/hooks/useEvents';
+import { useEvents } from '@/contexts/EventsContext';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function EventsPage() {

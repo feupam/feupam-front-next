@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
 import { useLoading } from '@/contexts/LoadingContext';
@@ -15,10 +15,10 @@ export function GoogleLoginButton() {
   const handleLogin = async () => {
     setLoading(true);
     console.log('[GoogleLoginButton] Iniciando login...');
-    const success = await signInWithGoogle();
-    console.log('[GoogleLoginButton] Login success:', success);
-    
-    if (success) {
+    try {
+      await signInWithGoogle();
+      console.log('[GoogleLoginButton] Login bem-sucedido');
+      
       const redirect = searchParams.get('redirect') || '/';
       console.log('[GoogleLoginButton] Parâmetros da URL:', Object.fromEntries(searchParams));
       console.log('[GoogleLoginButton] Redirect para:', redirect);
@@ -49,8 +49,11 @@ export function GoogleLoginButton() {
           window.location.href = '/';
         }
       }
+    } catch (error) {
+      console.error('[GoogleLoginButton] Erro no login:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   return (

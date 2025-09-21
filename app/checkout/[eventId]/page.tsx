@@ -22,7 +22,7 @@ import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 
 interface CheckoutPageProps {
   params: {
-    eventId: string;
+    eventId: string; // Usado apenas para carregar o evento no contexto
   };
   searchParams: {
     spotId?: string;
@@ -52,6 +52,9 @@ const TIME_LIMIT_SECONDS = 10 * 60;
 export default function CheckoutPage({ params, searchParams }: CheckoutPageProps) {
   const router = useRouter();
   const notificationRef = useRef<NotificationToastRef>(null);
+  
+  // IMPORTANTE: Sempre usar currentEvent do contexto, nunca params.eventId diretamente
+  // O params.eventId é usado APENAS para carregar o evento no contexto inicialmente
   const { currentEvent, setCurrentEventByName, loading: eventLoading } = useCurrentEventContext();
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
@@ -99,7 +102,12 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       
       // Busca todas as reservas do usuário
       const reservations = await api.users.getReservations();
-      const eventIdToCheck = currentEvent?.name || params.eventId;
+      const eventIdToCheck = currentEvent?.name;
+      if (!eventIdToCheck) {
+        console.error("Nome do evento não encontrado no contexto");
+        setError('Evento não encontrado.');
+        return;
+      }
       const currentReservation = reservations.find((res: any) => res.eventId === eventIdToCheck);
       
       // Limpa os dados do PIX no localStorage
@@ -155,8 +163,12 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         
         // Redireciona para a página de reserva
         setTimeout(() => {
-          const eventIdForRedirect = currentEvent?.name || params.eventId;
-          router.push(`/reserva/${eventIdForRedirect}/${searchParams.ticket || 'full'}`);
+          const eventIdForRedirect = currentEvent?.name;
+          if (eventIdForRedirect) {
+            router.push(`/reserva/${eventIdForRedirect}/${searchParams.ticket || 'full'}`);
+          } else {
+            router.push('/eventos');
+          }
         }, 3000);
       }
     } catch (error) {
@@ -167,8 +179,12 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         'error'
       );
       setTimeout(() => {
-        const eventIdForFallback = currentEvent?.name || params.eventId;
-        router.push(`/reserva/${eventIdForFallback}/${searchParams.ticket || 'full'}`);
+        const eventIdForFallback = currentEvent?.name;
+        if (eventIdForFallback) {
+          router.push(`/reserva/${eventIdForFallback}/${searchParams.ticket || 'full'}`);
+        } else {
+          router.push('/eventos');
+        }
       }, 3000);
     } finally {
       isHandlingExpiredTimer.current = false;
@@ -177,12 +193,12 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
 
   // Função para sincronizar o timer com o servidor
   const syncTimer = async () => {
-    if (!params.eventId) return false;
+    const eventIdToCheck = currentEvent?.name;
+    if (!eventIdToCheck) return false;
     
     try {
       // Busca todas as reservas do usuário
       const reservations = await api.users.getReservations();
-      const eventIdToCheck = currentEvent?.name || params.eventId;
       const currentReservation = reservations.find((res: any) => res.eventId === eventIdToCheck);
       
       if (currentReservation && currentReservation.status === 'Pago') {
@@ -251,6 +267,12 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       if (eventFetched.current) return;
       eventFetched.current = true;
       
+      // Se o evento já está carregado no contexto, não precisa buscar novamente
+      if (currentEvent) {
+        setLoading(false);
+        return;
+      }
+      
       try {
         // Primeiro tenta buscar pelo ID numérico (params.eventId = "7")
         const eventData = await api.events.get(params.eventId);
@@ -259,19 +281,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         if (eventData && eventData.name) {
           await setCurrentEventByName(eventData.name);
         } else {
-          // Se não conseguiu pelo ID, tenta diretamente pelo nome (fallback)
-          await setCurrentEventByName(params.eventId);
+          setError('Evento não encontrado ou acesso expirado.');
         }
       } catch (e: any) {
         console.error('Erro ao carregar evento:', e);
-        
-        // Fallback: tenta buscar diretamente pelo nome do eventId
-        try {
-          await setCurrentEventByName(params.eventId);
-        } catch (fallbackError: any) {
-          console.error('Erro no fallback:', fallbackError);
-          setError('Evento não encontrado ou acesso expirado.');
-        }
+        setError('Evento não encontrado ou acesso expirado.');
       } finally {
         setLoading(false);
       }
@@ -283,8 +297,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         const savedData = localStorage.getItem('reservationData');
         if (savedData) {
           const parsedData = JSON.parse(savedData);
-          const eventIdToCheck = currentEvent?.name || params.eventId;
-          if (parsedData.eventId === eventIdToCheck) {
+          const eventIdToCheck = currentEvent?.name;
+          if (eventIdToCheck && parsedData.eventId === eventIdToCheck) {
             setReservationData(parsedData);
             
             // Verifica se o tempo já expirou localmente
@@ -317,7 +331,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           
           if (!syncSuccess) {
             // Se não conseguiu obter os dados pela rota /retry, usa o método anterior
-            const eventIdToUse = currentEvent?.name || params.eventId;
+            const eventIdToUse = currentEvent?.name;
+            if (!eventIdToUse) {
+              setError('Evento não encontrado.');
+              return;
+            }
             const response = await api.tickets.purchase(eventIdToUse);
             
             // Monta os dados da reserva
@@ -361,16 +379,18 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
             setTimerProgress(100);
             
             // Salva os dados no localStorage
-            const eventIdToSave = currentEvent?.name || params.eventId;
-            localStorage.setItem('reservationData', JSON.stringify({
-              spotId: searchParams.spotId,
-              email: auth.currentUser?.email || '',
-              eventId: eventIdToSave,
-              userType: 'client',
-              status: reservationStatus,
-              price: currentEvent?.price
-            }));
-            localStorage.setItem('reservationTimestamp', new Date().toISOString());
+            const eventIdToSave = currentEvent?.name;
+            if (eventIdToSave) {
+              localStorage.setItem('reservationData', JSON.stringify({
+                spotId: searchParams.spotId,
+                email: auth.currentUser?.email || '',
+                eventId: eventIdToSave,
+                userType: 'client',
+                status: reservationStatus,
+                price: currentEvent?.price
+              }));
+              localStorage.setItem('reservationTimestamp', new Date().toISOString());
+            }
           }
         }
       } catch (error) {
@@ -503,7 +523,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       const paymentData = {
         items: [{
           amount: valueToUse,
-          description: currentEvent?.name || params.eventId
+          description: currentEvent?.name || 'Evento'
         }],
         customer: {
           email: reservationData.email || auth.currentUser?.email || '',
@@ -524,12 +544,14 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           setPixQrCode(response.qrcodePix);
           setPixCopiaECola(response.payLink);
           // Salva no localStorage
-          const eventNameForStorage = currentEvent?.name || params.eventId;
-          const pixDataKey = `pixData-${eventNameForStorage}`;
-          localStorage.setItem(pixDataKey, JSON.stringify({
-            qrCode: response.qrcodePix,
-            copiaECola: response.payLink
-          }));
+          const eventNameForStorage = currentEvent?.name;
+          if (eventNameForStorage) {
+            const pixDataKey = `pixData-${eventNameForStorage}`;
+            localStorage.setItem(pixDataKey, JSON.stringify({
+              qrCode: response.qrcodePix,
+              copiaECola: response.payLink
+            }));
+          }
           setActiveTab('pix');
           notificationRef.current?.showNotification(
             'PIX gerado com sucesso! Escaneie o código para pagar.',

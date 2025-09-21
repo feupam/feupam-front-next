@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { Button } from './ui/button';
 import { LogOut } from 'lucide-react';
 import { useLoading } from '@/contexts/LoadingContext';

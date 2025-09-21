@@ -5,8 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Users, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useCheckSpot } from '@/hooks/useCheckSpot';
-import { useReserveSpot } from '@/hooks/useReserveSpot';
+import { useReservationProcess } from '@/hooks/useReservationProcess';
 import { auth } from '@/lib/firebase';
 import userService from '@/services/userService';
 import { api } from '@/services/api';
@@ -21,8 +20,10 @@ interface EventPageProps {
 
 export default function EventPage({ event }: EventPageProps) {
   const router = useRouter();
-  const { checkSpot, isChecking } = useCheckSpot();
-  const { reserveSpot, isReserving } = useReserveSpot();
+  const { checkSpotAvailability, reserveSpot, isLoading } = useReservationProcess({
+    eventId: event.uuid,
+    ticketKind: 'full'
+  });
   const [isCheckingProfile, setIsCheckingProfile] = useState(false);
   const [profileIsComplete, setProfileIsComplete] = useState(false);
 
@@ -54,10 +55,10 @@ export default function EventPage({ event }: EventPageProps) {
       return;
     }
 
-    const hasSpot = await checkSpot(event.uuid);
+    const hasSpot = await checkSpotAvailability();
     if (!hasSpot) return;
     try {
-      const reservation = await reserveSpot(event.uuid, 'full');
+      const reservation = await reserveSpot();
       if (reservation?.spotId) {
         const paymentData: PaymentData & { spotId?: string } = {
           items: [{
@@ -171,9 +172,9 @@ export default function EventPage({ event }: EventPageProps) {
                 className="mt-2"
                 size="sm"
                 onClick={handleBooking}
-                disabled={isChecking || isReserving || isCheckingProfile}
+                disabled={isLoading || isCheckingProfile}
               >
-                {(isChecking || isReserving || isCheckingProfile) ? (
+                {(isLoading || isCheckingProfile) ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Processando...

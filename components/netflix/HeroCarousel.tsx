@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/useAuth'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface CarouselImage {
   src: string
@@ -79,21 +79,26 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
   }, [mounted, events.length])
 
   const handleEventClick = async (event: EventData) => {
+    setLoading(true);
     console.log('[HeroCarousel] Clique em inscrição para:', event.name);
     setCurrentEventFromData(event);
     
-    if (event.isOpen) {
-      // Sempre força login do Google antes de ir para o formulário de inscrição
-      console.log('[HeroCarousel] Forçando login do Google...');
-      const loginSuccess = await signInWithGoogle();
-      
-      if (loginSuccess) {
+    try {
+      if (event.isOpen) {
+        // Sempre força login do Google antes de ir para o formulário de inscrição
+        console.log('[HeroCarousel] Forçando login do Google...');
+        await signInWithGoogle();
         console.log('[HeroCarousel] Login bem-sucedido, redirecionando para formulário de inscrição...');
         router.push('/formulario');
+        // Aguarda um pouco antes de desativar o loading para dar tempo da navegação iniciar
+        setTimeout(() => setLoading(false), 500);
       } else {
-        console.log('[HeroCarousel] Login cancelado ou falhou');
+        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.log('[HeroCarousel] Login cancelado ou falhou');
+      setLoading(false);
+    }
   };
 
   const handleMoreInfo = (event: EventData) => {
@@ -101,8 +106,9 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
     setCurrentEventFromData(event);
     setTimeout(() => {
       router.push(`/event/${encodeURIComponent(event.name)}`);
-      setLoading(false);
-    }, 400);
+      // Aguarda um pouco mais antes de desativar o loading
+      setTimeout(() => setLoading(false), 300);
+    }, 100);
   };
 
   if (!events || events.length === 0) {

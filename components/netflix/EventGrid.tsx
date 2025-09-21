@@ -23,17 +23,23 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     console.log('[EventGrid] Clique em inscrição para:', event.name);
     setCurrentEventFromData(event);
     
-    if (event.isOpen) {
-      // Para eventos abertos, redireciona para login e depois para formulário de inscrição
-      const loginParams = new URLSearchParams({
-        redirect: `/formulario?eventId=${event.id}&eventName=${encodeURIComponent(event.name)}&isOpen=true`
-      });
-      console.log('[EventGrid] Redirecionando para login com redirect para formulário de inscrição...');
-      router.push(`/login?${loginParams.toString()}`);
-    } else {
-      router.push(`/event/${encodeURIComponent(event.name)}?fromProfile=true`);
+    try {
+      if (event.isOpen) {
+        // Para eventos abertos, redireciona para login e depois para formulário de inscrição
+        const loginParams = new URLSearchParams({
+          redirect: `/formulario?eventId=${event.id}&eventName=${encodeURIComponent(event.name)}&isOpen=true`
+        });
+        console.log('[EventGrid] Redirecionando para login com redirect para formulário de inscrição...');
+        router.push(`/login?${loginParams.toString()}`);
+      } else {
+        router.push(`/event/${encodeURIComponent(event.name)}?fromProfile=true`);
+      }
+    } catch (error) {
+      console.log('[EventGrid] Erro na navegação:', error);
+    } finally {
+      // Aguarda um pouco antes de desativar o loading para dar tempo da navegação iniciar
+      setTimeout(() => setLoading(false), 500);
     }
-    setLoading(false);
   };
 
   const handleMoreInfo = (event: EventData) => {
@@ -47,7 +53,8 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     setTimeout(() => {
       console.log('[EventGrid] Navegando para página do evento...');
       router.push(`/event/${encodeURIComponent(event.name)}`);
-      setLoading(false);
+      // Aguarda um pouco mais antes de desativar o loading
+      setTimeout(() => setLoading(false), 300);
     }, 100);
   };
 

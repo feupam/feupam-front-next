@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Menu, X, Ticket, Sun, Moon, Home, Shield } from 'lucide-react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from '@/components/UserMenu';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { useTheme } from 'next-themes';

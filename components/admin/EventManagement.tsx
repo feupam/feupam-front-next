@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageUpload } from '@/components/ui/image-upload';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
 import { formatBrazilianDateTimeToISO, formatToBrazilianDisplay } from '@/lib/utils/brazilian-datetime';

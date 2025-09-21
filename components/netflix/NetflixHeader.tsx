@@ -3,31 +3,41 @@
 import { ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/contexts/AuthContext"
 import { useRouter } from "next/navigation"
+import { EventsViewer } from "@/components/calendar/EventsViewer"
+import { EventData } from "@/services/eventService"
+import { useLoading } from "@/contexts/LoadingContext"
 
-export function NetflixHeader() {
+interface NetflixHeaderProps {
+  events?: EventData[];
+}
+
+export function NetflixHeader({ events = [] }: NetflixHeaderProps) {
   const { user, signInWithGoogle } = useAuth()
   const router = useRouter()
+  const { setLoading } = useLoading()
 
   const handleCartClick = async () => {
+    setLoading(true);
     console.log('[NetflixHeader] Clique no carrinho');
     
-    if (user) {
-      // Usuário já está logado, vai direto para o perfil
-      console.log('[NetflixHeader] Usuário logado, indo para /perfil');
-      router.push('/perfil');
-    } else {
-      // Usuário não está logado, força login primeiro
-      console.log('[NetflixHeader] Usuário não logado, forçando login...');
-      const loginSuccess = await signInWithGoogle();
-      
-      if (loginSuccess) {
-        console.log('[NetflixHeader] Login bem-sucedido, redirecionando para /perfil');
+    try {
+      if (user) {
+        // Usuário já está logado, vai direto para o perfil
+        console.log('[NetflixHeader] Usuário logado, indo para /perfil');
         router.push('/perfil');
       } else {
-        console.log('[NetflixHeader] Login cancelado ou falhou');
+        // Usuário não está logado, força login primeiro
+        console.log('[NetflixHeader] Usuário não logado, forçando login...');
+        await signInWithGoogle();
+        console.log('[NetflixHeader] Login bem-sucedido, redirecionando para /perfil');
+        router.push('/perfil');
       }
+    } catch (error) {
+      console.log('[NetflixHeader] Login cancelado ou falhou');
+    } finally {
+      setLoading(false);
     }
   };
   return (
@@ -38,8 +48,12 @@ export function NetflixHeader() {
           <h1 className="text-xl font-bold text-emerald-400">feupam</h1>
         </div>
 
-        {/* Carrinho de compras - mais à direita */}
-        <div className="flex items-center pr-4">
+        {/* Eventos e Carrinho de compras - mais à direita */}
+        <div className="flex items-center gap-2 pr-4">
+          {/* Visualizador de eventos */}
+          <EventsViewer events={events} />
+          
+          {/* Carrinho de compras */}
           <Button 
             variant="ghost" 
             size="icon" 

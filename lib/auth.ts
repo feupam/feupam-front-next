@@ -1,4 +1,3 @@
-import { useAuth } from "@/hooks/useAuth";
 import { auth } from "@/lib/firebase";
 
 // Interface para erros de API

@@ -76,7 +76,7 @@ export function EventBookingCard({ event, notificationRef }: EventBookingCardPro
   return (
     <div className="sticky top-4 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
       <div className="mb-6">
-        <h3 className="text-xl font-bold text-gray-900">Informações do Ingresso</h3>
+        <h3 className="text-xl font-bold text-gray-900">Informações da Inscrição</h3>
         <p className="mt-2 text-sm text-gray-600">
           Data: {format(new Date(event.date), "dd 'de' MMMM", { locale: ptBR })}
         </p>
@@ -130,7 +130,7 @@ export function EventBookingCard({ event, notificationRef }: EventBookingCardPro
                   </TooltipTrigger>
                   <TooltipContent>
                     {!availabilityMap[ticket.id] 
-                      ? "Ingresso esgotado" 
+                      ? "Inscrição esgotado" 
                       : isCheckingProfile
                         ? "Verificando perfil..."
                         : "Clique para comprar"}
@@ -143,7 +143,7 @@ export function EventBookingCard({ event, notificationRef }: EventBookingCardPro
       </div>
 
       <p className="text-center text-sm text-gray-600">
-        Ingressos limitados. Reserve já o seu!
+        Inscriçãos limitados. Reserve já o seu!
       </p>
     </div>
   );

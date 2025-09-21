@@ -316,7 +316,7 @@ export function UserConsultation() {
     }
 
     const csvHeaders = [
-      'Nome', 'Email', 'Data Criação', 'Evento', 'Status Reserva', 'Tipo Ingresso', 
+      'Nome', 'Email', 'Data Criação', 'Evento', 'Status Reserva', 'Tipo Inscrição', 
       'Valor Reserva', 'Gênero', 'Tipo Usuário', 'Método Pagamento', 'Valor Pago', 'Spot ID'
     ];
 

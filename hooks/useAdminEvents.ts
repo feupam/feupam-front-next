@@ -7,6 +7,17 @@ export interface AdminEvent {
   date?: string;
   location?: string;
   description?: string;
+  eventType?: string;
+  maxClientMale?: number;
+  maxClientFemale?: number;
+  maxStaffMale?: number;
+  maxStaffFemale?: number;
+  maxGeneralSpots?: number;
+  startDate?: string;
+  endDate?: string;
+  price?: number;
+  logo_evento?: string;
+  image_capa?: string;
 }
 
 export function useAdminEvents() {

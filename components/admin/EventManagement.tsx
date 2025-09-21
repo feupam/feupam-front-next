@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageUpload } from '@/components/ui/image-upload';
+import { Switch } from '@/components/ui/switch';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { useAdminEvents } from '@/hooks/useAdminEvents';
@@ -36,7 +37,8 @@ export function EventManagement() {
     maxGeneralSpots: '200',
     startDate: '',
     endDate: '',
-    price: '5000'
+    price: '5000',
+    isUnlimited: false
   });
 
   // Image files
@@ -48,8 +50,23 @@ export function EventManagement() {
     image_capa: null
   });
 
+  // Update Image files
+  const [updateImageFiles, setUpdateImageFiles] = useState<{
+    logo_evento: File | null;
+    image_capa: File | null;
+  }>({
+    logo_evento: null,
+    image_capa: null
+  });
+
   // Image validation errors
   const [imageErrors, setImageErrors] = useState<{
+    logo_evento?: string;
+    image_capa?: string;
+  }>({});
+
+  // Update Image validation errors
+  const [updateImageErrors, setUpdateImageErrors] = useState<{
     logo_evento?: string;
     image_capa?: string;
   }>({});
@@ -66,8 +83,97 @@ export function EventManagement() {
   // Update/Delete Event Form
   const [eventId, setEventId] = useState<string>('');
   const [updateEventData, setUpdateEventData] = useState({
-    name: ''
+    name: '',
+    date: '',
+    location: '',
+    description: '',
+    eventType: 'general',
+    maxClientMale: '0',
+    maxClientFemale: '0',
+    maxStaffMale: '0',
+    maxStaffFemale: '0',
+    maxGeneralSpots: '200',
+    startDate: '',
+    endDate: '',
+    price: '5000',
+    isUnlimited: false
   });
+
+  // Função para preencher os campos ao selecionar um evento
+  const handleEventSelection = (selectedEventId: string) => {
+    setEventId(selectedEventId);
+    
+    const selectedEvent = events.find(e => e.id === selectedEventId);
+    if (selectedEvent) {
+      console.log('[EventManagement] Evento selecionado:', selectedEvent);
+      console.log('[EventManagement] Price original do evento:', selectedEvent.price);
+      console.log('[EventManagement] Price que será usado:', selectedEvent.price || 5000);
+      
+      // Converter datas para formato de input datetime-local
+      const formatDateForInput = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        // Ajustar para timezone local
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60 * 1000));
+        return localDate.toISOString().slice(0, 16);
+      };
+
+      // Garantir que os valores numéricos sejam tratados corretamente
+      const maxGeneralSpots = selectedEvent.maxGeneralSpots || 0;
+      const isUnlimited = maxGeneralSpots >= 10000;
+      
+      console.log('[EventManagement] maxGeneralSpots original:', selectedEvent.maxGeneralSpots);
+      console.log('[EventManagement] maxGeneralSpots processado:', maxGeneralSpots);
+      console.log('[EventManagement] isUnlimited:', isUnlimited);
+
+      setUpdateEventData({
+        name: selectedEvent.name || '',
+        date: selectedEvent.date ? selectedEvent.date.split('T')[0] : '',
+        location: selectedEvent.location || '',
+        description: selectedEvent.description || '',
+        eventType: selectedEvent.eventType || 'general',
+        maxClientMale: String(selectedEvent.maxClientMale || 0),
+        maxClientFemale: String(selectedEvent.maxClientFemale || 0),
+        maxStaffMale: String(selectedEvent.maxStaffMale || 0),
+        maxStaffFemale: String(selectedEvent.maxStaffFemale || 0),
+        maxGeneralSpots: String(maxGeneralSpots),
+        startDate: formatDateForInput(selectedEvent.startDate || ''),
+        endDate: formatDateForInput(selectedEvent.endDate || ''),
+        price: String(selectedEvent.price || 5000),
+        isUnlimited: isUnlimited
+      });
+    }
+  };
+
+  // Limpar campos quando nenhum evento está selecionado
+  useEffect(() => {
+    if (!eventId) {
+      setUpdateEventData({
+        name: '',
+        date: '',
+        location: '',
+        description: '',
+        eventType: 'general',
+        maxClientMale: '0',
+        maxClientFemale: '0',
+        maxStaffMale: '0',
+        maxStaffFemale: '0',
+        maxGeneralSpots: '200',
+        startDate: '',
+        endDate: '',
+        price: '5000',
+        isUnlimited: false
+      });
+      
+      // Limpar também as imagens
+      setUpdateImageFiles({
+        logo_evento: null,
+        image_capa: null
+      });
+      setUpdateImageErrors({});
+    }
+  }, [eventId]);
 
   const handleCreateEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -115,16 +221,35 @@ export function EventManagement() {
       const formData = new FormData();
       
       // Adicionar campos na mesma ordem que funciona na requisição HTTP
-      formData.append('name', createEventData.name);
-      formData.append('date', createEventData.date);
-      formData.append('location', createEventData.location);
-      formData.append('description', createEventData.description);
-      formData.append('eventType', createEventData.eventType);
-      formData.append('maxClientMale', createEventData.maxClientMale);
-      formData.append('maxClientFemale', createEventData.maxClientFemale);
-      formData.append('maxStaffMale', createEventData.maxStaffMale);
-      formData.append('maxStaffFemale', createEventData.maxStaffFemale);
-      formData.append('maxGeneralSpots', createEventData.maxGeneralSpots);
+      // Preparar dados baseado no tipo de evento
+      let eventDataToSend = { ...createEventData };
+      
+      if (createEventData.eventType === 'general') {
+        // Para eventos gerais, zera os campos por gênero
+        eventDataToSend.maxClientMale = '0';
+        eventDataToSend.maxClientFemale = '0';
+        eventDataToSend.maxStaffMale = '0';
+        eventDataToSend.maxStaffFemale = '0';
+        
+        // Se é ilimitado, define um número grande
+        if (createEventData.isUnlimited) {
+          eventDataToSend.maxGeneralSpots = '10000';
+        }
+      } else {
+        // Para eventos por gênero, zera as vagas gerais
+        eventDataToSend.maxGeneralSpots = '0';
+      }
+
+      formData.append('name', eventDataToSend.name);
+      formData.append('date', eventDataToSend.date);
+      formData.append('location', eventDataToSend.location);
+      formData.append('description', eventDataToSend.description);
+      formData.append('eventType', eventDataToSend.eventType);
+      formData.append('maxClientMale', eventDataToSend.maxClientMale);
+      formData.append('maxClientFemale', eventDataToSend.maxClientFemale);
+      formData.append('maxStaffMale', eventDataToSend.maxStaffMale);
+      formData.append('maxStaffFemale', eventDataToSend.maxStaffFemale);
+      formData.append('maxGeneralSpots', eventDataToSend.maxGeneralSpots);
       
       // Converter datas para o formato correto
       const startDateISO = createEventData.startDate ? formatBrazilianDateTimeToISO(createEventData.startDate) : '2024-08-19T00:00:00Z';
@@ -207,7 +332,8 @@ export function EventManagement() {
           maxGeneralSpots: '200',
           startDate: '',
           endDate: '',
-          price: '5000'
+          price: '5000',
+          isUnlimited: false
         });
         // Reset images
         setImageFiles({
@@ -257,6 +383,7 @@ export function EventManagement() {
       }, 100);
     } finally {
       setLoading(false);
+      setGlobalLoading(false);
     }
   };
 
@@ -267,24 +394,117 @@ export function EventManagement() {
     try {
       const token = await user?.getIdToken();
       
+      console.log('[EventManagement] Dados antes da preparação:', updateEventData);
+      
+      // Preparar dados baseado no tipo de evento
+      let eventDataToUpdate = { ...updateEventData };
+      
+      if (updateEventData.eventType === 'general') {
+        // Para eventos gerais, zera os campos por gênero (mas mantém maxGeneralSpots do usuário)
+        eventDataToUpdate.maxClientMale = '0';
+        eventDataToUpdate.maxClientFemale = '0';
+        eventDataToUpdate.maxStaffMale = '0';
+        eventDataToUpdate.maxStaffFemale = '0';
+        
+        // Se é ilimitado, define um número grande, senão mantém o valor do usuário
+        if (updateEventData.isUnlimited) {
+          eventDataToUpdate.maxGeneralSpots = '10000';
+        }
+        // Não modifica maxGeneralSpots se não for ilimitado - mantém o valor do usuário
+      } else {
+        // Para eventos por gênero, zera as vagas gerais somente se não foi especificado
+        eventDataToUpdate.maxGeneralSpots = '0';
+      }
+
+      console.log('[EventManagement] Dados após preparação:', eventDataToUpdate);
+
+      // Usar FormData para suportar upload de imagens
+      const formData = new FormData();
+      
+      formData.append('eventId', eventId);
+      formData.append('name', eventDataToUpdate.name);
+      formData.append('date', eventDataToUpdate.date);
+      formData.append('location', eventDataToUpdate.location);
+      formData.append('description', eventDataToUpdate.description);
+      formData.append('eventType', eventDataToUpdate.eventType);
+      formData.append('maxClientMale', eventDataToUpdate.maxClientMale);
+      formData.append('maxClientFemale', eventDataToUpdate.maxClientFemale);
+      formData.append('maxStaffMale', eventDataToUpdate.maxStaffMale);
+      formData.append('maxStaffFemale', eventDataToUpdate.maxStaffFemale);
+      formData.append('maxGeneralSpots', eventDataToUpdate.maxGeneralSpots);
+      
+      // Converter datas para formato ISO
+      if (eventDataToUpdate.startDate) {
+        formData.append('startDate', new Date(eventDataToUpdate.startDate).toISOString());
+      }
+      if (eventDataToUpdate.endDate) {
+        formData.append('endDate', new Date(eventDataToUpdate.endDate).toISOString());
+      }
+      
+      console.log('[EventManagement] Price antes de adicionar ao FormData:', eventDataToUpdate.price);
+      console.log('[EventManagement] Tipo do price:', typeof eventDataToUpdate.price);
+      formData.append('price', eventDataToUpdate.price);
+
+      // Log do FormData DEPOIS de todos os campos serem adicionados
+      console.log('[EventManagement] FormData preparado:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+      }
+
+      // Adicionar imagens se foram selecionadas novas
+      if (updateImageFiles.image_capa) {
+        formData.append('image_capa', updateImageFiles.image_capa, updateImageFiles.image_capa.name);
+      }
+      
+      if (updateImageFiles.logo_evento) {
+        formData.append('logo_evento', updateImageFiles.logo_evento, updateImageFiles.logo_evento.name);
+      }
+      
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
-      const response = await fetch(`${API_URL}/events/${eventId}`, {
+      const endpoint = `${API_URL}/events/${eventId}`;
+      
+      console.log('[EventManagement] Enviando PUT para:', endpoint);
+      console.log('[EventManagement] EventId:', eventId);
+      
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
+          // Note: Não incluir Content-Type para FormData, o browser define automaticamente
         },
-        body: JSON.stringify({ eventId, ...updateEventData })
+        body: formData
       });
 
+      console.log('[EventManagement] Response status:', response.status);
+      
       if (response.ok) {
+        const responseData = await response.json();
+        console.log('[EventManagement] Response data:', responseData);
+        
         toast({
-          title: "Sucesso",
+          title: "✅ Sucesso!",
           description: "Evento atualizado com sucesso!",
+          duration: 5000,
         });
-        refetch(); // Atualiza a lista
+        
+        // Atualiza a lista de eventos
+        refetch();
+        
+        // Limpa as imagens selecionadas para upload
+        setUpdateImageFiles({
+          logo_evento: null,
+          image_capa: null
+        });
+        setUpdateImageErrors({});
+        
+        // Recarrega os dados do evento atualizado nos campos
+        setTimeout(() => {
+          handleEventSelection(eventId);
+        }, 500);
       } else {
-        throw new Error('Erro ao atualizar evento');
+        const errorData = await response.text();
+        console.error('[EventManagement] Error response:', errorData);
+        throw new Error(`Erro ao atualizar evento: ${response.status}`);
       }
     } catch (error) {
       toast({
@@ -408,8 +628,7 @@ export function EventManagement() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="general">Geral</SelectItem>
-                      <SelectItem value="kids">Kids</SelectItem>
-                      <SelectItem value="teen">Teen</SelectItem>
+                      <SelectItem value="gender_specific">Por Gênero</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -425,54 +644,83 @@ export function EventManagement() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-4 gap-4">
-                <div>
-                  <Label htmlFor="maxClientMale">Max Cliente Masculino</Label>
-                  <Input
-                    id="maxClientMale"
-                    type="number"
-                    value={createEventData.maxClientMale}
-                    onChange={(e) => setCreateEventData({ ...createEventData, maxClientMale: e.target.value })}
-                  />
+              {/* Configuração de Vagas baseada no tipo */}
+              {createEventData.eventType === 'general' ? (
+                <div className="space-y-4">
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="isUnlimited"
+                      checked={createEventData.isUnlimited}
+                      onCheckedChange={(checked) => setCreateEventData({ 
+                        ...createEventData, 
+                        isUnlimited: checked,
+                        maxGeneralSpots: checked ? '10000' : '200' // Se ilimitado, usa número grande
+                      })}
+                    />
+                    <Label htmlFor="isUnlimited">Vagas Ilimitadas</Label>
+                  </div>
+                  
+                  {!createEventData.isUnlimited && (
+                    <div>
+                      <Label htmlFor="maxGeneralSpots">Número de Vagas</Label>
+                      <Input
+                        id="maxGeneralSpots"
+                        type="number"
+                        value={createEventData.maxGeneralSpots}
+                        onChange={(e) => setCreateEventData({ ...createEventData, maxGeneralSpots: e.target.value })}
+                        placeholder="Ex: 200"
+                      />
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <Label htmlFor="maxClientFemale">Max Cliente Feminino</Label>
-                  <Input
-                    id="maxClientFemale"
-                    type="number"
-                    value={createEventData.maxClientFemale}
-                    onChange={(e) => setCreateEventData({ ...createEventData, maxClientFemale: e.target.value })}
-                  />
+              ) : (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="maxClientMale">Vagas Cliente Masculino</Label>
+                      <Input
+                        id="maxClientMale"
+                        type="number"
+                        value={createEventData.maxClientMale}
+                        onChange={(e) => setCreateEventData({ ...createEventData, maxClientMale: e.target.value })}
+                        placeholder="Ex: 100"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="maxClientFemale">Vagas Cliente Feminino</Label>
+                      <Input
+                        id="maxClientFemale"
+                        type="number"
+                        value={createEventData.maxClientFemale}
+                        onChange={(e) => setCreateEventData({ ...createEventData, maxClientFemale: e.target.value })}
+                        placeholder="Ex: 100"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="maxStaffMale">Vagas Staff Masculino</Label>
+                      <Input
+                        id="maxStaffMale"
+                        type="number"
+                        value={createEventData.maxStaffMale}
+                        onChange={(e) => setCreateEventData({ ...createEventData, maxStaffMale: e.target.value })}
+                        placeholder="Ex: 25"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="maxStaffFemale">Vagas Staff Feminino</Label>
+                      <Input
+                        id="maxStaffFemale"
+                        type="number"
+                        value={createEventData.maxStaffFemale}
+                        onChange={(e) => setCreateEventData({ ...createEventData, maxStaffFemale: e.target.value })}
+                        placeholder="Ex: 25"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="maxStaffMale">Max Staff Masculino</Label>
-                  <Input
-                    id="maxStaffMale"
-                    type="number"
-                    value={createEventData.maxStaffMale}
-                    onChange={(e) => setCreateEventData({ ...createEventData, maxStaffMale: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="maxStaffFemale">Max Staff Feminino</Label>
-                  <Input
-                    id="maxStaffFemale"
-                    type="number"
-                    value={createEventData.maxStaffFemale}
-                    onChange={(e) => setCreateEventData({ ...createEventData, maxStaffFemale: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="maxGeneralSpots">Vagas Gerais</Label>
-                <Input
-                  id="maxGeneralSpots"
-                  type="number"
-                  value={createEventData.maxGeneralSpots}
-                  onChange={(e) => setCreateEventData({ ...createEventData, maxGeneralSpots: e.target.value })}
-                />
-              </div>
+              )}
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -612,7 +860,9 @@ export function EventManagement() {
                   value={eventId || ""}
                   onValueChange={(value) => {
                     console.log('Selecionando evento:', value);
-                    setEventId(value || "");
+                    if (value) {
+                      handleEventSelection(value);
+                    }
                   }}
                   disabled={eventsLoading}
                 >
@@ -647,18 +897,266 @@ export function EventManagement() {
                   </p>
                 )}
               </div>
-              <div>
-                <Label htmlFor="updateName">Novo Nome</Label>
-                <Input
-                  id="updateName"
-                  value={updateEventData.name}
-                  onChange={(e) => setUpdateEventData({ ...updateEventData, name: e.target.value })}
-                  placeholder="Novo nome do evento"
-                  required
-                />
-              </div>
+              
+              {eventId && (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="updateName">Nome do Evento</Label>
+                      <Input
+                        id="updateName"
+                        value={updateEventData.name}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, name: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="updateDate">Data do Evento</Label>
+                      <Input
+                        id="updateDate"
+                        type="date"
+                        value={updateEventData.date}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, date: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="updateLocation">Local</Label>
+                    <Input
+                      id="updateLocation"
+                      value={updateEventData.location}
+                      onChange={(e) => setUpdateEventData({ ...updateEventData, location: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="updateDescription">Descrição</Label>
+                    <Textarea
+                      id="updateDescription"
+                      value={updateEventData.description}
+                      onChange={(e) => setUpdateEventData({ ...updateEventData, description: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="updateEventType">Tipo do Evento</Label>
+                      <Select
+                        value={updateEventData.eventType}
+                        onValueChange={(value) => setUpdateEventData({ ...updateEventData, eventType: value })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="general">Geral</SelectItem>
+                          <SelectItem value="gender_specific">Por Gênero</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="updatePrice">Preço (centavos)</Label>
+                      <Input
+                        id="updatePrice"
+                        type="number"
+                        min="0"
+                        value={updateEventData.price}
+                        onChange={(e) => {
+                          console.log('[EventManagement] Price input changed:', e.target.value);
+                          setUpdateEventData({ ...updateEventData, price: e.target.value });
+                        }}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Configuração de Vagas baseada no tipo */}
+                  {updateEventData.eventType === 'general' ? (
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id="updateIsUnlimited"
+                          checked={updateEventData.isUnlimited}
+                          onCheckedChange={(checked) => setUpdateEventData({ 
+                            ...updateEventData, 
+                            isUnlimited: checked,
+                            maxGeneralSpots: checked ? '10000' : '200'
+                          })}
+                        />
+                        <Label htmlFor="updateIsUnlimited">Vagas Ilimitadas</Label>
+                      </div>
+                      
+                      {!updateEventData.isUnlimited && (
+                        <div>
+                          <Label htmlFor="updateMaxGeneralSpots">Número de Vagas</Label>
+                          <Input
+                            id="updateMaxGeneralSpots"
+                            type="number"
+                            value={updateEventData.maxGeneralSpots}
+                            onChange={(e) => setUpdateEventData({ ...updateEventData, maxGeneralSpots: e.target.value })}
+                            placeholder="Ex: 200"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="updateMaxClientMale">Vagas Cliente Masculino</Label>
+                          <Input
+                            id="updateMaxClientMale"
+                            type="number"
+                            value={updateEventData.maxClientMale}
+                            onChange={(e) => setUpdateEventData({ ...updateEventData, maxClientMale: e.target.value })}
+                            placeholder="Ex: 100"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="updateMaxClientFemale">Vagas Cliente Feminino</Label>
+                          <Input
+                            id="updateMaxClientFemale"
+                            type="number"
+                            value={updateEventData.maxClientFemale}
+                            onChange={(e) => setUpdateEventData({ ...updateEventData, maxClientFemale: e.target.value })}
+                            placeholder="Ex: 100"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="updateMaxStaffMale">Vagas Staff Masculino</Label>
+                          <Input
+                            id="updateMaxStaffMale"
+                            type="number"
+                            value={updateEventData.maxStaffMale}
+                            onChange={(e) => setUpdateEventData({ ...updateEventData, maxStaffMale: e.target.value })}
+                            placeholder="Ex: 25"
+                          />
+                        </div>
+                        <div>
+                          <Label htmlFor="updateMaxStaffFemale">Vagas Staff Feminino</Label>
+                          <Input
+                            id="updateMaxStaffFemale"
+                            type="number"
+                            value={updateEventData.maxStaffFemale}
+                            onChange={(e) => setUpdateEventData({ ...updateEventData, maxStaffFemale: e.target.value })}
+                            placeholder="Ex: 25"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="updateStartDate">Data e Hora de Início</Label>
+                      <Input
+                        id="updateStartDate"
+                        type="datetime-local"
+                        value={updateEventData.startDate}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, startDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="updateEndDate">Data e Hora de Fim</Label>
+                      <Input
+                        id="updateEndDate"
+                        type="datetime-local"
+                        value={updateEventData.endDate}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, endDate: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Seção de Upload de Imagens */}
+                  <div className="space-y-4 border-t pt-4">
+                    <h3 className="text-lg font-semibold">Atualizar Imagens (Opcional)</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Deixe em branco para manter as imagens atuais do evento
+                    </p>
+                    
+                    {/* Preview das imagens atuais */}
+                    {eventId && events.find(e => e.id === eventId) && (
+                      <div className="space-y-2">
+                        <h4 className="font-medium">Imagens Atuais:</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                          {events.find(e => e.id === eventId)?.logo_evento && (
+                            <div>
+                              <Label>Logo Atual</Label>
+                              <img 
+                                src={events.find(e => e.id === eventId)?.logo_evento} 
+                                alt="Logo atual" 
+                                className="w-full h-32 object-cover rounded border"
+                              />
+                            </div>
+                          )}
+                          {events.find(e => e.id === eventId)?.image_capa && (
+                            <div>
+                              <Label>Capa Atual</Label>
+                              <img 
+                                src={events.find(e => e.id === eventId)?.image_capa} 
+                                alt="Capa atual" 
+                                className="w-full h-32 object-cover rounded border"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="updateLogoEvento">Nova Logo do Evento</Label>
+                        <ImageUpload
+                          label="Nova Logo do Evento"
+                          imageType="logo_evento"
+                          value={updateImageFiles.logo_evento}
+                          onChange={(file) => {
+                            setUpdateImageFiles({ ...updateImageFiles, logo_evento: file });
+                            setUpdateImageErrors({ ...updateImageErrors, logo_evento: undefined });
+                          }}
+                          error={updateImageErrors.logo_evento}
+                        />
+                        {updateImageErrors.logo_evento && (
+                          <p className="text-sm text-red-600 mt-1">{updateImageErrors.logo_evento}</p>
+                        )}
+                      </div>
+                      <div>
+                        <Label htmlFor="updateImageCapa">Nova Imagem de Capa</Label>
+                        <ImageUpload
+                          label="Nova Imagem de Capa"
+                          imageType="image_capa"
+                          value={updateImageFiles.image_capa}
+                          onChange={(file) => {
+                            setUpdateImageFiles({ ...updateImageFiles, image_capa: file });
+                            setUpdateImageErrors({ ...updateImageErrors, image_capa: undefined });
+                          }}
+                          error={updateImageErrors.image_capa}
+                        />
+                        {updateImageErrors.image_capa && (
+                          <p className="text-sm text-red-600 mt-1">{updateImageErrors.image_capa}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+              
               <Button type="submit" disabled={loading || !eventId}>
-                {loading ? 'Atualizando...' : 'Atualizar Evento'}
+                {loading ? (
+                  updateImageFiles.logo_evento || updateImageFiles.image_capa 
+                    ? 'Atualizando evento e imagens...' 
+                    : 'Atualizando evento...'
+                ) : (
+                  'Atualizar Evento'
+                )}
               </Button>
             </form>
           </CardContent>

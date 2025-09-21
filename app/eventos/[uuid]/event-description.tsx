@@ -28,7 +28,7 @@ export function EventDescription({ event }: EventDescriptionProps) {
               <h3 className="text-sm font-medium text-amber-800 dark:text-amber-300">Últimas Vagas</h3>
               <div className="mt-2 text-sm text-amber-700 dark:text-amber-400">
                 <p>
-                  Este evento está com poucas vagas disponíveis. Garanta logo seu ingresso!
+                  Este evento está com poucas vagas disponíveis. Garanta logo Sua Inscrição!
                 </p>
               </div>
             </div>

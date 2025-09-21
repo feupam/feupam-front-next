@@ -56,6 +56,16 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
   // IMPORTANTE: Sempre usar currentEvent do contexto, nunca params.eventId diretamente
   // O params.eventId é usado APENAS para carregar o evento no contexto inicialmente
   const { currentEvent, setCurrentEventByName, loading: eventLoading } = useCurrentEventContext();
+  
+  // Log para debug dos dados do evento
+  useEffect(() => {
+    if (currentEvent) {
+      console.log('[CheckoutPage] Current event data:', currentEvent);
+      console.log('[CheckoutPage] Current event price:', currentEvent.price, 'Type:', typeof currentEvent.price);
+      console.log('[CheckoutPage] Current event startDate:', currentEvent.startDate);
+      console.log('[CheckoutPage] Current event date:', currentEvent.date);
+    }
+  }, [currentEvent]);
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [processingPix, setProcessingPix] = useState(false);
@@ -117,7 +127,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       if (currentReservation && currentReservation.status === 'Pago') {
         // Já está pago, redireciona para ingressos
         notificationRef.current?.showNotification(
-          'Seu ingresso já está confirmado!',
+          'Sua Inscrição já está confirmado!',
           'success'
         );
         
@@ -204,7 +214,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       if (currentReservation && currentReservation.status === 'Pago') {
         // Já está pago, redireciona para ingressos
         notificationRef.current?.showNotification(
-          'Seu ingresso já está confirmado!',
+          'Sua Inscrição já está confirmado!',
           'success'
         );
         
@@ -593,7 +603,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     try {
       await api.payments.create(paymentData);
       notificationRef.current?.showNotification(
-        'Pagamento realizado com sucesso! Seu ingresso foi enviado para seu e-mail.',
+        'Pagamento realizado com sucesso! Sua Inscrição foi enviado para seu e-mail.',
         'success'
       );
       router.push('/meus-ingressos');
@@ -609,7 +619,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     // Verifica o tipo específico de erro
     if (error?.message?.includes("Valor menor que o ingresso")) {
       notificationRef.current?.showNotification(
-        'O valor do pagamento é menor que o preço do ingresso. Por favor, tente novamente.',
+        'O valor do pagamento é menor que o preço da Inscrição. Por favor, tente novamente.',
         'error'
       );
     } else {
@@ -731,11 +741,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                 </div>
                 <div className="pt-4 border-t border-border">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Valor do Ingresso</span>
+                    <span className="text-muted-foreground">Valor da Inscrição</span>
                     <span className="font-semibold">
                       {installmentOptions.length > 0 
                         ? formatCurrency(installmentOptions[0].valueInCents / 100) 
-                        : formatCurrency(currentEvent.price)}
+                        : formatCurrency(currentEvent.price / 100)}
                     </span>
                   </div>
                 </div>
@@ -794,19 +804,67 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                 )}
               </div>
 
-              {/* Métodos de Pagamento */}
+              {/* Métodos de Pagamento ou Finalização Gratuita */}
               <div>
-                <Tabs defaultValue="cartao" value={activeTab} onValueChange={setActiveTab}>
-                  <TabsList className="grid grid-cols-2 mb-4">
-                    <TabsTrigger value="cartao" className="flex items-center">
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Cartão
-                    </TabsTrigger>
-                    <TabsTrigger value="pix" className="flex items-center" disabled={processingPix && !pixQrCode}>
-                      <QrCode className="h-4 w-4 mr-2" />
-                      PIX
-                    </TabsTrigger>
-                  </TabsList>
+                {currentEvent.price === 0 ? (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-4">
+                      <h3 className="font-semibold text-green-800 dark:text-green-400 mb-2">Evento Gratuito</h3>
+                      <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                        Este evento é gratuito. Clique no botão abaixo para finalizar sua inscrição.
+                      </p>
+                      <Button 
+                        onClick={async () => {
+                          try {
+                            setProcessingPayment(true);
+                            
+                            // Para eventos gratuitos, marcar como "Pago" diretamente
+                            // Isso pode precisar de uma API específica para inscrições gratuitas
+                            // Por enquanto, vamos simular o comportamento
+                            
+                            notificationRef.current?.showNotification(
+                              'Inscrição realizada com sucesso! Sua Inscrição foi gerado.',
+                              'success'
+                            );
+                            
+                            setTimeout(() => {
+                              router.push('/meus-ingressos');
+                            }, 2000);
+                          } catch (error) {
+                            notificationRef.current?.showNotification(
+                              'Erro ao finalizar inscrição. Tente novamente.',
+                              'error'
+                            );
+                          } finally {
+                            setProcessingPayment(false);
+                          }
+                        }}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                        disabled={processingPayment}
+                      >
+                        {processingPayment ? (
+                          <div className="flex items-center justify-center">
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Finalizando inscrição...
+                          </div>
+                        ) : (
+                          'Finalizar Inscrição Gratuita'
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Tabs defaultValue="cartao" value={activeTab} onValueChange={setActiveTab}>
+                    <TabsList className="grid grid-cols-2 mb-4">
+                      <TabsTrigger value="cartao" className="flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Cartão
+                      </TabsTrigger>
+                      <TabsTrigger value="pix" className="flex items-center" disabled={processingPix && !pixQrCode}>
+                        <QrCode className="h-4 w-4 mr-2" />
+                        PIX
+                      </TabsTrigger>
+                    </TabsList>
                   
                   <TabsContent value="cartao">
                     <PaymentForm
@@ -825,14 +883,14 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                           <h3 className="font-semibold text-blue-800 dark:text-blue-400">Pagamento via PIX</h3>
                         </div>
                         <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
-                          Pague instantaneamente utilizando o PIX. Após o pagamento, seu ingresso será enviado para seu e-mail.
+                          Pague instantaneamente utilizando o PIX. Após o pagamento, Sua Inscrição será enviado para seu e-mail.
                         </p>
                         <div className="flex justify-between items-center font-medium mt-2">
                           <span className="text-blue-800 dark:text-blue-400">Valor total:</span>
                           <span className="text-lg text-blue-800 dark:text-blue-300">
                             {installmentOptions.length > 0 
                               ? formatCurrency(installmentOptions[0].valueInCents / 100) 
-                              : formatCurrency(currentEvent.price)}
+                              : formatCurrency(currentEvent.price / 100)}
                           </span>
                         </div>
                       </div>
@@ -873,6 +931,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                     </div>
                   </TabsContent>
                 </Tabs>
+                )}
               </div>
             </div>
           </div>

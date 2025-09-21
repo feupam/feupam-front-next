@@ -35,7 +35,7 @@ export function ImageUpload({
   const [isValidating, setIsValidating] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const requirements = IMAGE_REQUIREMENTS[imageType];
+  const requirements = imageType ? IMAGE_REQUIREMENTS[imageType] : null;
 
   const handleFileSelect = useCallback(async (file: File) => {
     console.log(`[ImageUpload] Selecionando arquivo: ${file.name}, tipo: ${file.type}, tamanho: ${file.size} bytes`);
@@ -105,7 +105,7 @@ export function ImageUpload({
       </Label>
       
       <div className="text-sm text-muted-foreground">
-        {requirements.description}
+        {requirements?.description || 'Selecione uma imagem'}
       </div>
 
       <div className="space-y-4">
@@ -204,8 +204,12 @@ export function ImageUpload({
           <ul className="space-y-1">
             <li>• Formato: JPG/JPEG</li>
             <li>• Tamanho: Sem limitação</li>
-            <li>• Dimensões recomendadas: {requirements.recommendedWidth}x{requirements.recommendedHeight}px</li>
-            <li>• Proporção: {requirements.aspectRatio}</li>
+            {requirements && (
+              <>
+                <li>• Dimensões recomendadas: {requirements.recommendedWidth}x{requirements.recommendedHeight}px</li>
+                <li>• Proporção: {requirements.aspectRatio}</li>
+              </>
+            )}
           </ul>
         </div>
       </div>

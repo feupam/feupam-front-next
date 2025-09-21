@@ -152,14 +152,14 @@ export default function EventPage({ event }: EventPageProps) {
           </div>
         </Card>
 
-        {/* Valor do Ingresso */}
+        {/* Valor da Inscrição */}
         <Card className="p-6 bg-card">
-          <h2 className="text-xl font-semibold mb-6">Valor do Ingresso</h2>
+          <h2 className="text-xl font-semibold mb-6">Valor da Inscrição</h2>
           
           <div className="flex items-center justify-between p-4 rounded-lg border border-border">
             <div>
-              <p className="font-medium text-foreground">Ingresso</p>
-              <p className="text-sm text-muted-foreground">Ingresso para o evento</p>
+              <p className="font-medium text-foreground">Inscrição</p>
+              <p className="text-sm text-muted-foreground">Inscrição para o evento</p>
             </div>
             <div className="text-right">
               <p className="text-lg font-bold text-foreground">

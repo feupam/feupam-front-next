@@ -6,14 +6,14 @@ describe('Event Types', () => {
     it('should validate ticket structure', () => {
       const mockTicket: Ticket = {
         id: 'ticket-123',
-        name: 'Ingresso VIP',
+        name: 'Inscrição VIP',
         description: 'Acesso completo ao evento',
         price: 150.00,
         available: true
       }
 
       expect(mockTicket.id).toBe('ticket-123')
-      expect(mockTicket.name).toBe('Ingresso VIP')
+      expect(mockTicket.name).toBe('Inscrição VIP')
       expect(mockTicket.description).toBe('Acesso completo ao evento')
       expect(mockTicket.price).toBe(150.00)
       expect(mockTicket.available).toBe(true)
@@ -22,7 +22,7 @@ describe('Event Types', () => {
     it('should support unavailable tickets', () => {
       const unavailableTicket: Ticket = {
         id: 'ticket-456',
-        name: 'Ingresso Esgotado',
+        name: 'Inscrição Esgotado',
         description: 'Ticket não disponível',
         price: 100.00,
         available: false
@@ -52,7 +52,7 @@ describe('Event Types', () => {
         tickets: [
           {
             id: 'ticket-1',
-            name: 'Ingresso Geral',
+            name: 'Inscrição Geral',
             description: 'Acesso ao evento',
             price: 80.00,
             available: true
@@ -66,7 +66,7 @@ describe('Event Types', () => {
       expect(mockEvent.eventType).toBe('general')
       expect(mockEvent.isOpen).toBe(true)
       expect(mockEvent.tickets).toHaveLength(1)
-      expect(mockEvent.tickets[0].name).toBe('Ingresso Geral')
+      expect(mockEvent.tickets[0].name).toBe('Inscrição Geral')
     })
 
     it('should support gender-specific events', () => {

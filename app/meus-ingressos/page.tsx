@@ -90,8 +90,11 @@ export default function MyTicketsPage() {
 
   // Verificação automática de pagamentos pendentes
   useEffect(() => {
-    // Verificamos apenas se houver pelo menos uma reserva com pagamento pendente
-    const hasPendingPayment = reservations.some(res => res.status !== 'Pago');
+    // Verificamos apenas se houver pelo menos uma reserva com pagamento pendente (apenas eventos pagos)
+    const hasPendingPayment = reservations.some(res => {
+      const event = events[res.eventId];
+      return res.status !== 'Pago' && event && event.price > 0;
+    });
     if (!hasPendingPayment || loading) return;
 
     const checkPaymentStatus = async () => {
@@ -152,7 +155,12 @@ export default function MyTicketsPage() {
     setPixDialogOpen(true);
   };
 
-  const getStatusBadgeColor = (status: string) => {
+  const getStatusBadgeColor = (status: string, price: number = 0) => {
+    // Se for evento gratuito, sempre mostrar como confirmado
+    if (price === 0) {
+      return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
+    }
+    
     switch(status) {
       case 'Pago': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400';
       case 'Processando': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
@@ -162,11 +170,19 @@ export default function MyTicketsPage() {
     }
   };
 
+  const getStatusText = (status: string, price: number = 0) => {
+    // Se for evento gratuito, sempre mostrar como confirmado
+    if (price === 0) {
+      return 'Confirmado';
+    }
+    return status;
+  };
+
   return (
     <ProtectedRoute>
       <div className="w-full space-y-6">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">Meus Ingressos</h1>
+          <h1 className="text-3xl font-bold mb-6">Minhas Inscriçõess</h1>
           
           <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
@@ -206,8 +222,8 @@ export default function MyTicketsPage() {
                       <CardHeader className="pb-3">
                         <div className="flex justify-between items-start">
                           <CardTitle className="text-xl">{event.name}</CardTitle>
-                          <div className={cn("px-2 py-1 text-xs rounded-full", getStatusBadgeColor(reservation.status))}>
-                            {reservation.status}
+                          <div className={cn("px-2 py-1 text-xs rounded-full", getStatusBadgeColor(reservation.status, event.price))}>
+                            {getStatusText(reservation.status, event.price)}
                           </div>
                         </div>
                         <CardDescription>
@@ -231,8 +247,8 @@ export default function MyTicketsPage() {
                       <CardContent className="pt-0">
                         <div className="flex flex-col">
                           <div className="flex justify-between items-center mb-2">
-                            <span className="text-sm text-muted-foreground">Tipo de Ingresso:</span>
-                            <span className="text-sm font-medium">{reservation.ticketKind || "Ingresso completo"}</span>
+                            <span className="text-sm text-muted-foreground">Tipo de Inscrição:</span>
+                            <span className="text-sm font-medium">{reservation.ticketKind || "Inscrição Completa"}</span>
                           </div>
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-muted-foreground">Valor:</span>
@@ -251,18 +267,20 @@ export default function MyTicketsPage() {
                         {/* Status do pagamento */}
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
                           <div className="flex items-center">
-                            {reservation.status === 'Pago' ? (
+                            {reservation.status === 'Pago' || reservation.price === 0 ? (
                               <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
                             ) : (
                               <XCircle className="h-5 w-5 text-orange-500 mr-2" />
                             )}
                             <div>
                               <p className="text-sm font-medium">
-                                {reservation.status === 'Pago' 
-                                  ? 'Pagamento confirmado' 
-                                  : 'Aguardando pagamento'}
+                                {event.price === 0
+                                  ? 'Inscrição confirmada'
+                                  : reservation.status === 'Pago' 
+                                    ? 'Pagamento confirmado' 
+                                    : 'Aguardando pagamento'}
                               </p>
-                              {currentCharge && currentCharge.meio && (
+                              {currentCharge && currentCharge.meio && event.price > 0 && (
                                 <p className="text-xs text-muted-foreground">
                                   Método: {currentCharge.meio === 'pix' ? 'PIX' : 'Cartão de Crédito'}
                                 </p>
@@ -272,8 +290,8 @@ export default function MyTicketsPage() {
                           
                           {/* Botões de ação */}
                           <div>
-                            {/* Botão para visualizar QR Code do PIX (só aparece se o PIX estiver pendente) */}
-                            {hasPixPayment && (
+                            {/* Botão para visualizar QR Code do PIX (só aparece se o PIX estiver pendente e não for gratuito) */}
+                            {hasPixPayment && event.price > 0 && (
                               <Button 
                                 variant="outline" 
                                 size="sm" 
@@ -291,8 +309,8 @@ export default function MyTicketsPage() {
                               </Button>
                             )}
                             
-                            {/* Botão para continuar pagamento (apenas se não estiver pago e não tiver PIX pendente) */}
-                            {reservation.status !== 'Pago' && !hasPixPayment && (
+                            {/* Botão para continuar pagamento (apenas se não estiver pago, não tiver PIX pendente e não for gratuito) */}
+                            {reservation.status !== 'Pago' && !hasPixPayment && event.price > 0 && (
                               <Button 
                                 variant="default" 
                                 size="sm"

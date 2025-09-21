@@ -42,7 +42,7 @@ export function ReservationModal({ event, isOpen, onClose, onSuccess }: Reservat
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Reservar Ingresso</DialogTitle>
+          <DialogTitle>Reservar Inscrição</DialogTitle>
         </DialogHeader>
 
         <div className="mt-4 space-y-4">

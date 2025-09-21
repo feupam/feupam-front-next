@@ -311,15 +311,15 @@ export const api = {
     }
   },
 
-  // Ingressos
+  // Inscriçãos
   tickets: {
     list: async () => {
-      console.log('[API Tickets] Listando ingressos...');
+      console.log('[API Tickets] Listanda Inscriçãos...');
       const token = await getCurrentToken();
       return request('/tickets', { token });
     },
     get: async (id: string) => {
-      console.log('[API Tickets] Buscando ingresso:', id);
+      console.log('[API Tickets] Buscanda Inscrição:', id);
       const token = await getCurrentToken();
       return request(`/tickets/${id}`, { token });
     },

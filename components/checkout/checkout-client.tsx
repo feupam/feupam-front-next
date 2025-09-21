@@ -39,6 +39,9 @@ export default function CheckoutClient({ eventId, spotId, ticketKind }: Checkout
     async function fetchEvent() {
       try {
         const data = await api.events.get(eventId);
+        console.log('[CheckoutClient] Event data received:', data);
+        console.log('[CheckoutClient] Event price (raw):', data.price, 'Type:', typeof data.price);
+        console.log('[CheckoutClient] Event price (converted):', data.price / 100, 'formatted:', formatCurrency(data.price / 100));
         setEvent(data);
       } catch (e: any) {
         setError('Evento não encontrado ou acesso expirado.');
@@ -115,7 +118,7 @@ export default function CheckoutClient({ eventId, spotId, ticketKind }: Checkout
     try {
       await api.payments.create(paymentData);
       notificationRef.current?.showNotification(
-        'Pagamento realizado com sucesso! Seu ingresso foi enviado para seu e-mail.',
+        'Pagamento realizado com sucesso! Sua Inscrição foi enviado para seu e-mail.',
         'success'
       );
       router.push('/conta/ingressos');
@@ -131,7 +134,7 @@ export default function CheckoutClient({ eventId, spotId, ticketKind }: Checkout
     // Verifica o tipo específico de erro
     if (error?.message?.includes("Valor menor que o ingresso")) {
       notificationRef.current?.showNotification(
-        'O valor do pagamento é menor que o preço do ingresso. Por favor, tente novamente.',
+        'O valor do pagamento é menor que o preço da Inscrição. Por favor, tente novamente.',
         'error'
       );
     } else {
@@ -212,19 +215,45 @@ export default function CheckoutClient({ eventId, spotId, ticketKind }: Checkout
                 </div>
                 <div className="pt-4 border-t border-border">
                   <div className="flex justify-between items-center">
-                    <span className="text-muted-foreground">Valor do Ingresso</span>
-                    <span className="font-semibold">{formatCurrency(event.price)}</span>
+                    <span className="text-muted-foreground">Valor da Inscrição</span>
+                    <span className="font-semibold">
+                      {formatCurrency(event.price / 100)}
+                    </span>
                   </div>
                 </div>
               </div>
-              {/* Formulário de Pagamento */}
+              {/* Formulário de Pagamento ou Finalização Gratuita */}
               <div>
-                <PaymentForm
-                  event={event}
-                  spotId={spotId}
-                  reservationData={reservationData || undefined}
-                  onSubmit={handleProcessPayment}
-                />
+                {event.price === 0 ? (
+                  <div className="space-y-4">
+                    <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-4">
+                      <h3 className="font-semibold text-green-800 dark:text-green-400 mb-2">Evento Gratuito</h3>
+                      <p className="text-sm text-green-700 dark:text-green-300 mb-4">
+                        Este evento é gratuito. Clique no botão abaixo para finalizar sua inscrição.
+                      </p>
+                      <Button 
+                        onClick={() => {
+                          // Lógica para finalizar inscrição gratuita
+                          notificationRef.current?.showNotification(
+                            'Inscrição realizada com sucesso!',
+                            'success'
+                          );
+                          router.push('/meus-ingressos');
+                        }}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white"
+                      >
+                        Finalizar Inscrição Gratuita
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <PaymentForm
+                    event={event}
+                    spotId={spotId}
+                    reservationData={reservationData || undefined}
+                    onSubmit={handleProcessPayment}
+                  />
+                )}
               </div>
             </div>
           </div>

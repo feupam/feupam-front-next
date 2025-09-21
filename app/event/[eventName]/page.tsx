@@ -5,7 +5,7 @@ import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { eventService } from '@/services/eventService';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, MapPin, Clock, Users } from 'lucide-react';
+import { CalendarDays, MapPin, Clock, Users, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { EventClosedDialog } from '@/components/events/event-closed-dialog';
@@ -159,21 +159,31 @@ export default function EventPage() {
           />
         </div>
         <div className="absolute inset-0 bg-gradient-to-t from-background to-transparent" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <motion.h1 
-            className="text-4xl md:text-6xl font-bold text-white mb-4"
-            {...fadeInUp}
+        
+        {/* Animated scroll indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-20"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8, duration: 0.8 }}
+        >
+          <motion.div
+            animate={{ y: [0, 15, 0] }}
+            transition={{ 
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            className="cursor-pointer bg-black/20 rounded-full p-2 backdrop-blur-sm"
+            onClick={() => {
+              const nextSection = document.querySelector('.container');
+              nextSection?.scrollIntoView({ behavior: 'smooth' });
+            }}
           >
-            {eventDetails.name}
-          </motion.h1>
-          <motion.p 
-            className="text-lg md:text-xl text-white/90 max-w-2xl"
-            {...fadeInUp}
-            transition={{ delay: 0.2 }}
-          >
-            {eventDetails.description || 'Uma experiência única e inesquecível'}
-          </motion.p>
-        </div>
+            <ChevronDown className="h-6 w-6 text-white hover:text-white/80 transition-colors" />
+          </motion.div>
+        </motion.div>
+
       </section>
 
       {/* Event Info */}
@@ -214,13 +224,6 @@ export default function EventPage() {
                   <p className="font-medium">{eventDetails.location || 'A definir'}</p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Users className="h-6 w-6 text-primary" />
-                <div>
-                  <p className="text-sm text-muted-foreground">Capacidade</p>
-                  <p className="font-medium">{getCapacity()} pessoas</p>
-                </div>
-              </div>
             </div>
           </motion.div>
 
@@ -231,7 +234,7 @@ export default function EventPage() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.6 }}
           >
-            <h2 className="text-3xl font-bold">Informações do Ingresso</h2>
+            <h2 className="text-3xl font-bold">Informações da Inscrição</h2>
             <div className="grid gap-6">
               <div className="p-6 rounded-lg bg-card border border-border">
                 <h3 className="text-xl font-semibold mb-4">Valor</h3>
@@ -257,83 +260,13 @@ export default function EventPage() {
               </Button>
 
               <p className="text-sm text-center text-muted-foreground">
-                Vagas limitadas! Reserve já seu lugar neste evento incrível.
+                Faça sua inscrição para este evento.
               </p>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="bg-card border-y border-border py-16">
-        <div className="container mx-auto px-4">
-          <motion.div 
-            className="grid grid-cols-1 md:grid-cols-3 gap-8"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.8 }}
-          >
-            <div className="text-center p-6">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Networking</h3>
-              <p className="text-muted-foreground">
-                Conecte-se com pessoas incríveis
-              </p>
-            </div>
-            <div className="text-center p-6">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CalendarDays className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Programação</h3>
-              <p className="text-muted-foreground">
-                Atividades cuidadosamente planejadas
-              </p>
-            </div>
-            <div className="text-center p-6">
-              <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Local Especial</h3>
-              <p className="text-muted-foreground">
-                Ambiente escolhido com carinho
-              </p>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
-      <section className="container mx-auto px-4 py-16 text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 1 }}
-        >
-          <h2 className="text-3xl md:text-4xl font-bold mb-6">
-            Não perca essa oportunidade!
-          </h2>
-          <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Garanta já sua vaga neste evento incrível. Lugares limitados!
-          </p>
-          <Button 
-            size="lg"
-            className="text-lg"
-            onClick={handleEventClick}
-          >
-            {eventDetails.isOpen ? "Comprar Ingresso Agora" : "Atualize seus dados"}
-          </Button>
-
-          {/* Dialog de evento fechado */}
-          <EventClosedDialog
-            open={showDialog}
-            onClose={() => setShowDialog(false)}
-            startDate={eventDetails.startDate}
-            endDate={eventDetails.endDate}
-          />
-        </motion.div>
-      </section>
     </div>
   );
 }

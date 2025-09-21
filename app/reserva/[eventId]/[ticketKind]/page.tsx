@@ -432,9 +432,9 @@ export default function ReservationPage({ params }: ReservationPageProps) {
       <div className="min-h-screen flex flex-col items-center justify-center bg-background py-10 px-2">
         <Card className="w-full max-w-md shadow-xl border-0">
           <CardHeader className="text-center pb-0">
-            <CardTitle className="text-3xl font-bold mb-2">Reserva de Ingresso</CardTitle>
+            <CardTitle className="text-3xl font-bold mb-2">Reserva de Inscrição</CardTitle>
             <CardDescription className="text-base mb-2">
-              Reserve seu ingresso para o evento
+              Reserve Sua Inscrição para o evento
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">

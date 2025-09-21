@@ -140,7 +140,7 @@ export default function EditProfileForEventPage({ params }: EditProfileForEventP
         <div className="container py-10">
           <h1 className="text-2xl font-bold mb-6 text-center">Atualize seus dados para continuar com a compra</h1>
           <p className="text-center text-muted-foreground mb-8">
-            Precisamos garantir que suas informações estão atualizadas antes de prosseguir com a compra do ingresso.
+            Precisamos garantir que suas informações estão atualizadas antes de prosseguir com a compra da Inscrição.
           </p>
           {renderForm()}
         </div>

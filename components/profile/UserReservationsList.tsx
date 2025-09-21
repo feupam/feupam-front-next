@@ -107,9 +107,9 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
   const getTicketKindLabel = (ticketKind: string) => {
     switch (ticketKind) {
       case 'full':
-        return 'Ingresso Completo';
+        return 'Inscrição Completa';
       case 'day':
-        return 'Ingresso Diário';
+        return 'Inscrição Diário';
       case 'student':
         return 'Estudante';
       default:
@@ -305,7 +305,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                     {reservation.status.toLowerCase() === 'pago' && (
                       <Button variant="outline" size="sm">
                         <Download className="h-4 w-4 mr-2" />
-                        Baixar Ingresso
+                        Baixar Inscrição
                       </Button>
                     )}
                     {reservation.status.toLowerCase() !== 'cancelado' && (

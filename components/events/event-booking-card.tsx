@@ -50,7 +50,7 @@ export function EventBookingCard({ event }: EventBookingCardProps) {
 
   return (
     <Card className="bg-white rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-6">Valor do Ingresso</h2>
+      <h2 className="text-xl font-semibold mb-6">Valor da Inscrição</h2>
 
       {event.cupons && event.cupons.length > 0 && (
         <>
@@ -81,7 +81,7 @@ export function EventBookingCard({ event }: EventBookingCardProps) {
             Verificando...
           </>
         ) : (
-          'Comprar Ingresso'
+          'Inscrições'
         )}
       </Button>
     </Card>

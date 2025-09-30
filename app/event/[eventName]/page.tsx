@@ -212,14 +212,14 @@ export default function EventPage() {
                 <CalendarDays className="h-6 w-6 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Data</p>
-                  <p className="font-medium">{formatDate(eventDetails.startDate)}</p>
+                  <p className="font-medium">{formatDate(eventDetails.date)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
                 <Clock className="h-6 w-6 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Horário</p>
-                  <p className="font-medium">{formatTime(eventDetails.startDate)}</p>
+                  <p className="font-medium">{formatTime(eventDetails.date)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">

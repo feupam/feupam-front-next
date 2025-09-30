@@ -296,9 +296,15 @@ export function UserConsultation() {
         const token = await getCurrentToken();
         if (!token) {
           console.error('Token de autenticação não encontrado');
+          toast({
+            title: 'Erro',
+            description: 'Token de autenticação não encontrado',
+            variant: 'destructive',
+          });
           return;
         }
 
+        console.log('Buscando eventos da API externa...');
         const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -306,22 +312,69 @@ export function UserConsultation() {
           },
         });
 
+        console.log('Response status:', response.status);
+        console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
         if (!response.ok) {
-          throw new Error(`Erro na requisição: ${response.status}`);
+          throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('Eventos carregados da API:', data);
+        console.log('Dados completos da API /events:', JSON.stringify(data, null, 2));
         
-        // Extrair os IDs/nomes dos eventos da resposta da API
-        const eventIds = data.events ? data.events.map((event: any) => event.id || event.name) : [];
+        // Tentar diferentes estruturas de resposta
+        let eventIds: string[] = [];
+        
+        if (data.events && Array.isArray(data.events)) {
+          // Estrutura: { events: [...] }
+          eventIds = data.events.map((event: any) => {
+            console.log('Evento encontrado:', event);
+            return event.id || event.name || event.eventId || JSON.stringify(event);
+          });
+        } else if (Array.isArray(data)) {
+          // Estrutura: [...]
+          eventIds = data.map((event: any) => {
+            console.log('Evento encontrado (array direto):', event);
+            return event.id || event.name || event.eventId || JSON.stringify(event);
+          });
+        } else if (data.data && Array.isArray(data.data)) {
+          // Estrutura: { data: [...] }
+          eventIds = data.data.map((event: any) => {
+            console.log('Evento encontrado (data):', event);
+            return event.id || event.name || event.eventId || JSON.stringify(event);
+          });
+        } else {
+          console.warn('Estrutura de resposta não reconhecida:', data);
+          // Tentar extrair todas as chaves que parecem IDs de eventos
+          const keys = Object.keys(data);
+          eventIds = keys.filter(key => typeof data[key] === 'string' || typeof data[key] === 'object');
+        }
+        
+        console.log('IDs de eventos extraídos:', eventIds);
+        
+        if (eventIds.length === 0) {
+          console.warn('Nenhum evento encontrado na resposta da API');
+          toast({
+            title: 'Aviso',
+            description: 'Nenhum evento encontrado na API',
+            variant: 'default',
+          });
+        } else {
+          console.log(`${eventIds.length} eventos carregados com sucesso`);
+          toast({
+            title: 'Sucesso',
+            description: `${eventIds.length} eventos carregados`,
+            variant: 'default',
+          });
+        }
+        
         setAvailableEvents(eventIds);
         
       } catch (error) {
-        console.error('Erro ao carregar eventos da API externa:', error);
+        console.error('Erro completo ao carregar eventos da API externa:', error);
         toast({
           title: 'Erro',
-          description: 'Erro ao carregar lista de eventos',
+          description: `Erro ao carregar lista de eventos: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
           variant: 'destructive',
         });
       }

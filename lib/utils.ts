@@ -8,6 +8,15 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export function formatCurrency(value: number, currency: string = 'BRL'): string {
+  // Garantir que o valor é um número válido
+  if (typeof value !== 'number' || isNaN(value)) {
+    console.warn('[formatCurrency] Invalid value received:', value);
+    return new Intl.NumberFormat('pt-BR', {
+      style: 'currency',
+      currency: currency
+    }).format(0);
+  }
+  
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: currency

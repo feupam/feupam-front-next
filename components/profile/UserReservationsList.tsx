@@ -79,8 +79,9 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
   };
 
   const formatPrice = (price: number | undefined) => {
-    if (price === undefined || price === null || isNaN(price)) {
-      return 'R$ --,--';
+    console.log('[UserReservationsList] formatPrice called with:', price, 'type:', typeof price);
+    if (price === undefined || price === null || isNaN(price) || price === 0) {
+      return 'Gratuito';
     }
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',

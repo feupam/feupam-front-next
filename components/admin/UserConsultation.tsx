@@ -415,7 +415,7 @@ export function UserConsultation() {
           reservation.event || reservation.eventId,
           reservation.status,
           reservation.ticketKind,
-          `R$ ${(reservation.price / 100).toFixed(2)}`,
+          `R$ ${reservation.price ? (reservation.price / 100).toFixed(2) : '0,00'}`,
           reservation.gender === 'male' ? 'Masculino' : 'Feminino',
           reservation.userType === 'staff' ? 'Staff' : 'Cliente',
           mainCharge?.meio || 'N/A',
@@ -708,7 +708,7 @@ export function UserConsultation() {
                                           {reservation.status}
                                         </Badge>
                                         <span className="text-sm font-medium">
-                                          R$ {(reservation.price / 100).toFixed(2)}
+                                          R$ {reservation.price ? (reservation.price / 100).toFixed(2) : '0,00'}
                                         </span>
                                       </div>
                                       <div className="text-xs text-muted-foreground space-y-1">

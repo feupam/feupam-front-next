@@ -765,9 +765,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                   <div className="flex justify-between items-center">
                     <span className="text-muted-foreground">Valor da Inscrição</span>
                     <span className="font-semibold">
-                      {installmentOptions.length > 0 
-                        ? formatCurrency(installmentOptions[0].valueInCents / 100) 
-                        : formatCurrency(currentEvent.price / 100)}
+                      {formatCurrency(currentEvent.price / 100)}
                     </span>
                   </div>
                 </div>

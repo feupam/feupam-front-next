@@ -57,7 +57,35 @@ export default function MyTicketsPage() {
         setLoading(true);
         // Buscar reservas do usuário
         const reservationsData = await api.users.getReservations();
-        setReservations(reservationsData);
+        console.log('[MyTickets] Raw reservations data:', reservationsData);
+        
+        // Processar dados das reservas para garantir que o price esteja correto
+        const processedReservations = reservationsData.map((reservation: any) => {
+          console.log('[MyTickets] Processing reservation:', reservation);
+          
+          // Se não tiver price diretamente, tentar pegar do charges
+          let finalPrice = reservation.price;
+          if ((!finalPrice || finalPrice === 0) && reservation.charges && reservation.charges.length > 0) {
+            finalPrice = reservation.charges[0].amount;
+            console.log('[MyTickets] Price taken from charges:', finalPrice);
+          }
+          
+          // Garantir que o valor é um número válido
+          if (typeof finalPrice === 'string') {
+            finalPrice = parseInt(finalPrice, 10);
+          }
+          
+          console.log('[MyTickets] Final price for reservation:', finalPrice);
+          
+          return {
+            ...reservation,
+            // Garantir que o price está definido corretamente
+            price: finalPrice || 0
+          };
+        });
+        
+        console.log('[MyTickets] Processed reservations:', processedReservations);
+        setReservations(processedReservations);
 
         // Buscar detalhes dos eventos para cada reserva
         const eventsMap: Record<string, any> = {};
@@ -260,7 +288,15 @@ export default function MyTicketsPage() {
                           </div>
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-muted-foreground">Valor:</span>
-                            <span className="text-sm font-medium">{formatCurrency(reservation.price / 100)}</span>
+                            <span className="text-sm font-medium">
+                              {(() => {
+                                console.log('[MyTickets] Rendering price for reservation:', reservation.id, 'price:', reservation.price);
+                                if (!reservation.price || reservation.price === 0) {
+                                  return 'Gratuito';
+                                }
+                                return formatCurrency(reservation.price / 100);
+                              })()}
+                            </span>
                           </div>
                           {reservation.updatedAt && (
                             <div className="flex justify-between items-center mb-2">

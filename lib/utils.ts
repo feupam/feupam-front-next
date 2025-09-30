@@ -17,12 +17,21 @@ export function formatCurrency(value: number, currency: string = 'BRL'): string 
 // Funções de formatação de data e hora padronizadas
 export function formatDate(dateStr: string): string {
   try {
-    const date = new Date(dateStr);
+    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
+    let dateToFormat: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      // Para strings no formato YYYY-MM-DD, cria a data como horário local
+      const [year, month, day] = dateStr.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      dateToFormat = new Date(dateStr);
+    }
+    
     return new Intl.DateTimeFormat('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
-    }).format(date);
+    }).format(dateToFormat);
   } catch {
     return 'A definir';
   }
@@ -30,11 +39,20 @@ export function formatDate(dateStr: string): string {
 
 export function formatTime(dateStr: string): string {
   try {
-    const date = new Date(dateStr);
+    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
+    let dateToFormat: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      // Para strings no formato YYYY-MM-DD, cria a data como horário local
+      const [year, month, day] = dateStr.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      dateToFormat = new Date(dateStr);
+    }
+    
     return new Intl.DateTimeFormat('pt-BR', {
       hour: '2-digit',
       minute: '2-digit',
-    }).format(date);
+    }).format(dateToFormat);
   } catch {
     return 'A definir';
   }

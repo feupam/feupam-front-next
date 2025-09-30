@@ -46,9 +46,14 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
 
   // CSS personalizado para animação que funciona com qualquer número de imagens
   useEffect(() => {
-    if (!mounted || !events.length) return
+    if (!mounted) return
     
-    const imageCount = events.length
+    // Filtrar eventos que já passaram DENTRO do useEffect
+    const activeEvents = events.filter(event => !isEventExpired(event.date || event.startDate));
+    
+    if (!activeEvents.length) return
+    
+    const imageCount = activeEvents.length
     const keyframesName = `scrollLeft-${imageCount}`
     
     // Criar animação CSS dinamicamente
@@ -77,7 +82,7 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
         document.head.removeChild(styleElement)
       }
     }
-  }, [mounted, events.length])
+  }, [mounted, events]) // Dependency em events em vez de events.length
 
   const handleEventClick = async (event: EventData) => {
     setLoading(true);

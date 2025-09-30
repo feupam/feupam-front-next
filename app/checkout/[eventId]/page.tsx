@@ -22,7 +22,7 @@ import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 
 interface CheckoutPageProps {
   params: {
-    eventId: string; // Usado apenas para carregar o evento no contexto
+    eventId: string; // Na verdade sempre contém o nome do evento, não o ID numérico
   };
   searchParams: {
     spotId?: string;
@@ -53,8 +53,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
   const router = useRouter();
   const notificationRef = useRef<NotificationToastRef>(null);
   
-  // IMPORTANTE: Sempre usar currentEvent do contexto, nunca params.eventId diretamente
-  // O params.eventId é usado APENAS para carregar o evento no contexto inicialmente
+  // IMPORTANTE: Sempre usar currentEvent do contexto
+  // O params.eventId contém o nome do evento (não ID numérico)
   const { currentEvent, setCurrentEventByName, loading: eventLoading } = useCurrentEventContext();
   
   // Log para debug dos dados do evento
@@ -62,6 +62,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     if (currentEvent) {
       console.log('[CheckoutPage] Current event data:', currentEvent);
       console.log('[CheckoutPage] Current event price:', currentEvent.price, 'Type:', typeof currentEvent.price);
+      console.log('[CheckoutPage] Price comparison (currentEvent.price <= 0):', currentEvent.price <= 0);
+      console.log('[CheckoutPage] Price comparison (Number(currentEvent.price) <= 0):', Number(currentEvent.price) <= 0);
       console.log('[CheckoutPage] Current event startDate:', currentEvent.startDate);
       console.log('[CheckoutPage] Current event date:', currentEvent.date);
     }
@@ -277,6 +279,9 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       if (eventFetched.current) return;
       eventFetched.current = true;
       
+      console.log('[loadEventFromContext] params.eventId (nome do evento):', params.eventId);
+      console.log('[loadEventFromContext] currentEvent já carregado?', !!currentEvent);
+      
       // Se o evento já está carregado no contexto, não precisa buscar novamente
       if (currentEvent) {
         setLoading(false);
@@ -284,15 +289,9 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       }
       
       try {
-        // Primeiro tenta buscar pelo ID numérico (params.eventId = "7")
-        const eventData = await api.events.get(params.eventId);
-        
-        // Se encontrou o evento, usa o nome do evento para setar no contexto
-        if (eventData && eventData.name) {
-          await setCurrentEventByName(eventData.name);
-        } else {
-          setError('Evento não encontrado ou acesso expirado.');
-        }
+        // params.eventId sempre contém o nome do evento, não o ID numérico
+        console.log('[loadEventFromContext] Usando setCurrentEventByName com:', params.eventId);
+        await setCurrentEventByName(params.eventId);
       } catch (e: any) {
         console.error('Erro ao carregar evento:', e);
         setError('Evento não encontrado ou acesso expirado.');
@@ -475,11 +474,18 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     setProcessingPayment(true);
     setProcessingPix(true);
     
+    console.log('[PIX Payment] Iniciando pagamento PIX...');
+    console.log('[PIX Payment] params.eventId:', params.eventId);
+    console.log('[PIX Payment] currentEvent?.name:', currentEvent?.name);
+    console.log('[PIX Payment] reservationData:', reservationData);
+    
     try {
       // Primeiro verificamos o status da reserva usando a rota /retry
       try {
         console.log("Verificando status da reserva antes de gerar PIX...");
+        // params.eventId sempre contém o nome do evento
         const eventNameForAPI = currentEvent?.name || params.eventId;
+        console.log("eventNameForAPI que será usado:", eventNameForAPI);
         const reservationStatus = await api.tickets.retryPurchase(eventNameForAPI);
         
         // Verifica se o status é válido para continuar com o pagamento
@@ -494,7 +500,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           localStorage.removeItem('reservationTimestamp');
           
           setTimeout(() => {
-            router.push(`/reserva/${params.eventId}/${searchParams.ticket || 'full'}`);
+            router.push(`/reserva/${eventNameForAPI}/${searchParams.ticket || 'full'}`);
           }, 3000);
           return;
         }
@@ -525,10 +531,24 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       }
       
       // Garante que usamos o valor correto para o pagamento
-      const eventPrice = reservationData.price || (currentEvent?.price || 0);
-      const valueToUse = installmentOptions.length > 0 
-        ? Math.max(installmentOptions[0].valueInCents, eventPrice) 
-        : eventPrice;
+      const eventPrice = currentEvent?.price || 0;
+      const reservationPrice = reservationData.price || 0;
+      const installmentPrice = installmentOptions.length > 0 ? installmentOptions[0].valueInCents : 0;
+      
+      console.log('[PIX Payment] Debug valores:');
+      console.log('- eventPrice:', eventPrice);
+      console.log('- reservationPrice:', reservationPrice);
+      console.log('- installmentPrice:', installmentPrice);
+      console.log('- currentEvent:', currentEvent);
+      
+      // Usar o preço do evento (que é o valor real) sempre
+      const valueToUse = eventPrice > 0 ? eventPrice : installmentPrice;
+      
+      console.log('[PIX Payment] Valor final calculado:', valueToUse);
+      
+      if (valueToUse <= 0) {
+        throw new Error('Valor do pagamento inválido: ' + valueToUse);
+      }
       
       const paymentData = {
         items: [{
@@ -543,6 +563,12 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         },
         spotId: reservationId
       };
+      
+      console.log('[PIX Payment] Dados enviados para API:', paymentData);
+      console.log('[PIX Payment] Current Event:', currentEvent);
+      console.log('[PIX Payment] Current Event Name:', currentEvent?.name);
+      console.log('[PIX Payment] Reservation Data:', reservationData);
+      console.log('[PIX Payment] SpotId usado:', reservationId);
       
       const response = await api.payments.create(paymentData);
       
@@ -573,7 +599,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           setPixQrCode(response.last_transaction.qr_code_url);
           setPixCopiaECola(response.last_transaction.qr_code);
           // Salva no localStorage
-          const pixDataKey = `pixData-${params.eventId}`;
+          const pixDataKey = `pixData-${currentEvent?.name}`;
           localStorage.setItem(pixDataKey, JSON.stringify({
             qrCode: response.last_transaction.qr_code_url,
             copiaECola: response.last_transaction.qr_code
@@ -806,7 +832,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
 
               {/* Métodos de Pagamento ou Finalização Gratuita */}
               <div>
-                {currentEvent.price === 0 ? (
+                {(!currentEvent.price || Number(currentEvent.price) <= 0) ? (
                   <div className="space-y-4">
                     <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-4">
                       <h3 className="font-semibold text-green-800 dark:text-green-400 mb-2">Evento Gratuito</h3>

@@ -100,18 +100,17 @@ export default function EventPage() {
     }
   }, [eventName, currentEvent, setCurrentEventFromData]);
 
-  // Mostrar diálogo automaticamente apenas se veio do ProfileForm e evento fechado
+  // Mostrar diálogo automaticamente se evento estiver fechado
   useEffect(() => {
-    if (eventDetails && !eventDetails.isOpen && fromProfile) {
-      console.log('[EventPage] Mostrando diálogo - evento fechado e veio do ProfileForm');
+    if (eventDetails && !eventDetails.isOpen) {
+      console.log('[EventPage] Mostrando diálogo - evento fechado');
       // Pequeno delay para garantir que a página carregou completamente
       const timer = setTimeout(() => {
         setShowDialog(true);
       }, 500);
-      
       return () => clearTimeout(timer);
     }
-  }, [eventDetails, fromProfile]);
+  }, [eventDetails]);
 
   if (loading) {
     return <LoadingPage text="Carregando evento..." />;
@@ -137,16 +136,22 @@ export default function EventPage() {
   const handleEventClick = () => {
     console.log('[EventPage] Clique em inscrição para:', eventDetails.name);
     setCurrentEventFromData(eventDetails);
-    
-    if (eventDetails.isOpen) {
-      router.push('/formulario');
-    } else {
-      setShowDialog(true);
-    }
+
+    router.push('/formulario');
+
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
+    <>
+      {eventDetails && !eventDetails.isOpen && (
+        <EventClosedDialog
+          open={showDialog}
+          onClose={() => setShowDialog(false)}
+          startDate={eventDetails.startDate}
+          endDate={eventDetails.endDate}
+        />
+      )}
+      <div className="min-h-screen bg-gradient-to-b from-background to-background/95">
       {/* Hero Section */}
       <section className="relative h-[60vh] md:h-[80vh] w-full">
         <div className="absolute inset-0">
@@ -240,7 +245,7 @@ export default function EventPage() {
                 <h3 className="text-xl font-semibold mb-4">Valor</h3>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-primary">
-                    {formatCurrency(eventDetails.price || 0)}
+                    {formatCurrency((eventDetails.price || 0) / 100)}
                   </span>
                   <span className="text-muted-foreground">/pessoa</span>
                 </div>
@@ -267,6 +272,7 @@ export default function EventPage() {
         </div>
       </section>
 
-    </div>
+      </div>
+    </>
   );
 }

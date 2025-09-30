@@ -30,6 +30,10 @@ interface UserReservationsListProps {
 
 export function UserReservationsList({ reservations, loading, error, onRefetch }: UserReservationsListProps) {
   const { setLoading } = useLoading();
+  
+  console.log('[UserReservationsList] Reservations recebidas:', reservations);
+  console.log('[UserReservationsList] Loading:', loading);
+  console.log('[UserReservationsList] Error:', error);
 
   const handleRefetch = () => {
     setLoading(true);
@@ -74,7 +78,10 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
     }
   };
 
-  const formatPrice = (price: number) => {
+  const formatPrice = (price: number | undefined) => {
+    if (price === undefined || price === null || isNaN(price)) {
+      return 'R$ --,--';
+    }
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
       currency: 'BRL'
@@ -85,11 +92,17 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
     if (!timestamp) return '';
     
     let date: Date;
-    if (timestamp.seconds) {
+    if (timestamp._seconds) {
+      // Formato da API externa: { _seconds: number, _nanoseconds: number }
+      date = new Date(timestamp._seconds * 1000);
+    } else if (timestamp.seconds) {
+      // Formato Firebase: { seconds: number, nanoseconds: number }
       date = new Date(timestamp.seconds * 1000);
     } else if (timestamp instanceof Date) {
       date = timestamp;
     } else if (typeof timestamp === 'string') {
+      date = new Date(timestamp);
+    } else if (typeof timestamp === 'number') {
       date = new Date(timestamp);
     } else {
       return '';
@@ -212,14 +225,14 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                         </span>
                       </div>
                       <CardTitle className="text-base">
-                        {getTicketKindLabel(reservation.ticketKind)}
+                        {reservation.eventId} - {getTicketKindLabel(reservation.ticketKind || 'full')}
                       </CardTitle>
                       <div className="flex items-center justify-between mt-2">
                         <span className="font-semibold text-lg">
                           {formatPrice(reservation.price)}
                         </span>
                         <span className="text-sm text-gray-500">
-                          {formatDate(reservation.updatedAt)}
+                          {formatDate(reservation.createdAt)}
                         </span>
                       </div>
                     </div>
@@ -237,11 +250,11 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                     <div className="grid grid-cols-2 gap-3 text-sm">
                       <div>
                         <span className="text-gray-600">ID da Reserva:</span>
-                        <p className="font-mono text-xs">{reservation.spotId}</p>
+                        <p className="font-mono text-xs">{reservation.id || reservation.spotId}</p>
                       </div>
                       <div>
                         <span className="text-gray-600">Tipo:</span>
-                        <p>{getTicketKindLabel(reservation.ticketKind)}</p>
+                        <p>{getTicketKindLabel(reservation.ticketKind || 'full')}</p>
                       </div>
                       <div>
                         <span className="text-gray-600">Evento:</span>
@@ -250,6 +263,16 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                       <div>
                         <span className="text-gray-600">Gênero:</span>
                         <p>{reservation.gender === 'male' ? 'Masculino' : 'Feminino'}</p>
+                      </div>
+                      {reservation.position && (
+                        <div>
+                          <span className="text-gray-600">Posição:</span>
+                          <p>{reservation.position}</p>
+                        </div>
+                      )}
+                      <div>
+                        <span className="text-gray-600">Criado em:</span>
+                        <p>{formatDate(reservation.createdAt)}</p>
                       </div>
                     </div>
                   </div>

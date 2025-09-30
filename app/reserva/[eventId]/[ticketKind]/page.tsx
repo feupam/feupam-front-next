@@ -2,11 +2,11 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useReservationProcess, ReservationData } from '@/hooks/useReservationProcess';
-import { Loader2, CheckCircle2, XCircle, Clock, AlertTriangle } from 'lucide-react';
+import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
 import { api } from '@/lib/api';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
@@ -20,7 +20,7 @@ interface ReservationPageProps {
 
 export default function ReservationPage({ params }: ReservationPageProps) {
   const { eventId, ticketKind } = params;
-  const [step, setStep] = useState<'checking' | 'reserving' | 'existing' | 'success' | 'error' | 'cancelled' | 'waiting'>('checking');
+  const [step, setStep] = useState<'checking' | 'reserving' | 'existing' | 'success' | 'error' | 'waiting'>('checking');
   const router = useRouter();
   const processingRef = useRef(false);
   const [localReservationData, setLocalReservationData] = useState<ReservationData | null>(null);
@@ -41,7 +41,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     }
   }, [currentEvent, isCurrentEventOpen, router]);
 
-  // Only initialize hook if we have the required params
+  // Initialize hook
   const reservationProcess = useReservationProcess(
     eventId && ticketKind ? { eventId, ticketKind } : undefined
   );
@@ -52,13 +52,10 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     errorMessage,
     reservationData,
     isWaitingList,
-    reservationStatus,
     checkSpotAvailability,
     reserveSpot,
     fetchUserReservations,
-    purchaseTicket,
     checkReservationStatus,
-    tryPurchase
   } = reservationProcess;
 
   useEffect(() => {
@@ -67,9 +64,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     }
   }, [reservationData]);
 
-  // Função definida no escopo para processamento da reserva
+  // Função principal de processamento da reserva
   async function processReservation() {
-    // Previne execução múltipla
     if (processingRef.current) {
       console.log("Processamento já iniciado, ignorando chamada...");
       return;
@@ -79,90 +75,67 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     
     console.log("Iniciando processamento de reserva");
     try {
-      // Primeiro verifica se o usuário já comprou o ingresso
+      // 1. Verifica se o usuário já comprou o ingresso
+      console.log("1. Verificando se já comprou o ingresso...");
       try {
         const reservations = await api.users.getReservations();
         const currentReservation = reservations.find((res: any) => res.eventId === eventId);
         
         if (currentReservation && currentReservation.status === 'Pago') {
           console.log("Usuário já comprou este ingresso");
-          // Redireciona para a página de ingressos
           router.push('/meus-ingressos');
           return;
         }
+        
+        // Se há reserva válida (não paga), mostrar como existente
+        if (currentReservation && currentReservation.status === 'reserved') {
+          console.log("Usuário já possui reserva válida na API:", currentReservation);
+          setLocalReservationData(currentReservation);
+          setStep('existing');
+          return;
+        }
+        
+        console.log("Nenhuma reserva válida encontrada na API");
       } catch (error) {
-        console.error("Erro ao verificar ingressos existentes:", error);
-        // Continua com o fluxo normal em caso de erro
+        console.error("Erro ao verificar reservas na API:", error);
       }
       
-      // Verifica se já existe reserva salva no localStorage
-      const savedReservation = localStorage.getItem('reservationData');
-      if (savedReservation) {
-        try {
-          const parsed = JSON.parse(savedReservation);
-          if (parsed.eventId === eventId) {
-            console.log("Reserva existente encontrada no localStorage");
-            
-            // Verifica o status da reserva para garantir que ainda é válida
-            const reservationStatus = await checkReservationStatus();
-            
-            if (reservationStatus.status === 'cancelled') {
-              console.log("Reserva existente está cancelada");
-              setLocalReservationData(parsed);
-              setStep('cancelled');
-              return;
-            } else if (reservationStatus.status === 'waiting') {
-              console.log("Usuário está na lista de espera");
-              setLocalReservationData(parsed);
-              setStep('waiting');
-              return;
-            } else if (reservationStatus.status === 'pago') {
-              console.log("Usuário já pagou");
-              router.push('/meus-ingressos');
-              return;
-            }
-            
-            setLocalReservationData(parsed);
-            setStep('existing');
-            return;
-          }
-        } catch (e) {
-          console.error("Erro ao processar reserva salva:", e);
-          // Ignora erro de parse
-        }
-      }
-
-      // Verifica disponibilidade
-      console.log("Verificando disponibilidade");
+      // 2. Verifica disponibilidade de vagas
+      console.log("2. Verificando disponibilidade de vagas...");
       setStep('checking');
       const isAvailable = await checkSpotAvailability();
       console.log("Disponibilidade:", isAvailable);
+      
       if (!isAvailable) {
+        console.log("Não há vagas disponíveis");
         setStep('error');
         return;
       }
+      
+      // 3. Limpa localStorage antigo se existir
+      console.log("3. Limpando dados antigos do localStorage...");
+      localStorage.removeItem('reservationData');
+      localStorage.removeItem('reservationTimestamp');
 
-      // Tenta fazer reserva
-      console.log("Reservando vaga");
+      // 4. Faz nova reserva
+      console.log("4. Fazendo nova reserva...");
       setStep('reserving');
+      
       const response = await reserveSpot();
       if (response) {
-        console.log("Reserva bem-sucedida:", response);
-        setStep('success');
-      } else if (isError) {
-        console.log("Erro na reserva");
-        setStep('error');
-      } else {
-        // Verifica reservas existentes
-        console.log("Verificando reservas existentes");
-        const existingReservation = await fetchUserReservations();
-        if (existingReservation) {
-          console.log("Reserva existente encontrada na API:", existingReservation);
+        console.log("Resposta da reserva:", response);
+        
+        // Se a resposta contém indicadores de reserva já existente no spotId
+        if (response.spotId?.includes('existing') || response.spotId?.includes('fallback') || response.spotId?.includes('409')) {
+          console.log("Reserva já existia");
           setStep('existing');
         } else {
-          console.log("Nenhuma reserva encontrada");
-          setStep('error');
+          console.log("Nova reserva criada com sucesso");
+          setStep('success');
         }
+      } else {
+        console.log("Erro na reserva");
+        setStep('error');
       }
     } catch (error) {
       console.error("Erro no processamento:", error);
@@ -177,134 +150,14 @@ export default function ReservationPage({ params }: ReservationPageProps) {
 
   const handleProceedToCheckout = async () => {
     try {
-      setStep('reserving'); // Mostra loader enquanto processa
+      console.log("Redirecionando para checkout:", eventId);
       
-      console.log("Iniciando processo de compra para o evento:", eventId);
-      
-      // NOVA LÓGICA: Verifica se estamos no estado 'success' (reserva recém-criada)
-      if (step === 'success') {
-        console.log("Reserva recém-criada, usando purchase diretamente...");
-        try {
-          // Chama a API para verificar o status e iniciar o processo de compra
-          const result = await purchaseTicket(eventId);
-          console.log("Resultado da verificação de status:", result);
-          
-          // Se chegou aqui, o status é 'reserved' e pode prosseguir
-          // Verifica se temos dados da reserva para salvar
-          if (localReservationData) {
-            localStorage.setItem('reservationData', JSON.stringify(localReservationData));
-            localStorage.setItem('reservationTimestamp', new Date().toISOString());
-          }
-          
-          // Redireciona para o checkout
-          router.push(`/checkout/${eventId}`);
-          return;
-        } catch (error) {
-          console.error("Erro ao usar purchaseTicket:", error);
-          setStep('error');
-          return;
-        }
-      }
-      
-      // Se não estamos no estado 'success', segue o fluxo original
-      // Verifica se há uma reserva existente para o evento
-      const savedReservation = localStorage.getItem('reservationData');
-      const hasExistingReservation = savedReservation && JSON.parse(savedReservation).eventId === eventId;
-      
-      if (hasExistingReservation) {
-        // Se já existe uma reserva, usa o retry para verificar status e obter tempo restante
-        try {
-          console.log("Reserva existente encontrada, verificando status com retry...");
-          const retryResult = await tryPurchase(eventId);
-          console.log("Resultado da verificação com retry:", retryResult);
-          
-          if (retryResult) {
-            // Verifica o status da reserva para tomar a ação adequada
-            if (retryResult.status === "waiting") {
-              setStep('waiting');
-              return;
-            } else if (retryResult.status === "expired" || retryResult.status === "cancelled") {
-              setStep('cancelled');
-              return;
-            } else if (retryResult.status === "pago") {
-              router.push('/meus-ingressos');
-              return;
-            } else if (retryResult.status === "reserved" && retryResult.remainingMinutes) {
-              // Se a reserva ainda é válida e temos o tempo restante, salvamos os dados
-              console.log(`Reserva válida. Tempo restante: ${retryResult.remainingMinutes} minutos`);
-              
-              // Se temos os dados da reserva local, os atualizamos com as informações mais recentes
-              if (localReservationData) {
-                const updatedReservationData = {
-                  ...localReservationData,
-                  status: retryResult.status,
-                  // Se a API retornar um ID, usamos ele
-                  id: retryResult.id || localReservationData.id,
-                  // Se a API retornar um preço, usamos ele
-                  price: retryResult.price || localReservationData.price
-                };
-                
-                localStorage.setItem('reservationData', JSON.stringify(updatedReservationData));
-              }
-              
-              // Redireciona para o checkout
-              router.push(`/checkout/${eventId}`);
-              return;
-            }
-          }
-        } catch (retryError) {
-          console.error("Erro ao usar retryPurchase:", retryError);
-        }
-      } else {
-        // Se não existe reserva, usa o purchase para criar uma nova
-        try {
-          console.log("Nenhuma reserva existente encontrada, usando purchase...");
-          // Chama a API para verificar o status e iniciar o processo de compra
-          const result = await purchaseTicket(eventId);
-          console.log("Resultado da verificação de status:", result);
-          
-          // Verifica o status da reserva para tomar a ação adequada
-          if (typeof result === 'string') {
-            // Se o resultado for uma string, é o status diretamente
-            if (result === 'waiting') {
-              // Mostra componente da lista de espera
-              setStep('waiting');
-              return;
-            } else if (result === 'cancelled' || result === 'expired') {
-              // Mostra componente de reserva cancelada/expirada
-              setStep('cancelled');
-              return;
-            } else if (result === 'pago') {
-              // Redireciona para página de ingressos
-              router.push('/meus-ingressos');
-              return;
-            }
-          } else if (result && result.status) {
-            // Se for objeto, verifica a propriedade status
-            if (result.status === 'waiting') {
-              setStep('waiting');
-              return;
-            } else if (result.status === 'cancelled' || result.status === 'expired') {
-              setStep('cancelled');
-              return;
-            } else if (result.status === 'pago') {
-              router.push('/meus-ingressos');
-              return;
-            }
-          }
-        } catch (purchaseError) {
-          console.error("Erro ao usar purchaseTicket:", purchaseError);
-        }
-      }
-      
-      // Se chegou aqui, o status é 'available' ou 'reserved' e pode prosseguir
-      // Salva os dados da reserva no localStorage para que o checkout possa acessá-los
+      // Salva os dados da reserva no localStorage
       if (localReservationData) {
         localStorage.setItem('reservationData', JSON.stringify(localReservationData));
         localStorage.setItem('reservationTimestamp', new Date().toISOString());
       }
       
-      // Redireciona para o checkout com suporte a PIX e timer
       router.push(`/checkout/${eventId}`);
     } catch (error) {
       console.error("Erro ao processar compra:", error);
@@ -313,7 +166,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
   };
 
   const handleTryAgain = () => {
-    processingRef.current = false; // Reseta o flag para permitir novo processamento
+    processingRef.current = false;
     processReservation();
   };
 
@@ -354,20 +207,6 @@ export default function ReservationPage({ params }: ReservationPageProps) {
             </Button>
           </div>
         );
-      
-      case 'cancelled':
-        return (
-          <div className="flex flex-col items-center justify-center py-12 px-4">
-            <XCircle className="w-16 h-16 text-destructive mb-6" />
-            <h2 className="text-2xl font-semibold mb-3 text-center">Sua reserva foi cancelada ou expirou</h2>
-            <p className="text-muted-foreground text-center mb-8 max-w-xs">
-              Sua última tentativa de reserva foi cancelada ou expirou. Para tentar novamente, clique no botão abaixo e realize uma nova reserva para este evento.
-            </p>
-            <Button size="lg" className="w-full max-w-xs" onClick={handleTryAgain}>
-              Fazer nova reserva
-            </Button>
-          </div>
-        );
 
       case 'success':
         return (
@@ -401,14 +240,18 @@ export default function ReservationPage({ params }: ReservationPageProps) {
         return (
           <div className="flex flex-col items-center justify-center py-12 px-4">
             <XCircle className="w-16 h-16 text-destructive mb-6" />
-            <h2 className="text-2xl font-semibold mb-3 text-center">Erro na reserva</h2>
+            <h2 className="text-2xl font-semibold mb-3 text-center">
+              {isWaitingList ? 'Lista de espera' : 'Vagas já preenchidas'}
+            </h2>
             <p className="text-muted-foreground text-center mb-6 max-w-xs">
               {isWaitingList 
                 ? 'Não há mais vagas disponíveis para este evento. Você entrou para a lista de espera.'
-                : errorMessage || 'Ocorreu um erro ao processar sua reserva. Por favor, tente novamente.'}
+                : 'Infelizmente todas as vagas para este evento já foram preenchidas. Tente novamente mais tarde ou entre em contato conosco.'}
             </p>
             {!isWaitingList && (
-              <Button size="lg" className="w-full max-w-xs" onClick={handleTryAgain}>Tentar novamente</Button>
+              <Button size="lg" className="w-full max-w-xs" onClick={handleTryAgain}>
+                Tentar novamente
+              </Button>
             )}
             {isWaitingList && (
               <Alert className="mt-4">

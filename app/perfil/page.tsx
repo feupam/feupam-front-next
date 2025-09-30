@@ -17,6 +17,14 @@ export default function ProfilePage() {
   const { reservations, loading: reservationsLoading, error: reservationsError, refetch } = useUserReservations();
   const router = useRouter();
 
+  // Loading geral - mostra loading se qualquer um estiver carregando
+  const isLoading = profileLoading || reservationsLoading;
+
+  console.log('[ProfilePage] profileLoading:', profileLoading);
+  console.log('[ProfilePage] reservationsLoading:', reservationsLoading);
+  console.log('[ProfilePage] isLoading:', isLoading);
+  console.log('[ProfilePage] reservations:', reservations);
+
   const handleEditProfile = () => {
     router.push('/formulario');
   };
@@ -32,14 +40,19 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      {profileLoading ? (
-        <LoadingCard text="Carregando perfil..." />
-      ) : profileError ? (
+      {isLoading ? (
+        <LoadingCard text="Carregando dados do perfil e reservas..." />
+      ) : (profileError || reservationsError) ? (
         <div className="flex min-h-screen items-center justify-center p-4">
           <Card className="p-6 max-w-md w-full">
-            <h2 className="text-lg font-semibold text-red-600">Erro ao carregar perfil</h2>
-            <p className="mt-2 text-muted-foreground">{profileError}</p>
-            <Button onClick={() => router.refresh()} className="mt-4 w-full">
+            <h2 className="text-lg font-semibold text-red-600">Erro ao carregar dados</h2>
+            <p className="mt-2 text-muted-foreground">
+              {profileError || reservationsError}
+            </p>
+            <Button onClick={() => {
+              router.refresh();
+              refetch();
+            }} className="mt-4 w-full">
               Tentar novamente
             </Button>
           </Card>

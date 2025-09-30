@@ -1,6 +1,7 @@
 ### Base URL
 @base_url=https://api-s3go7ufjia-uc.a.run.app
 @eventId=federa
+@eventName=FederaLideres
 @token=eyJhbGciOiJSUzI1NiIsImtpZCI6IjNmOWEwNTBkYzRhZTgyOGMyODcxYzMyNTYzYzk5ZDUwMjc3ODRiZTUiLCJ0eXAiOiJKV1QifQ.eyJuYW1lIjoiSWdyZWphIFByZXNiaXRlcmlhbmEgSW5kZXBlbmRlbnRlIiwicGljdHVyZSI6Imh0dHBzOi8vbGgzLmdvb2dsZXVzZXJjb250ZW50LmNvbS9hL0FDZzhvY0k4b0RRWFJFdHQ5OTJEQmNqbTVfQVZOajZ0cDNrRFFUTVIzZldwWFhSRnhIX2hVVlU9czk2LWMiLCJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vZmVkZXJhLWFwaSIsImF1ZCI6ImZlZGVyYS1hcGkiLCJhdXRoX3RpbWUiOjE3NDY2NDE0NzgsInVzZXJfaWQiOiJoYTlBMWpMVFI2ZXNzYXkzMFBvRjlFa2xGS28yIiwic3ViIjoiaGE5QTFqTFRSNmVzc2F5MzBQb0Y5RWtsRktvMiIsImlhdCI6MTc0NjY0NTY3MSwiZXhwIjoxNzQ2NjQ5MjcxLCJlbWFpbCI6ImlwaWNhcm1vcmlvY2xhcm9AZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsiZ29vZ2xlLmNvbSI6WyIxMDI0NzI3Mjg0MjY5OTk4MzI0NzgiXSwiZW1haWwiOlsiaXBpY2FybW9yaW9jbGFyb0BnbWFpbC5jb20iXX0sInNpZ25faW5fcHJvdmlkZXIiOiJnb29nbGUuY29tIn19.K5b3IzfXUenumW_K3sOV8bPszE1I3iOyoZKr51Vq5ZnYNk4Ax0YtsYqBtqmSF0E3oQGmtdgboYlcS6RRCxB6jDPVU-na-jxc-NwvJ4XnjG-Am8xN7vyNG9YD1_kYfNoNwyHIJHWgptG6HnAxNm1E6E7dq8YFPrAAF3AG5ZPOMUPJRjHgNfRpuDoCS-kqURjHyqI3gLudts7MMzJjAol20IPzZEhPu_D1UCCdgys4tlO5vvPh8Wd1KXFWnBbqh-6qLv0SYZC26s41Hg-Jyiw8vhcV_L5TjHwrIZjzlgWBywyP-yIIMZAg19J6pNs90DDWWbz0W8tZ1amFDopALLo_8Q
 
 ### Chamada POST para a API payPaymentsPagarme
@@ -13,7 +14,7 @@ Authorization: Bearer {{token}}
     "items": [
         {
             "amount": 87380,
-            "description": "federa"
+            "description": "{{eventName}}"
         }
     ],
     "customer": {

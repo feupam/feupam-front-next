@@ -92,6 +92,7 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
   // Função para definir evento atual diretamente com os dados
   const setCurrentEventFromData = useCallback((eventData: any) => {
     console.log('[CurrentEventContext] Definindo evento a partir de dados:', eventData);
+    console.log('[CurrentEventContext] eventData.price:', eventData.price, 'Type:', typeof eventData.price);
     
     const event: Event = {
       uuid: String(eventData.id),
@@ -100,7 +101,7 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
       description: eventData.description || '',
       date: eventData.date,
       maxGeneralSpots: '0',
-      price: 0,
+      price: Number(eventData.price) || 0,
       endDate: eventData.endDate,
       startDate: eventData.startDate,
       eventType: 'gender_specific' as const,

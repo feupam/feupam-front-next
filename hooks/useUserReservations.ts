@@ -1,10 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { users } from '@/services/api';
+import { api } from '@/lib/api';
 
 export interface UserReservation {
-  charges: Array<{
+  id: string;
+  email: string;
+  eventId: string;
+  gender: string;
+  status: string;
+  createdAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+  expiresAt: {
+    _seconds: number;
+    _nanoseconds: number;
+  };
+  position: number;
+  // Campos opcionais para compatibilidade
+  price?: number;
+  spotId?: string;
+  ticketKind?: string;
+  userType?: string;
+  charges?: Array<{
     amount: number;
     chargeId: string;
     email: string;
@@ -16,15 +35,6 @@ export interface UserReservation {
     qrcodePix: string;
     status: string;
   }>;
-  email: string;
-  eventId: string;
-  gender: string;
-  price: number;
-  spotId: string;
-  status: string;
-  ticketKind: string;
-  updatedAt: any;
-  userType: string;
 }
 
 interface UseUserReservationsReturn {
@@ -39,75 +49,48 @@ export function useUserReservations(): UseUserReservationsReturn {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  console.log('[useUserReservations] Hook inicializado - Estado inicial:', {
+    reservations: reservations.length,
+    loading,
+    error
+  });
+
   const fetchReservations = async () => {
     try {
       console.log('[useUserReservations] Iniciando busca de reservas...');
       setLoading(true);
       setError(null);
       
-      // Para desenvolvimento/teste, usar dados mockados se não estiver autenticado
-      if (process.env.NODE_ENV === 'development') {
-        try {
-          const data = await users.getReservations();
-          console.log('[useUserReservations] Dados recebidos da API:', data);
-          setReservations(data || []);
-        } catch (apiError: any) {
-          // Se a API falhar (usuário não autenticado), usar dados mockados
-          console.log('[useUserReservations] API falhou, usando dados mockados para desenvolvimento');
-          const mockData = [
-            {
-              charges: [{
-                amount: 36500,
-                chargeId: "ch_n5VygLGiei8r6bWo",
-                email: "test@test.com",
-                envioWhatsapp: false,
-                event: "federa",
-                lote: 0,
-                meio: "pix",
-                payLink: "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/20dc5196-0e2a-4b58-afad-a8ca3807932c5204000053039865406365.005802BR5925PRESBITERIO VALE DO RIO G6014RIO DE JANEIRO6229052592afd6f91d7c032f8be5536c66304323E",
-                qrcodePix: "https://api.pagar.me/core/v5/transactions/tran_7MoWA9PtKt3Laxe4/qrcode?payment_method=pix",
-                status: "Pago"
-              }],
-              email: "test@test.com",
-              eventId: "federa",
-              gender: "male",
-              price: 36500,
-              spotId: "h25JtbI4iSbIvtAeKkoB",
-              status: "Pago",
-              ticketKind: "full",
-              updatedAt: new Date(),
-              userType: "client"
-            },
-            {
-              charges: [{
-                amount: 25000,
-                chargeId: "ch_pendente123",
-                email: "test@test.com",
-                envioWhatsapp: false,
-                event: "evento2",
-                lote: 1,
-                meio: "credit_card",
-                payLink: "",
-                qrcodePix: "",
-                status: "Pendente"
-              }],
-              email: "test@test.com",
-              eventId: "evento2",
-              gender: "female",
-              price: 25000,
-              spotId: "spot123",
-              status: "Pendente",
-              ticketKind: "day",
-              updatedAt: new Date(),
-              userType: "client"
-            }
-          ];
-          setReservations(mockData);
-        }
+      // Sempre usar a API real (externa)
+      const data = await api.users.getReservations();
+      console.log('[useUserReservations] Dados recebidos da API externa:', data);
+      console.log('[useUserReservations] Tipo dos dados:', typeof data);
+      console.log('[useUserReservations] É array?', Array.isArray(data));
+      console.log('[useUserReservations] Quantidade de itens:', data?.length);
+      
+      if (data && Array.isArray(data)) {
+        // Processar dados da API externa para formato compatível
+        const processedReservations = data.map((reservation: any) => {
+          console.log('[useUserReservations] Processando reserva:', reservation);
+          
+          return {
+            ...reservation,
+            // Garantir campos obrigatórios
+            spotId: reservation.id || reservation.spotId,
+            ticketKind: reservation.ticketKind || 'full',
+            userType: reservation.userType || 'client',
+            // Converter timestamp para compatibilidade
+            updatedAt: reservation.createdAt || reservation.updatedAt,
+            // Price pode não vir da API de reservas, será buscado do evento
+            price: reservation.price || undefined
+          };
+        });
+        
+        console.log('[useUserReservations] Reservas processadas:', processedReservations);
+        setReservations(processedReservations);
       } else {
-        const data = await users.getReservations();
-        console.log('[useUserReservations] Dados recebidos:', data);
-        setReservations(data || []);
+        console.log('[useUserReservations] Dados não são um array válido, definindo array vazio');
+        setReservations([]);
       }
     } catch (err: any) {
       console.error('[useUserReservations] Erro ao buscar reservas:', err);

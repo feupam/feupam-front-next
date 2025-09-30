@@ -169,6 +169,11 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
       };
 
       console.log("Dados de pagamento:", paymentData);
+      console.log("Event:", event);
+      console.log("Event.name:", event.name);
+      console.log("SpotId:", spotId);
+      console.log("ReservationData:", reservationData);
+      console.log("ReservationData.spotId:", reservationData?.spotId);
 
       if (onSubmit) {
         await onSubmit(paymentData);

@@ -217,10 +217,6 @@ export function EventManagement() {
 
       const token = await user?.getIdToken();
       
-      // Criar FormData para envio multipart
-      const formData = new FormData();
-      
-      // Adicionar campos na mesma ordem que funciona na requisição HTTP
       // Preparar dados baseado no tipo de evento
       let eventDataToSend = { ...createEventData };
       
@@ -239,17 +235,32 @@ export function EventManagement() {
         // Para eventos por gênero, zera as vagas gerais
         eventDataToSend.maxGeneralSpots = '0';
       }
+      
+      // Criar FormData para envio multipart
+      const formData = new FormData();
+      
+      // Validar e adicionar campos obrigatórios
+      const requiredFields = {
+        name: eventDataToSend.name,
+        date: eventDataToSend.date,
+        location: eventDataToSend.location,
+        description: eventDataToSend.description,
+        eventType: eventDataToSend.eventType,
+        maxClientMale: eventDataToSend.maxClientMale,
+        maxClientFemale: eventDataToSend.maxClientFemale,
+        maxStaffMale: eventDataToSend.maxStaffMale,
+        maxStaffFemale: eventDataToSend.maxStaffFemale,
+        maxGeneralSpots: eventDataToSend.maxGeneralSpots,
+        price: eventDataToSend.price
+      };
 
-      formData.append('name', eventDataToSend.name);
-      formData.append('date', eventDataToSend.date);
-      formData.append('location', eventDataToSend.location);
-      formData.append('description', eventDataToSend.description);
-      formData.append('eventType', eventDataToSend.eventType);
-      formData.append('maxClientMale', eventDataToSend.maxClientMale);
-      formData.append('maxClientFemale', eventDataToSend.maxClientFemale);
-      formData.append('maxStaffMale', eventDataToSend.maxStaffMale);
-      formData.append('maxStaffFemale', eventDataToSend.maxStaffFemale);
-      formData.append('maxGeneralSpots', eventDataToSend.maxGeneralSpots);
+      // Verificar se todos os campos obrigatórios estão presentes
+      for (const [key, value] of Object.entries(requiredFields)) {
+        if (value === undefined || value === null || value === '') {
+          throw new Error(`Campo obrigatório '${key}' está vazio`);
+        }
+        formData.append(key, String(value));
+      }
       
       // Converter datas para o formato correto
       const startDateISO = createEventData.startDate ? formatBrazilianDateTimeToISO(createEventData.startDate) : '2024-08-19T00:00:00Z';
@@ -257,21 +268,37 @@ export function EventManagement() {
       
       formData.append('startDate', startDateISO);
       formData.append('endDate', endDateISO);
-      formData.append('price', createEventData.price);
 
-      // Adicionar imagens (SEMPRE no final)
-      if (imageFiles.image_capa) {
-        formData.append('image_capa', imageFiles.image_capa, imageFiles.image_capa.name);
+      // Validar arquivos antes de adicionar
+      if (!imageFiles.image_capa || !imageFiles.logo_evento) {
+        throw new Error('Imagens são obrigatórias para criação do evento');
       }
-      
-      if (imageFiles.logo_evento) {
-        formData.append('logo_evento', imageFiles.logo_evento, imageFiles.logo_evento.name);
+
+      // Verificar se os arquivos são válidos
+      if (imageFiles.image_capa.size === 0) {
+        throw new Error('Arquivo de imagem de capa está corrompido');
       }
+      if (imageFiles.logo_evento.size === 0) {
+        throw new Error('Arquivo de logo está corrompido');
+      }
+
+      // Adicionar imagens (SEMPRE no final e com nomes específicos)
+      formData.append('image_capa', imageFiles.image_capa, imageFiles.image_capa.name);
+      formData.append('logo_evento', imageFiles.logo_evento, imageFiles.logo_evento.name);
 
       // Log para debug
       console.log('[EventManagement] FormData criado:');
+      console.log('[EventManagement] Campos de texto:');
       for (let [key, value] of formData.entries()) {
-        console.log(`[EventManagement] ${key}:`, value instanceof File ? `File: ${value.name}` : value);
+        if (!(value instanceof File)) {
+          console.log(`  ${key}: ${value}`);
+        }
+      }
+      console.log('[EventManagement] Arquivos:');
+      for (let [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          console.log(`  ${key}: File(${value.name}, ${value.size} bytes, ${value.type})`);
+        }
       }
 
       console.log('[EventManagement] Enviando evento para criação...');
@@ -284,18 +311,29 @@ export function EventManagement() {
       console.log('[EventManagement] URL de destino:', targetUrl);
       console.log('[EventManagement] Token presente:', token ? 'SIM' : 'NÃO');
       
-      // Fazer a requisição diretamente para a API externa
       console.log('[EventManagement] Executando fetch para API externa...');
-      const response = await fetch(targetUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`
-          // Note: Não incluir Content-Type para FormData, o browser define automaticamente
-        },
-        body: formData
-      });
+      
+      let response;
+      try {
+        response = await fetch(targetUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+            // Note: Não incluir Content-Type para FormData, o browser define automaticamente
+          },
+          body: formData
+        });
+      } catch (fetchError) {
+        console.error('[EventManagement] Erro na requisição fetch:', fetchError);
+        throw new Error(`Erro de conexão: ${fetchError instanceof Error ? fetchError.message : 'Falha na rede'}`);
+      }
       
       console.log('[EventManagement] Fetch executado, response recebido:', response.status);
+      
+      // Verificar se a resposta é válida
+      if (!response) {
+        throw new Error('Resposta inválida do servidor');
+      }
 
       if (response.ok) {
         const responseData = await response.json();
@@ -342,8 +380,27 @@ export function EventManagement() {
         });
         setImageErrors({});
       } else {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          const responseText = await response.text();
+          console.log('[EventManagement] Response raw text:', responseText);
+          
+          try {
+            errorData = JSON.parse(responseText);
+          } catch {
+            errorData = { message: responseText, error: 'Parse Error' };
+          }
+        } catch (textError) {
+          console.error('[EventManagement] Erro ao ler resposta:', textError);
+          errorData = { message: 'Erro desconhecido do servidor', error: 'Response Error' };
+        }
+        
         console.error('[EventManagement] Erro na resposta:', errorData);
+        
+        // Tratamento específico para erros de FormData
+        if (errorData.message && errorData.message.includes('Multipart')) {
+          throw new Error('Erro no envio dos arquivos. Verifique se as imagens foram selecionadas corretamente.');
+        }
         
         // Define status de erro
         setSubmitStatus({ 
@@ -418,47 +475,44 @@ export function EventManagement() {
 
       console.log('[EventManagement] Dados após preparação:', eventDataToUpdate);
 
-      // Usar FormData para suportar upload de imagens
-      const formData = new FormData();
-      
-      formData.append('eventId', eventId);
-      formData.append('name', eventDataToUpdate.name);
-      formData.append('date', eventDataToUpdate.date);
-      formData.append('location', eventDataToUpdate.location);
-      formData.append('description', eventDataToUpdate.description);
-      formData.append('eventType', eventDataToUpdate.eventType);
-      formData.append('maxClientMale', eventDataToUpdate.maxClientMale);
-      formData.append('maxClientFemale', eventDataToUpdate.maxClientFemale);
-      formData.append('maxStaffMale', eventDataToUpdate.maxStaffMale);
-      formData.append('maxStaffFemale', eventDataToUpdate.maxStaffFemale);
-      formData.append('maxGeneralSpots', eventDataToUpdate.maxGeneralSpots);
-      
-      // Converter datas para formato ISO
+      // Preparar dados para JSON (API externa espera JSON, não FormData)
+      const updateData: {
+        name: string;
+        date: string;
+        location: string;
+        description: string;
+        eventType: string;
+        maxClientMale: number;
+        maxClientFemale: number;
+        maxStaffMale: number;
+        maxStaffFemale: number;
+        maxGeneralSpots: number;
+        price: number;
+        startDate?: string;
+        endDate?: string;
+      } = {
+        name: eventDataToUpdate.name,
+        date: eventDataToUpdate.date,
+        location: eventDataToUpdate.location,
+        description: eventDataToUpdate.description,
+        eventType: eventDataToUpdate.eventType,
+        maxClientMale: parseInt(eventDataToUpdate.maxClientMale),
+        maxClientFemale: parseInt(eventDataToUpdate.maxClientFemale),
+        maxStaffMale: parseInt(eventDataToUpdate.maxStaffMale),
+        maxStaffFemale: parseInt(eventDataToUpdate.maxStaffFemale),
+        maxGeneralSpots: parseInt(eventDataToUpdate.maxGeneralSpots),
+        price: parseInt(eventDataToUpdate.price)
+      };
+
+      // Adicionar datas se fornecidas
       if (eventDataToUpdate.startDate) {
-        formData.append('startDate', new Date(eventDataToUpdate.startDate).toISOString());
+        updateData.startDate = new Date(eventDataToUpdate.startDate).toISOString();
       }
       if (eventDataToUpdate.endDate) {
-        formData.append('endDate', new Date(eventDataToUpdate.endDate).toISOString());
-      }
-      
-      console.log('[EventManagement] Price antes de adicionar ao FormData:', eventDataToUpdate.price);
-      console.log('[EventManagement] Tipo do price:', typeof eventDataToUpdate.price);
-      formData.append('price', eventDataToUpdate.price);
-
-      // Log do FormData DEPOIS de todos os campos serem adicionados
-      console.log('[EventManagement] FormData preparado:');
-      for (let [key, value] of formData.entries()) {
-        console.log(`  ${key}: ${value}`);
+        updateData.endDate = new Date(eventDataToUpdate.endDate).toISOString();
       }
 
-      // Adicionar imagens se foram selecionadas novas
-      if (updateImageFiles.image_capa) {
-        formData.append('image_capa', updateImageFiles.image_capa, updateImageFiles.image_capa.name);
-      }
-      
-      if (updateImageFiles.logo_evento) {
-        formData.append('logo_evento', updateImageFiles.logo_evento, updateImageFiles.logo_evento.name);
-      }
+      console.log('[EventManagement] Dados JSON preparados:', updateData);
       
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
       const endpoint = `${API_URL}/events/${eventId}`;
@@ -466,50 +520,96 @@ export function EventManagement() {
       console.log('[EventManagement] Enviando PUT para:', endpoint);
       console.log('[EventManagement] EventId:', eventId);
       
+      // Primeiro, atualizar dados básicos do evento (JSON)
       const response = await fetch(endpoint, {
         method: 'PUT',
         headers: {
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
-          // Note: Não incluir Content-Type para FormData, o browser define automaticamente
         },
-        body: formData
+        body: JSON.stringify(updateData)
       });
 
       console.log('[EventManagement] Response status:', response.status);
       
-      if (response.ok) {
-        const responseData = await response.json();
-        console.log('[EventManagement] Response data:', responseData);
-        
-        toast({
-          title: "✅ Sucesso!",
-          description: "Evento atualizado com sucesso!",
-          duration: 5000,
-        });
-        
-        // Atualiza a lista de eventos
-        refetch();
-        
-        // Limpa as imagens selecionadas para upload
-        setUpdateImageFiles({
-          logo_evento: null,
-          image_capa: null
-        });
-        setUpdateImageErrors({});
-        
-        // Recarrega os dados do evento atualizado nos campos
-        setTimeout(() => {
-          handleEventSelection(eventId);
-        }, 500);
-      } else {
+      if (!response.ok) {
         const errorData = await response.text();
         console.error('[EventManagement] Error response:', errorData);
         throw new Error(`Erro ao atualizar evento: ${response.status}`);
       }
+
+      const responseData = await response.json();
+      console.log('[EventManagement] Response data:', responseData);
+
+      // Se há imagens para atualizar, fazer upload separado (se sua API suportar)
+      if (updateImageFiles.logo_evento || updateImageFiles.image_capa) {
+        console.log('[EventManagement] Tentando upload das imagens...');
+        
+        const formData = new FormData();
+        
+        if (updateImageFiles.logo_evento) {
+          formData.append('logo_evento', updateImageFiles.logo_evento, updateImageFiles.logo_evento.name);
+        }
+        
+        if (updateImageFiles.image_capa) {
+          formData.append('image_capa', updateImageFiles.image_capa, updateImageFiles.image_capa.name);
+        }
+
+        // Tentar endpoint de imagens (ajuste conforme sua API)
+        const imageEndpoint = `${API_URL}/events/${eventId}/images`;
+        
+        try {
+          const imageResponse = await fetch(imageEndpoint, {
+            method: 'POST', // ou PUT dependendo da sua API
+            headers: {
+              'Authorization': `Bearer ${token}`
+              // Não incluir Content-Type para FormData
+            },
+            body: formData
+          });
+
+          if (!imageResponse.ok) {
+            console.warn('[EventManagement] Falha no upload das imagens, mas evento foi atualizado');
+            toast({
+              title: "⚠️ Atenção",
+              description: "Evento atualizado, mas falha no upload das imagens",
+              variant: "destructive",
+              duration: 7000,
+            });
+          } else {
+            console.log('[EventManagement] Imagens atualizadas com sucesso');
+          }
+        } catch (imageError) {
+          console.warn('[EventManagement] Erro no upload de imagens:', imageError);
+          // Não quebra o fluxo principal
+        }
+      }
+      
+      toast({
+        title: "✅ Sucesso!",
+        description: "Evento atualizado com sucesso!",
+        duration: 5000,
+      });
+      
+      // Atualiza a lista de eventos
+      refetch();
+      
+      // Limpa as imagens selecionadas para upload
+      setUpdateImageFiles({
+        logo_evento: null,
+        image_capa: null
+      });
+      setUpdateImageErrors({});
+      
+      // Recarrega os dados do evento atualizado nos campos
+      setTimeout(() => {
+        handleEventSelection(eventId);
+      }, 500);
     } catch (error) {
+      console.error('[EventManagement] Erro capturado:', error);
       toast({
         title: "Erro",
-        description: "Erro ao atualizar evento",
+        description: error instanceof Error ? error.message : "Erro ao atualizar evento",
         variant: "destructive",
       });
     } finally {

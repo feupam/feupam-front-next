@@ -10,6 +10,8 @@ import { UserConsultation } from '@/components/admin/UserConsultation';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { isAdmin } from '@/lib/admin';
+import { AlertCircle, Shield } from 'lucide-react';
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -34,6 +36,41 @@ export default function AdminPage() {
 
   if (!user) {
     return null;
+  }
+
+  // Verificar se o usuário tem permissão de admin
+  if (!isAdmin(user)) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mb-4">
+              <AlertCircle className="w-6 h-6 text-red-600 dark:text-red-400" />
+            </div>
+            <CardTitle className="text-red-600 dark:text-red-400">Acesso Negado</CardTitle>
+            <CardDescription>
+              Email inválido para acesso administrativo
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-muted-foreground">
+              Seu email <strong>{user.email}</strong> não tem permissões para acessar esta área.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Entre em contato com os responsáveis se acredita que isso é um erro.
+            </p>
+            <div className="pt-4">
+              <button
+                onClick={() => router.back()}
+                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+              >
+                Voltar
+              </button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

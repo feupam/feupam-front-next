@@ -163,7 +163,10 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
           <div key={index} className="flex-shrink-0 w-[calc(100vw-1rem)] md:w-[calc(100vw-2rem)]">
             <div
               className="relative h-[calc(40vh-1rem)] sm:h-[calc(50vh-1rem)] md:h-[calc(65vh-2rem)] lg:h-[calc(70vh-2rem)] xl:h-[calc(75vh-2rem)] group cursor-pointer"
-              onClick={() => handleMoreInfo(image.event)}
+              onClick={() => {
+                setCurrentEventFromData(image.event);
+                router.push(`/event/${encodeURIComponent(image.event.name)}`);
+              }}
             >
               <img
                 src={image.src}
@@ -173,37 +176,44 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
               />
               {/* Overlay com gradiente */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent rounded-lg" />
-              {/* Informações do evento */}
-              <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-                <div className="max-w-xl">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs md:text-sm text-emerald-200/80">
-                      {new Date(image.event.startDate).getFullYear()}
-                    </span>
-                    <span className="text-xs md:text-sm text-emerald-200/80">•</span>
-                    <span className="text-xs md:text-sm text-emerald-200/80">Evento</span>
+              
+              {/* Informações do evento - só aparecem se NÃO houver imagem */}
+              {!image.event.image_capa && (
+                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
+                  <div className="max-w-xl">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-xs md:text-sm text-emerald-200/80">
+                        {new Date(image.event.startDate).getFullYear()}
+                      </span>
+                      <span className="text-xs md:text-sm text-emerald-200/80">•</span>
+                      <span className="text-xs md:text-sm text-emerald-200/80">Evento</span>
+                    </div>
+                    <h2 className="text-lg md:text-2xl font-bold mb-2 text-emerald-100 line-clamp-2">
+                      {image.event.name}
+                    </h2>
+                    <p className="text-xs md:text-sm text-emerald-200/90 mb-4 line-clamp-2">
+                      {image.event.description}
+                    </p>
                   </div>
-                  <h2 className="text-lg md:text-2xl font-bold mb-2 text-emerald-100 line-clamp-2">
-                    {image.event.name}
-                  </h2>
-                  <p className="text-xs md:text-sm text-emerald-200/90 mb-4 line-clamp-2">
-                    {image.event.description}
-                  </p>
-                  {/* Botão Saiba Mais */}
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="bg-black/50 backdrop-blur-sm border-emerald-400 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100 transition-all duration-300"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleMoreInfo(image.event);
-                    }}
-                  >
-                    <Info className="h-3 w-3 md:h-4 md:w-4 mr-2" />
-                    Saiba mais
-                  </Button>
                 </div>
+              )}
+              
+              {/* Botão Saiba Mais - sempre aparece */}
+              <div className="absolute bottom-4 right-4 md:bottom-6 md:right-6">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="bg-black/50 backdrop-blur-sm border-emerald-400 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100 transition-all duration-300"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setCurrentEventFromData(image.event);
+                    router.push(`/event/${encodeURIComponent(image.event.name)}`);
+                  }}
+                >
+                  <Info className="h-3 w-3 md:h-4 md:w-4 mr-2" />
+                  Saiba mais
+                </Button>
               </div>
             </div>
           </div>

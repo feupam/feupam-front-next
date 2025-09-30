@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from '@/components/UserMenu';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { useTheme } from 'next-themes';
+import { isAdmin } from '@/lib/admin';
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -17,6 +18,9 @@ export default function Header() {
   const pathname = usePathname();
   const { user } = useAuth();
   const { currentEvent } = useCurrentEventContext();
+
+  // Função para verificar se o usuário é admin
+  const userIsAdmin = isAdmin(user);
 
   // Evita problemas de hidratação
   useEffect(() => {
@@ -29,7 +33,7 @@ export default function Header() {
   }, [currentEvent]);
 
   const navigation = [
-    { name: 'Admin', href: '/admin', icon: Shield },
+    ...(userIsAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
     { name: 'Home', href: '/home', icon: Home },
     { name: currentEvent?.name || 'Evento', href: currentEvent ? `/event/${encodeURIComponent(currentEvent.name)}` : '/home', icon: Ticket },
     { name: 'Perfil', href: '/perfil' },

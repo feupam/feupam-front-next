@@ -11,6 +11,7 @@ import { api } from '@/lib/api';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { NotificationToast, NotificationToastRef } from '@/components/notifications/notification-toast';
+import { formatEventPrice } from '@/lib/event-prices';
 
 interface Reservation {
   id: string;
@@ -289,13 +290,7 @@ export default function MyTicketsPage() {
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-muted-foreground">Valor:</span>
                             <span className="text-sm font-medium">
-                              {(() => {
-                                console.log('[MyTickets] Rendering price for reservation:', reservation.id, 'price:', reservation.price);
-                                if (!reservation.price || reservation.price === 0) {
-                                  return 'Gratuito';
-                                }
-                                return formatCurrency(reservation.price / 100);
-                              })()}
+                              {formatEventPrice(reservation.price || event.price, reservation.eventId)}
                             </span>
                           </div>
                           {reservation.updatedAt && (

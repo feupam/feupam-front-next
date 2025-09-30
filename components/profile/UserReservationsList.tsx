@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import type { UserReservation } from '@/hooks/useUserReservations';
 import { useLoading } from '@/contexts/LoadingContext';
+import { formatEventPrice } from '@/lib/event-prices';
 
 interface UserReservationsListProps {
   reservations: UserReservation[];
@@ -78,15 +79,10 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
     }
   };
 
-  const formatPrice = (price: number | undefined) => {
-    console.log('[UserReservationsList] formatPrice called with:', price, 'type:', typeof price);
-    if (price === undefined || price === null || isNaN(price) || price === 0) {
-      return 'Gratuito';
-    }
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(price / 100);
+  // Using centralized price formatting utility
+  const formatPrice = (price: number | undefined, eventId?: string) => {
+    console.log('[UserReservationsList] formatPrice called with:', price, 'type:', typeof price, 'eventId:', eventId);
+    return formatEventPrice(price, eventId);
   };
 
   const formatDate = (timestamp: any) => {
@@ -230,7 +226,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                       </CardTitle>
                       <div className="flex items-center justify-between mt-2">
                         <span className="font-semibold text-lg">
-                          {formatPrice(reservation.price)}
+                          {formatPrice(reservation.price, reservation.eventId)}
                         </span>
                         <span className="text-sm text-gray-500">
                           {formatDate(reservation.createdAt)}
@@ -289,7 +285,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <span className="text-gray-600">Valor:</span>
-                          <p className="font-semibold">{formatPrice(mainCharge.amount)}</p>
+                          <p className="font-semibold">{formatPrice(mainCharge.amount, reservation.eventId)}</p>
                         </div>
                         <div>
                           <span className="text-gray-600">Método:</span>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
+import { getEventPrice } from '@/lib/event-prices';
 
 export interface UserReservation {
   id: string;
@@ -73,6 +74,9 @@ export function useUserReservations(): UseUserReservationsReturn {
         const processedReservations = data.map((reservation: any) => {
           console.log('[useUserReservations] Processando reserva:', reservation);
           
+          // Para eventos conhecidos, definir preço baseado no eventId
+          const knownPrice = getEventPrice(reservation.eventId);
+          
           return {
             ...reservation,
             // Garantir campos obrigatórios
@@ -81,8 +85,8 @@ export function useUserReservations(): UseUserReservationsReturn {
             userType: reservation.userType || 'client',
             // Converter timestamp para compatibilidade
             updatedAt: reservation.createdAt || reservation.updatedAt,
-            // Price pode não vir da API de reservas, será buscado do evento
-            price: reservation.price || undefined
+            // Usar preço da reserva se disponível, senão usar preço conhecido, senão undefined
+            price: reservation.price || knownPrice
           };
         });
         

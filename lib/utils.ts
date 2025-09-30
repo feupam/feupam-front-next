@@ -85,20 +85,55 @@ export function formatTime(dateStr: string): string {
 
 export function formatDateTime(dateStr: string): { date: string; time: string } {
   try {
-    const date = new Date(dateStr);
+    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
+    let dateToFormat: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      // Para strings no formato YYYY-MM-DD, cria a data como horário local
+      const [year, month, day] = dateStr.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      dateToFormat = new Date(dateStr);
+    }
+    
     return {
       date: new Intl.DateTimeFormat('pt-BR', {
         day: '2-digit',
         month: '2-digit',
         year: 'numeric'
-      }).format(date),
+      }).format(dateToFormat),
       time: new Intl.DateTimeFormat('pt-BR', {
         hour: '2-digit',
         minute: '2-digit'
-      }).format(date)
+      }).format(dateToFormat)
     };
   } catch {
     return { date: 'A definir', time: 'A definir' };
+  }
+}
+
+// Função para formato longo com horário: "23 de janeiro de 2026 às 21:00"
+export function formatLongDateTime(dateStr: string): string {
+  try {
+    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
+    let dateToFormat: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      // Para strings no formato YYYY-MM-DD, cria a data como horário local
+      const [year, month, day] = dateStr.split('-');
+      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      dateToFormat = new Date(dateStr);
+    }
+    
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'America/Sao_Paulo'
+    }).format(dateToFormat).replace(' ', ' às ');
+  } catch {
+    return 'A definir';
   }
 }
 

@@ -13,7 +13,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, index = 0 }: EventCardProps) {
-  const { date, time } = formatDateTime(event.startDate);
+  const { date, time } = formatDateTime(event.date || event.startDate);
   
   return (
     <motion.div

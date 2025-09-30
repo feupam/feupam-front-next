@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { NotificationToast, NotificationToastRef } from '@/components/notifications/notification-toast';
 
@@ -230,11 +230,19 @@ export default function MyTicketsPage() {
                           <div className="flex items-center mt-1">
                             <Calendar className="h-3 w-3 mr-1 opacity-70" />
                             <span className="text-xs">
-                              {new Date(event.date).toLocaleDateString('pt-BR', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                              })}
+                              {(() => {
+                                // Usar formatDate para corrigir timezone, depois converter para formato longo
+                                const formattedDate = formatDate(event.date); // DD/MM/AAAA
+                                if (formattedDate === 'A definir') return formattedDate;
+                                
+                                // Converter DD/MM/AAAA para formato longo em português
+                                const [day, month, year] = formattedDate.split('/');
+                                const monthNames = [
+                                  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+                                  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+                                ];
+                                return `${parseInt(day)} de ${monthNames[parseInt(month) - 1]} de ${year}`;
+                              })()}
                             </span>
                           </div>
                           <div className="flex items-center mt-1">

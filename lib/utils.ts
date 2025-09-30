@@ -14,6 +14,31 @@ export function formatCurrency(value: number, currency: string = 'BRL'): string 
   }).format(value);
 }
 
+// Função para verificar se um evento já passou
+export function isEventExpired(eventDate: string): boolean {
+  try {
+    let eventDateObj: Date;
+    
+    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
+    if (/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
+      const [year, month, day] = eventDate.split('-');
+      eventDateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
+    } else {
+      eventDateObj = new Date(eventDate);
+    }
+    
+    // Compara com a data atual (apenas o dia, sem horário)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Remove horário para comparar apenas datas
+    
+    eventDateObj.setHours(0, 0, 0, 0); // Remove horário do evento também
+    
+    return eventDateObj < today;
+  } catch {
+    return false; // Em caso de erro, não filtra o evento
+  }
+}
+
 // Funções de formatação de data e hora padronizadas
 export function formatDate(dateStr: string): string {
   try {

@@ -7,6 +7,7 @@ import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import { isEventExpired, formatDate } from '@/lib/utils'
 
 interface CarouselImage {
   src: string
@@ -115,8 +116,15 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
     return null
   }
 
-  // Converte os eventos para o formato CarouselImage
-  const images: CarouselImage[] = events.map(event => ({
+  // Filtrar eventos que já passaram
+  const activeEvents = events.filter(event => !isEventExpired(event.date || event.startDate));
+  
+  if (activeEvents.length === 0) {
+    return null
+  }
+
+  // Converte os eventos ativos para o formato CarouselImage
+  const images: CarouselImage[] = activeEvents.map(event => ({
     src: event.image_capa || "/placeholder.svg",
     alt: event.name,
     event: event
@@ -183,7 +191,10 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
                   <div className="max-w-xl">
                     <div className="flex items-center gap-2 mb-2">
                       <span className="text-xs md:text-sm text-emerald-200/80">
-                        {new Date(image.event.startDate).getFullYear()}
+                        {(() => {
+                          const eventDate = image.event.date || image.event.startDate;
+                          return new Date(eventDate).getFullYear();
+                        })()}
                       </span>
                       <span className="text-xs md:text-sm text-emerald-200/80">•</span>
                       <span className="text-xs md:text-sm text-emerald-200/80">Evento</span>

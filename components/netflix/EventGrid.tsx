@@ -6,6 +6,7 @@ import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
 import { useLoading } from '@/contexts/LoadingContext'
+import { isEventExpired, formatDate } from '@/lib/utils'
 
 interface EventGridProps {
   events: EventData[]
@@ -62,12 +63,29 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     return null
   }
 
+  // Filtrar eventos que já passaram
+  const activeEvents = events.filter(event => !isEventExpired(event.date || event.startDate));
+  
+  if (activeEvents.length === 0) {
+    return (
+      <section className="px-4 pb-12">
+        <div className="container mx-auto">
+          <h2 className="text-xl md:text-2xl font-bold mb-4 text-left text-white">Eventos Disponíveis</h2>
+          <div className="text-center py-8 text-white/70">
+            <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <p>Nenhum evento ativo no momento</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="px-4 pb-12">
       <div className="container mx-auto">
         <h2 className="text-xl md:text-2xl font-bold mb-4 text-left text-white">Eventos Disponíveis</h2>
         <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
-          {events.map((event, index) => (
+          {activeEvents.map((event, index) => (
             <div 
               key={event.id} 
               className={`group overflow-hidden hover:scale-105 transition-transform duration-300 cursor-pointer ${
@@ -104,7 +122,7 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
                         {event.name}
                       </h3>
                       <p className="text-xs text-emerald-300 mt-1">
-                        {new Date(event.startDate).toLocaleDateString('pt-BR')}
+                        {formatDate(event.date || event.startDate)}
                       </p>
                     </div>
                   </div>

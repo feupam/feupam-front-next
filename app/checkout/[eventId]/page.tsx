@@ -532,19 +532,15 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       
       // Garante que usamos o valor correto para o pagamento
       const eventPrice = currentEvent?.price || 0;
-      const reservationPrice = reservationData.price || 0;
-      const installmentPrice = installmentOptions.length > 0 ? installmentOptions[0].valueInCents : 0;
       
       console.log('[PIX Payment] Debug valores:');
-      console.log('- eventPrice:', eventPrice);
-      console.log('- reservationPrice:', reservationPrice);
-      console.log('- installmentPrice:', installmentPrice);
+      console.log('- eventPrice (valor correto para PIX):', eventPrice);
       console.log('- currentEvent:', currentEvent);
       
-      // Usar o preço do evento (que é o valor real) sempre
-      const valueToUse = eventPrice > 0 ? eventPrice : installmentPrice;
+      // Para PIX, sempre usar o preço exato do evento
+      const valueToUse = eventPrice;
       
-      console.log('[PIX Payment] Valor final calculado:', valueToUse);
+      console.log('[PIX Payment] Valor final para PIX:', valueToUse);
       
       if (valueToUse <= 0) {
         throw new Error('Valor do pagamento inválido: ' + valueToUse);
@@ -914,9 +910,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                         <div className="flex justify-between items-center font-medium mt-2">
                           <span className="text-blue-800 dark:text-blue-400">Valor total:</span>
                           <span className="text-lg text-blue-800 dark:text-blue-300">
-                            {installmentOptions.length > 0 
-                              ? formatCurrency(installmentOptions[0].valueInCents / 100) 
-                              : formatCurrency(currentEvent.price / 100)}
+                            {formatCurrency(currentEvent.price / 100)}
                           </span>
                         </div>
                       </div>

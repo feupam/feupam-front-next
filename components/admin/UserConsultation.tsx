@@ -293,11 +293,37 @@ export function UserConsultation() {
   useEffect(() => {
     const loadAvailableEvents = async () => {
       try {
-        // Você pode implementar uma API para listar eventos ou usar uma lista fixa
-        const events = ['federa', 'federaoficial', 'FederaKidis', 'Evangelismo'];
-        setAvailableEvents(events);
+        const token = await getCurrentToken();
+        if (!token) {
+          console.error('Token de autenticação não encontrado');
+          return;
+        }
+
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/events`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro na requisição: ${response.status}`);
+        }
+
+        const data = await response.json();
+        console.log('Eventos carregados da API:', data);
+        
+        // Extrair os IDs/nomes dos eventos da resposta da API
+        const eventIds = data.events ? data.events.map((event: any) => event.id || event.name) : [];
+        setAvailableEvents(eventIds);
+        
       } catch (error) {
-        console.error('Erro ao carregar eventos:', error);
+        console.error('Erro ao carregar eventos da API externa:', error);
+        toast({
+          title: 'Erro',
+          description: 'Erro ao carregar lista de eventos',
+          variant: 'destructive',
+        });
       }
     };
 

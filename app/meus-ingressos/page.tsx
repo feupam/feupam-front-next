@@ -267,9 +267,14 @@ export default function MyTicketsPage() {
                         {/* Status do pagamento */}
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
                           <div className="flex items-center">
-                            {reservation.status === 'Pago' || reservation.price === 0 ? (
+                            {event.price === 0 ? (
+                              // Evento gratuito - ícone verde com check
+                              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                            ) : reservation.status === 'Pago' ? (
+                              // Evento pago e pago - ícone verde com check
                               <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
                             ) : (
+                              // Evento pago mas pendente - ícone laranja com X
                               <XCircle className="h-5 w-5 text-orange-500 mr-2" />
                             )}
                             <div>

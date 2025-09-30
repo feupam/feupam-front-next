@@ -1,68 +1,48 @@
 'use client';
 
 import { UserReservationsList } from '@/components/profile/UserReservationsList';
-
-// Dados mockados para teste
-const mockReservations = [
-  {
-    charges: [{
-      amount: 36500,
-      chargeId: "ch_n5VygLGiei8r6bWo",
-      email: "test@test.com",
-      envioWhatsapp: false,
-      event: "federa",
-      lote: 0,
-      meio: "pix",
-      payLink: "00020101021226820014br.gov.bcb.pix2560pix.stone.com.br/pix/v2/20dc5196-0e2a-4b58-afad-a8ca3807932c5204000053039865406365.005802BR5925PRESBITERIO VALE DO RIO G6014RIO DE JANEIRO6229052592afd6f91d7c032f8be5536c66304323E",
-      qrcodePix: "https://api.pagar.me/core/v5/transactions/tran_7MoWA9PtKt3Laxe4/qrcode?payment_method=pix",
-      status: "Pago"
-    }],
-    email: "test@test.com",
-    eventId: "federa",
-    gender: "male",
-    price: 36500,
-    spotId: "h25JtbI4iSbIvtAeKkoB",
-    status: "Pago",
-    ticketKind: "full",
-    updatedAt: new Date(),
-    userType: "client"
-  },
-  {
-    charges: [{
-      amount: 25000,
-      chargeId: "ch_pendente123",
-      email: "test@test.com",
-      envioWhatsapp: false,
-      event: "evento2",
-      lote: 1,
-      meio: "credit_card",
-      payLink: "",
-      qrcodePix: "",
-      status: "Pendente"
-    }],
-    email: "test@test.com",
-    eventId: "evento2",
-    gender: "female",
-    price: 25000,
-    spotId: "spot123",
-    status: "Pendente",
-    ticketKind: "day",
-    updatedAt: new Date(),
-    userType: "client"
-  }
-];
+import { useUserReservations } from '@/hooks/useUserReservations';
+import { useAuth } from '@/contexts/AuthContext';
+import { useEffect } from 'react';
 
 export default function TestReservationsPage() {
+  const { user } = useAuth();
+  const { reservations, loading, error, refetch } = useUserReservations();
+
+  useEffect(() => {
+    console.log('[TestReservationsPage] User:', user);
+    console.log('[TestReservationsPage] Reservations:', reservations);
+    console.log('[TestReservationsPage] Loading:', loading);
+    console.log('[TestReservationsPage] Error:', error);
+  }, [user, reservations, loading, error]);
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background p-4 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Acesso Negado</h1>
+          <p className="text-muted-foreground">Você precisa estar logado para ver esta página.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="max-w-4xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Teste - Lista de Reservas</h1>
+        <h1 className="text-2xl font-bold mb-6">Teste - Lista de Reservas (API Externa)</h1>
+        <p className="text-muted-foreground mb-4">
+          Dados vindos da API: {process.env.NEXT_PUBLIC_API_URL}
+        </p>
+        <p className="text-sm text-muted-foreground mb-6">
+          Endpoint: GET /users/reservations
+        </p>
         
         <UserReservationsList
-          reservations={mockReservations}
-          loading={false}
-          error={null}
-          onRefetch={() => console.log('Refetch triggered')}
+          reservations={reservations}
+          loading={loading}
+          error={error}
+          onRefetch={refetch}
         />
       </div>
     </div>

@@ -93,10 +93,14 @@ export default function FormularioInscricaoPage() {
       cellphone: mainPhone.phone, // Número sem DDD
       ddd_responsavel: responsavelPhone.ddd || '', // DDD do responsável
       cellphone_responsavel: responsavelPhone.phone || '', // Número do responsável sem DDD
-      documento_responsavel: values.documento_responsavel || '',
+      // Limpa máscaras de CPF e documento do responsável antes de enviar ao backend
+      cpf: values.cpf ? values.cpf.replace(/\D/g, '') : '',
+      documento_responsavel: values.documento_responsavel ? values.documento_responsavel.replace(/\D/g, '') : '',
       responsavel: values.responsavel || '',
       complemento: values.complemento || '',
       info_add: values.info_add || '',
+      // Limpa máscara do CEP também
+      cep: values.cep ? values.cep.replace(/\D/g, '') : '',
       lgpdConsentAccepted: Boolean(values.lgpdConsentAccepted), // Força conversão para boolean
       wantShirt: Boolean(values.wantShirt),
       isStaff: Boolean(values.isStaff),

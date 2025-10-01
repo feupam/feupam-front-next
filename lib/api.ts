@@ -390,6 +390,13 @@ export const api = {
       );
       return response.data;
     },
+    getReservationsHistory: async () => {
+      const token = await getCurrentToken();
+      const response = await axiosInstance.get('/users/reservations-report', 
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return response.data;
+    },
     cancelReservation: async (reservationIdOrEventId?: string) => {
       const token = await getCurrentToken();
       

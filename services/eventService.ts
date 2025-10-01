@@ -8,6 +8,7 @@ export interface EventData {
   location: string;
   startDate: string;
   endDate: string;
+  range_date?: string; // Campo opcional para range de datas
   isOpen: boolean;
   image_capa?: string;
   logo_evento?: string;

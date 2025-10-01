@@ -2,8 +2,7 @@
 
 import { Event } from '@/types/event';
 import { CalendarDays, MapPin, Users } from 'lucide-react';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatEventDateLong } from '@/lib/utils';
 
 interface EventInfoProps {
   event: Event;
@@ -18,7 +17,7 @@ export function EventInfo({ event }: EventInfoProps) {
           <div>
             <p className="text-sm font-medium text-gray-600">Data</p>
             <p className="text-base font-semibold text-gray-900">
-              {format(new Date(event.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+              {formatEventDateLong(event.date, event.range_date)}
             </p>
           </div>
         </div>

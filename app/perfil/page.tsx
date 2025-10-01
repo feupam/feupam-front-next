@@ -1,9 +1,7 @@
 'use client';
 
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useUserReservations } from '@/hooks/useUserReservations';
 import { UserProfileCard } from '@/components/profile/UserProfileCard';
-import { UserReservationsList } from '@/components/profile/UserReservationsList';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingCard } from '@/components/shared/Loading';
@@ -14,16 +12,10 @@ import { auth } from '@/lib/firebase';
 
 export default function ProfilePage() {
   const { profile, loading: profileLoading, error: profileError } = useUserProfile();
-  const { reservations, loading: reservationsLoading, error: reservationsError, refetch } = useUserReservations();
   const router = useRouter();
 
-  // Loading geral - mostra loading se qualquer um estiver carregando
-  const isLoading = profileLoading || reservationsLoading;
-
   console.log('[ProfilePage] profileLoading:', profileLoading);
-  console.log('[ProfilePage] reservationsLoading:', reservationsLoading);
-  console.log('[ProfilePage] isLoading:', isLoading);
-  console.log('[ProfilePage] reservations:', reservations);
+  console.log('[ProfilePage] profile:', profile);
 
   const handleEditProfile = () => {
     router.push('/formulario');
@@ -40,18 +32,17 @@ export default function ProfilePage() {
 
   return (
     <ProtectedRoute>
-      {isLoading ? (
-        <LoadingCard text="Carregando dados do perfil e reservas..." />
-      ) : (profileError || reservationsError) ? (
+      {profileLoading ? (
+        <LoadingCard text="Carregando dados do perfil..." />
+      ) : profileError ? (
         <div className="flex min-h-screen items-center justify-center p-4">
           <Card className="p-6 max-w-md w-full">
             <h2 className="text-lg font-semibold text-red-600">Erro ao carregar dados</h2>
             <p className="mt-2 text-muted-foreground">
-              {profileError || reservationsError}
+              {profileError}
             </p>
             <Button onClick={() => {
               router.refresh();
-              refetch();
             }} className="mt-4 w-full">
               Tentar novamente
             </Button>
@@ -68,14 +59,6 @@ export default function ProfilePage() {
                   onEditProfile={handleEditProfile}
                 />
               )}
-
-              {/* Lista de Reservas/Compras */}
-              <UserReservationsList
-                reservations={reservations}
-                loading={reservationsLoading}
-                error={reservationsError}
-                onRefetch={refetch}
-              />
             </div>
           </div>
         </div>

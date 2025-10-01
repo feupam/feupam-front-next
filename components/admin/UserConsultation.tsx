@@ -72,6 +72,7 @@ interface Reservation {
   id: string;
   email: string;
   eventId: string;
+  eventName?: string; // Para compatibilidade
   status: string;
   price: number;
   ticketKind: string;
@@ -412,7 +413,7 @@ export function UserConsultation() {
           item.user.name || '',
           item.user.email || '',
           new Date(item.user.createdAt).toLocaleDateString('pt-BR'),
-          reservation.event || reservation.eventId,
+          reservation.event || reservation.eventName || reservation.eventId,
           reservation.status,
           reservation.ticketKind,
           `R$ ${reservation.price ? (reservation.price / 100).toFixed(2) : '0,00'}`,

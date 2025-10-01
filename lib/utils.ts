@@ -23,141 +23,154 @@ export function formatCurrency(value: number, currency: string = 'BRL'): string 
   }).format(value);
 }
 
-// Função para verificar se um evento já passou
-export function isEventExpired(eventDate: string): boolean {
-  try {
-    let eventDateObj: Date;
-    
-    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
-    if (/^\d{4}-\d{2}-\d{2}$/.test(eventDate)) {
-      const [year, month, day] = eventDate.split('-');
-      eventDateObj = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else {
-      eventDateObj = new Date(eventDate);
-    }
-    
-    // Compara com a data atual (apenas o dia, sem horário)
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); // Remove horário para comparar apenas datas
-    
-    eventDateObj.setHours(0, 0, 0, 0); // Remove horário do evento também
-    
-    return eventDateObj < today;
-  } catch {
-    return false; // Em caso de erro, não filtra o evento
+// Função base para parsing de datas (evita problemas de timezone)
+function parseDate(dateStr: string): Date {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    // Para strings YYYY-MM-DD, criar como horário local
+    const [year, month, day] = dateStr.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   }
+  return new Date(dateStr);
 }
 
-// Funções de formatação de data e hora padronizadas
-export function formatDate(dateStr: string): string {
+// Função unificada para formatação de datas
+export function formatDate(dateStr: string, options?: {
+  format?: 'short' | 'long' | 'full';
+  includeTime?: boolean;
+  rangeDate?: string;
+}): string {
   try {
-    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
-    let dateToFormat: Date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      // Para strings no formato YYYY-MM-DD, cria a data como horário local
-      const [year, month, day] = dateStr.split('-');
-      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else {
-      dateToFormat = new Date(dateStr);
+    const { format = 'short', includeTime = false, rangeDate } = options || {};
+    
+    const startDate = parseDate(dateStr);
+    let endDate: Date | null = null;
+    
+    if (rangeDate) {
+      endDate = parseDate(rangeDate);
     }
     
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(dateToFormat);
+    // Configurações de formatação baseadas no tipo
+    const formatOptions: Intl.DateTimeFormatOptions = {
+      timeZone: 'America/Sao_Paulo'
+    };
+    
+    if (format === 'short') {
+      formatOptions.day = '2-digit';
+      formatOptions.month = '2-digit';
+      formatOptions.year = 'numeric';
+    } else if (format === 'long') {
+      formatOptions.day = 'numeric';
+      formatOptions.month = 'long';
+      formatOptions.year = 'numeric';
+    } else if (format === 'full') {
+      formatOptions.day = '2-digit';
+      formatOptions.month = '2-digit';
+      formatOptions.year = 'numeric';
+    }
+    
+    if (includeTime) {
+      formatOptions.hour = '2-digit';
+      formatOptions.minute = '2-digit';
+    }
+    
+    const formatter = new Intl.DateTimeFormat('pt-BR', formatOptions);
+    const startFormatted = formatter.format(startDate);
+    
+    // Se não há range, retorna apenas a data inicial
+    if (!endDate) {
+      return format === 'long' && includeTime ? 
+        startFormatted.replace(' ', ' às ') : 
+        startFormatted;
+    }
+    
+    const endFormatted = formatter.format(endDate);
+    
+    // Se as datas são iguais, mostra apenas uma
+    if (startFormatted === endFormatted) {
+      return startFormatted;
+    }
+    
+    // Se são diferentes, mostra o range
+    if (format === 'long' && rangeDate) {
+      // Para formato longo com range, otimizar a exibição
+      const startDay = startDate.getDate();
+      const endDay = endDate.getDate();
+      const startMonth = startDate.getMonth();
+      const endMonth = endDate.getMonth();
+      const startYear = startDate.getFullYear();
+      const endYear = endDate.getFullYear();
+      
+      // Se são do mesmo mês e ano, mostrar "23 a 25 de janeiro de 2026"
+      if (startMonth === endMonth && startYear === endYear) {
+        const monthFormatter = new Intl.DateTimeFormat('pt-BR', {
+          month: 'long',
+          year: 'numeric',
+          timeZone: 'America/Sao_Paulo'
+        });
+        const monthYear = monthFormatter.format(startDate).replace(/^\d+\s+de\s+/, '');
+        return `${startDay} a ${endDay} de ${monthYear}`;
+      }
+      // Se são de meses diferentes, usar formato completo
+      return `${startFormatted} a ${endFormatted}`;
+    }
+    
+    return `${startFormatted} a ${endFormatted}`;
+    
   } catch {
     return 'A definir';
   }
 }
 
-export function formatTime(dateStr: string): string {
-  try {
-    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
-    let dateToFormat: Date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      // Para strings no formato YYYY-MM-DD, cria a data como horário local
-      const [year, month, day] = dateStr.split('-');
-      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else {
-      dateToFormat = new Date(dateStr);
-    }
-    
-    return new Intl.DateTimeFormat('pt-BR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(dateToFormat);
-  } catch {
-    return 'A definir';
-  }
+// Funções de conveniência usando a função unificada
+export function formatEventDate(startDate: string, rangeDate?: string): string {
+  return formatDate(startDate, { format: 'short', rangeDate });
 }
 
-export function formatDateTime(dateStr: string): { date: string; time: string } {
+export function formatEventDateLong(startDate: string, rangeDate?: string): string {
+  return formatDate(startDate, { format: 'long', rangeDate });
+}
+
+export function formatEventDateTime(startDate: string, rangeDate?: string): { date: string; time: string } {
   try {
-    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
-    let dateToFormat: Date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      // Para strings no formato YYYY-MM-DD, cria a data como horário local
-      const [year, month, day] = dateStr.split('-');
-      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else {
-      dateToFormat = new Date(dateStr);
-    }
+    const dateOnly = formatDate(startDate, { format: 'short', rangeDate });
+    const timeOnly = formatDate(startDate, { includeTime: true }).split(' ')[1] || 'A definir';
     
     return {
-      date: new Intl.DateTimeFormat('pt-BR', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      }).format(dateToFormat),
-      time: new Intl.DateTimeFormat('pt-BR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(dateToFormat)
+      date: dateOnly,
+      time: timeOnly
     };
   } catch {
     return { date: 'A definir', time: 'A definir' };
   }
 }
 
-// Função para formato longo com horário: "23 de janeiro de 2026 às 21:00"
+export function formatDateTime(dateStr: string): { date: string; time: string } {
+  return formatEventDateTime(dateStr);
+}
+
+export function formatTime(dateStr: string): string {
+  return formatEventDateTime(dateStr).time;
+}
+
 export function formatLongDateTime(dateStr: string): string {
-  try {
-    // Se a string for no formato YYYY-MM-DD (apenas data), adiciona horário local para evitar timezone issues
-    let dateToFormat: Date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-      // Para strings no formato YYYY-MM-DD, cria a data como horário local
-      const [year, month, day] = dateStr.split('-');
-      dateToFormat = new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-    } else {
-      dateToFormat = new Date(dateStr);
-    }
-    
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'America/Sao_Paulo'
-    }).format(dateToFormat).replace(' ', ' às ');
-  } catch {
-    return 'A definir';
-  }
+  return formatDate(dateStr, { format: 'long', includeTime: true });
 }
 
 export function formatFullDateTime(dateStr: string): string {
+  return formatDate(dateStr, { format: 'full', includeTime: true });
+}
+
+// Função para verificar se um evento já passou
+export function isEventExpired(eventDate: string): boolean {
   try {
-    const date = new Date(dateStr);
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
+    const eventDateObj = parseDate(eventDate);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    eventDateObj.setHours(0, 0, 0, 0);
+    
+    return eventDateObj < today;
   } catch {
-    return 'A definir';
+    return false;
   }
 }
 

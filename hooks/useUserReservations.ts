@@ -8,6 +8,7 @@ export interface UserReservation {
   id: string;
   email: string;
   eventId: string;
+  eventName?: string; // Para compatibilidade após mapeamento
   gender: string;
   status: string;
   createdAt: {
@@ -62,16 +63,29 @@ export function useUserReservations(): UseUserReservationsReturn {
       setLoading(true);
       setError(null);
       
-      // Sempre usar a API real (externa)
-      const data = await api.users.getReservations();
-      console.log('[useUserReservations] Dados recebidos da API externa:', data);
+      // Usar o endpoint de histórico completo para incluir reservas "Pago"
+      const data = await api.users.getReservationsHistory();
+      console.log('[useUserReservations] Dados recebidos do histórico:', data);
       console.log('[useUserReservations] Tipo dos dados:', typeof data);
-      console.log('[useUserReservations] É array?', Array.isArray(data));
-      console.log('[useUserReservations] Quantidade de itens:', data?.length);
       
-      if (data && Array.isArray(data)) {
+      // O endpoint reservations-report retorna um objeto com dados paginados
+      let reservationsArray: any[] = [];
+      if (data && data.data && Array.isArray(data.data)) {
+        // Extrair reservations de cada usuário
+        reservationsArray = data.data.flatMap((userWithReservations: any) => 
+          userWithReservations.reservations || []
+        );
+      } else if (data && Array.isArray(data)) {
+        // Fallback se retornar array direto
+        reservationsArray = data;
+      }
+      
+      console.log('[useUserReservations] Reservations extraídas:', reservationsArray);
+      console.log('[useUserReservations] Quantidade de itens:', reservationsArray?.length);
+      
+      if (reservationsArray && Array.isArray(reservationsArray)) {
         // Processar dados da API externa para formato compatível
-        const processedReservations = data.map((reservation: any) => {
+        const processedReservations = reservationsArray.map((reservation: any) => {
           console.log('[useUserReservations] Processando reserva:', reservation);
           
           // Para eventos conhecidos, definir preço baseado no eventId
@@ -86,7 +100,9 @@ export function useUserReservations(): UseUserReservationsReturn {
             // Converter timestamp para compatibilidade
             updatedAt: reservation.createdAt || reservation.updatedAt,
             // Usar preço da reserva se disponível, senão usar preço conhecido, senão undefined
-            price: reservation.price || knownPrice
+            price: reservation.price || knownPrice,
+            // Mapear eventId para eventName para compatibilidade
+            eventName: reservation.eventName || reservation.eventId
           };
         });
         

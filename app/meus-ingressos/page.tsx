@@ -8,10 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { api } from '@/lib/api';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency, formatDate, formatEventDateLong } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { NotificationToast, NotificationToastRef } from '@/components/notifications/notification-toast';
 import { formatEventPrice } from '@/lib/event-prices';
+import { auth } from '@/lib/firebase';
 
 interface Reservation {
   id: string;
@@ -20,7 +21,8 @@ interface Reservation {
   email: string;
   userType: string;
   gender: string;
-  eventId: string;
+  eventId?: string; // Para compatibilidade com API
+  eventName: string; // Campo principal após mapeamento
   price: number;
   status: string;
   updatedAt?: {
@@ -56,9 +58,44 @@ export default function MyTicketsPage() {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Buscar reservas do usuário
-        const reservationsData = await api.users.getReservations();
-        console.log('[MyTickets] Raw reservations data:', reservationsData);
+        
+        // Primeiro tentar o endpoint de reservas ativas do usuário
+        let reservationsData: any[] = [];
+        
+        try {
+          console.log('[MyTickets] Trying user reservations endpoint...');
+          reservationsData = await api.users.getReservations();
+          console.log('[MyTickets] User reservations data:', reservationsData);
+        } catch (error) {
+          console.warn('[MyTickets] Failed to get user reservations, trying history endpoint...', error);
+          
+          // Se falhar, tentar o endpoint de histórico e filtrar pelo usuário atual
+          try {
+            const historyData = await api.users.getReservationsHistory();
+            console.log('[MyTickets] History data:', historyData);
+            
+            // Extrair apenas as reservas do usuário atual
+            if (historyData && historyData.data && Array.isArray(historyData.data)) {
+              // Buscar pelo email do usuário atual
+              const currentUserEmail = auth.currentUser?.email;
+              console.log('[MyTickets] Current user email:', currentUserEmail);
+              
+              if (currentUserEmail) {
+                const currentUserData = historyData.data.find((userData: any) => 
+                  userData.email === currentUserEmail || 
+                  (userData.reservations && userData.reservations.some((r: any) => r.email === currentUserEmail))
+                );
+                
+                if (currentUserData && currentUserData.reservations) {
+                  reservationsData = currentUserData.reservations;
+                  console.log('[MyTickets] Filtered user reservations from history:', reservationsData);
+                }
+              }
+            }
+          } catch (historyError) {
+            console.error('[MyTickets] Both endpoints failed:', historyError);
+          }
+        }
         
         // Processar dados das reservas para garantir que o price esteja correto
         const processedReservations = reservationsData.map((reservation: any) => {
@@ -81,7 +118,9 @@ export default function MyTicketsPage() {
           return {
             ...reservation,
             // Garantir que o price está definido corretamente
-            price: finalPrice || 0
+            price: finalPrice || 0,
+            // Mapear eventId para eventName se eventName não existir
+            eventName: reservation.eventName || reservation.eventId
           };
         });
         
@@ -90,20 +129,24 @@ export default function MyTicketsPage() {
 
         // Buscar detalhes dos eventos para cada reserva
         const eventsMap: Record<string, any> = {};
-        for (const reservation of reservationsData) {
-          if (!eventsMap[reservation.eventId]) {
+        for (const reservation of processedReservations) {
+          const eventKey = reservation.eventName || reservation.eventId;
+          if (eventKey && !eventsMap[eventKey]) {
             try {
-              const eventData = await api.events.get(reservation.eventId);
-              eventsMap[reservation.eventId] = eventData;
+              const eventData = await api.events.get(eventKey);
+              eventsMap[eventKey] = eventData;
             } catch (err) {
-              console.error(`Erro ao buscar evento ${reservation.eventId}:`, err);
+              console.error(`Erro ao buscar evento ${eventKey}:`, err);
               // Evento não encontrado, configurar dados mínimos
-              eventsMap[reservation.eventId] = {
-                name: reservation.eventId,
+              eventsMap[eventKey] = {
+                name: eventKey,
                 location: "Local não disponível",
                 date: new Date().toISOString(),
+                price: 0
               };
             }
+          } else if (!eventKey) {
+            console.warn('[MyTickets] Reservation without eventName or eventId:', reservation);
           }
         }
         setEvents(eventsMap);
@@ -121,8 +164,8 @@ export default function MyTicketsPage() {
   useEffect(() => {
     // Verificamos apenas se houver pelo menos uma reserva com pagamento pendente (apenas eventos pagos)
     const hasPendingPayment = reservations.some(res => {
-      const event = events[res.eventId];
-      return res.status !== 'Pago' && event && event.price > 0;
+      const event = events[res.eventName];
+      return res.status?.toLowerCase() !== 'pago' && event && event.price > 0;
     });
     if (!hasPendingPayment || loading) return;
 
@@ -144,12 +187,12 @@ export default function MyTicketsPage() {
           // Buscar novos detalhes dos eventos para cada reserva
           const eventsMap: Record<string, any> = { ...events };
           for (const reservation of updatedReservations) {
-            if (!eventsMap[reservation.eventId]) {
+            if (!eventsMap[reservation.eventName]) {
               try {
-                const eventData = await api.events.get(reservation.eventId);
-                eventsMap[reservation.eventId] = eventData;
+                const eventData = await api.events.get(reservation.eventName);
+                eventsMap[reservation.eventName] = eventData;
               } catch (err) {
-                console.error(`Erro ao buscar evento ${reservation.eventId}:`, err);
+                console.error(`Erro ao buscar evento ${reservation.eventName}:`, err);
               }
             }
           }
@@ -173,11 +216,18 @@ export default function MyTicketsPage() {
   }, [reservations, loading, events, pixDialogOpen]);
 
   const filteredReservations = reservations.filter(reservation => {
+    console.log('[MyTickets] Filtering reservation:', reservation.id, 'status:', reservation.status, 'activeTab:', activeTab);
+    
     if (activeTab === 'todos') return true;
-    if (activeTab === 'pendentes') return reservation.status !== 'Pago';
-    if (activeTab === 'pagos') return reservation.status === 'Pago';
+    // Usar comparação case-insensitive para maior compatibilidade
+    if (activeTab === 'pendentes') return reservation.status?.toLowerCase() !== 'pago';
+    if (activeTab === 'pagos') return reservation.status?.toLowerCase() === 'pago';
     return true;
   });
+  
+  console.log('[MyTickets] Total reservations:', reservations.length);
+  console.log('[MyTickets] Filtered reservations:', filteredReservations.length);
+  console.log('[MyTickets] Active tab:', activeTab);
 
   const handleViewPixQRCode = (charge: ChargeInfo) => {
     setSelectedCharge(charge);
@@ -211,13 +261,11 @@ export default function MyTicketsPage() {
     <ProtectedRoute>
       <div className="w-full space-y-6">
         <div className="max-w-6xl mx-auto px-4 py-8">
-          <h1 className="text-3xl font-bold mb-6">Minhas Inscriçõess</h1>
+          <h1 className="text-3xl font-bold mb-6">Minhas Inscrições</h1>
           
           <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="todos">Todos</TabsTrigger>
-            <TabsTrigger value="pendentes">Pendentes</TabsTrigger>
-            <TabsTrigger value="pagos">Pagos</TabsTrigger>
           </TabsList>
           
           <TabsContent value={activeTab}>
@@ -234,8 +282,11 @@ export default function MyTicketsPage() {
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredReservations.map((reservation) => {
-                  const event = events[reservation.eventId];
-                  if (!event) return null;
+                  const event = events[reservation.eventName];
+                  if (!event) {
+                    console.warn('[MyTickets] Event not found for reservation:', reservation.id, 'eventName:', reservation.eventName);
+                    return null;
+                  }
                   
                   // Verificar se tem pagamento PIX pendente
                   const hasPixPayment = reservation.charges?.some(
@@ -259,19 +310,7 @@ export default function MyTicketsPage() {
                           <div className="flex items-center mt-1">
                             <Calendar className="h-3 w-3 mr-1 opacity-70" />
                             <span className="text-xs">
-                              {(() => {
-                                // Usar formatDate para corrigir timezone, depois converter para formato longo
-                                const formattedDate = formatDate(event.date); // DD/MM/AAAA
-                                if (formattedDate === 'A definir') return formattedDate;
-                                
-                                // Converter DD/MM/AAAA para formato longo em português
-                                const [day, month, year] = formattedDate.split('/');
-                                const monthNames = [
-                                  'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
-                                  'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
-                                ];
-                                return `${parseInt(day)} de ${monthNames[parseInt(month) - 1]} de ${year}`;
-                              })()}
+                              {formatEventDateLong(event.date, event.range_date)}
                             </span>
                           </div>
                           <div className="flex items-center mt-1">
@@ -290,7 +329,7 @@ export default function MyTicketsPage() {
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-muted-foreground">Valor:</span>
                             <span className="text-sm font-medium">
-                              {formatEventPrice(reservation.price || event.price, reservation.eventId)}
+                              {formatEventPrice(reservation.price || event.price, reservation.eventName)}
                             </span>
                           </div>
                           {reservation.updatedAt && (
@@ -358,7 +397,7 @@ export default function MyTicketsPage() {
                               <Button 
                                 variant="default" 
                                 size="sm"
-                                onClick={() => window.location.href = `/reserva/${reservation.eventId}/${reservation.ticketKind || 'full'}`}
+                                onClick={() => window.location.href = `/reserva/${reservation.eventName}/${reservation.ticketKind || 'full'}`}
                               >
                                 <CreditCard className="h-4 w-4 mr-1" />
                                 Continuar Pagamento

@@ -79,7 +79,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
       console.log("1. Verificando se já comprou o ingresso...");
       try {
         const reservations = await api.users.getReservations();
-        const currentReservation = reservations.find((res: any) => res.eventId === eventId);
+        const currentReservation = reservations.find((res: any) => res.eventName === eventId);
         
         if (currentReservation && currentReservation.status === 'Pago') {
           console.log("Usuário já comprou este ingresso");

@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Event } from '@/types/event';
 import { motion } from 'framer-motion';
 import { Ticket, MapPin, Calendar, Loader2 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, formatEventDateTime } from '@/lib/utils';
 import AnimatedBackground from '@/components/ui/animated-background';
 import PaymentForm from '@/components/checkout/payment-form';
 import { NotificationToast, NotificationToastRef } from '@/components/notifications/notification-toast';
@@ -199,13 +199,7 @@ export default function CheckoutClient({ eventId, spotId, ticketKind }: Checkout
                   <div className="flex items-center space-x-2">
                     <Calendar className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">
-                      {new Date(event.date).toLocaleDateString('pt-BR', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                      {formatEventDateTime(event.date, event.range_date).date} • {formatEventDateTime(event.date, event.range_date).time}
                     </span>
                   </div>
                   <div className="flex items-center space-x-2">

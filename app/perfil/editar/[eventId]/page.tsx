@@ -63,11 +63,11 @@ export default function EditProfileForEventPage({ params }: EditProfileForEventP
           }
         }
         
+        // CPF: não formatar aqui, deixar o useProfileForm lidar com isso
+        // para garantir que seja enviado sem máscara para o backend
         if (cleanedProfile.cpf) {
-          const numericOnly = cleanedProfile.cpf.replace(/\D/g, '').slice(0, 11);
-          if (numericOnly.length === 11) {
-            cleanedProfile.cpf = `${numericOnly.slice(0, 3)}.${numericOnly.slice(3, 6)}.${numericOnly.slice(6, 9)}-${numericOnly.slice(9)}`;
-          }
+          // Apenas garante que temos apenas números (remove qualquer formatação existente)
+          cleanedProfile.cpf = cleanedProfile.cpf.replace(/\D/g, '');
         }
         
         if (cleanedProfile.data_nasc) {
@@ -90,10 +90,9 @@ export default function EditProfileForEventPage({ params }: EditProfileForEventP
         }
         
         if (cleanedProfile.documento_responsavel) {
-          const numericOnly = cleanedProfile.documento_responsavel.replace(/\D/g, '').slice(0, 11);
-          if (numericOnly.length === 11) {
-            cleanedProfile.documento_responsavel = `${numericOnly.slice(0, 3)}.${numericOnly.slice(3, 6)}.${numericOnly.slice(6, 9)}-${numericOnly.slice(9)}`;
-          }
+          // Apenas garante que temos apenas números (remove qualquer formatação existente)
+          // O useProfileForm já cuida de enviar sem máscara para o backend
+          cleanedProfile.documento_responsavel = cleanedProfile.documento_responsavel.replace(/\D/g, '');
         }
 
         console.log('Perfil processado:', cleanedProfile);

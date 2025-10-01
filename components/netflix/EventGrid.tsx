@@ -6,7 +6,7 @@ import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
 import { useLoading } from '@/contexts/LoadingContext'
-import { isEventExpired, formatDate } from '@/lib/utils'
+import { isEventExpired, formatDate, formatEventDate } from '@/lib/utils'
 
 interface EventGridProps {
   events: EventData[]
@@ -122,7 +122,7 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
                         {event.name}
                       </h3>
                       <p className="text-xs text-emerald-300 mt-1">
-                        {formatDate(event.date || event.startDate)}
+                        {formatEventDate(event.date || event.startDate, event.range_date)}
                       </p>
                     </div>
                   </div>

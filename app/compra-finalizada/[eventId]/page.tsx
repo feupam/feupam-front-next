@@ -38,13 +38,13 @@ export default function CompraFinalizadaPage({ params }: CompraFinalizadaProps) 
         <CardContent className="text-center">
           <p className="mb-6">
             Você receberá um e-mail com os detalhes da sua compra em breve.
-            Sua Inscrição estará disponível na área &quot;Minhas Inscriçõess&quot;.
+            Sua Inscrição estará disponível na área &quot;Minhas Inscrições&quot;.
           </p>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button asChild className="w-full">
             <Link href="/meus-ingressos">
-              Ver Minhas Inscriçõess
+              Ver Minhas Inscrições
             </Link>
           </Button>
           <Button asChild variant="outline" className="w-full">

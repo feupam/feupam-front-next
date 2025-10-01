@@ -12,6 +12,7 @@ export interface Event {
   location: string;
   description: string;
   date: string;
+  range_date?: string; // Campo opcional para range de datas
   maxGeneralSpots: string;
   price: number;
   endDate: string;

@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, Clock } from 'lucide-react';
-import { formatCurrency, formatDateTime } from '@/lib/utils';
+import { formatCurrency, formatDateTime, formatEventDateTime } from '@/lib/utils';
 import { Event } from '@/types/event';
 
 interface EventCardProps {
@@ -13,7 +13,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, index = 0 }: EventCardProps) {
-  const { date, time } = formatDateTime(event.date || event.startDate);
+  const { date, time } = formatEventDateTime(event.date || event.startDate, event.range_date);
   
   return (
     <motion.div

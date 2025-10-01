@@ -195,7 +195,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
       </div>
 
       {reservations.map((reservation, index) => {
-        const reservationId = `${reservation.eventId}-${reservation.spotId}`;
+        const reservationId = `${reservation.eventName}-${reservation.spotId}`;
         const isExpanded = expandedReservations.has(reservationId);
         const mainCharge = reservation.charges?.[0];
 
@@ -218,15 +218,15 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                           <span className="ml-1">{reservation.status}</span>
                         </Badge>
                         <span className="text-sm text-gray-500">
-                          {reservation.eventId.toUpperCase()}
+                          {(reservation.eventName || reservation.eventId || '').toUpperCase()}
                         </span>
                       </div>
                       <CardTitle className="text-base">
-                        {reservation.eventId} - {getTicketKindLabel(reservation.ticketKind || 'full')}
+                        {reservation.eventName} - {getTicketKindLabel(reservation.ticketKind || 'full')}
                       </CardTitle>
                       <div className="flex items-center justify-between mt-2">
                         <span className="font-semibold text-lg">
-                          {formatPrice(reservation.price, reservation.eventId)}
+                          {formatPrice(reservation.price, reservation.eventName)}
                         </span>
                         <span className="text-sm text-gray-500">
                           {formatDate(reservation.createdAt)}
@@ -255,7 +255,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                       </div>
                       <div>
                         <span className="text-gray-600">Evento:</span>
-                        <p>{reservation.eventId}</p>
+                        <p>{reservation.eventName}</p>
                       </div>
                       <div>
                         <span className="text-gray-600">Gênero:</span>
@@ -285,7 +285,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
                       <div className="grid grid-cols-2 gap-3 text-sm">
                         <div>
                           <span className="text-gray-600">Valor:</span>
-                          <p className="font-semibold">{formatPrice(mainCharge.amount, reservation.eventId)}</p>
+                          <p className="font-semibold">{formatPrice(mainCharge.amount, reservation.eventName)}</p>
                         </div>
                         <div>
                           <span className="text-gray-600">Método:</span>

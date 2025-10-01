@@ -5,6 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button';
 import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react';
 import { EventData } from '@/services/eventService';
+import { formatEventDate } from '@/lib/utils';
 
 interface EventsCalendarProps {
   events: EventData[];
@@ -14,6 +15,7 @@ interface CalendarEvent {
   id: number;
   name: string;
   date: string;
+  range_date?: string;
   isOpen: boolean;
   location: string;
 }
@@ -28,6 +30,7 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
       id: event.id,
       name: event.name,
       date: event.date,
+      range_date: event.range_date,
       isOpen: event.isOpen,
       location: event.location
     }));
@@ -183,7 +186,7 @@ export function EventsCalendar({ events }: EventsCalendarProps) {
                   <div>
                     <div className="font-medium">{event.name}</div>
                     <div className="text-sm text-muted-foreground">
-                      {event.location} • {new Date(event.date).toLocaleDateString('pt-BR')}
+                      {event.location} • {formatEventDate(event.date, event.range_date)}
                     </div>
                   </div>
                   <div className={`px-2 py-1 rounded text-xs ${

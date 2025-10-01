@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { useReservationProcess } from '@/hooks/useReservationProcess';
 import { auth } from '@/lib/firebase';
 import userService from '@/services/userService';
+import { formatEventDate } from '@/lib/utils';
 import { api } from '@/services/api';
 import { useState, useEffect } from 'react';
 import { isProfileComplete } from '@/lib/utils/profile';
@@ -105,7 +106,7 @@ export default function EventPage({ event }: EventPageProps) {
           <div className="flex flex-wrap gap-4 text-muted-foreground">
             <div className="flex items-center gap-2">
               <Calendar className="h-5 w-5" />
-              <span>{new Date(event.date).toLocaleDateString('pt-BR')}</span>
+              <span>{formatEventDate(event.date, event.range_date)}</span>
             </div>
             <div className="flex items-center gap-2">
               <MapPin className="h-5 w-5" />

@@ -1,7 +1,6 @@
 import { Event } from '@/types/event';
 import { Button } from '@/components/ui/button';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { formatEventDateLong } from '@/lib/utils';
 import { Ticket, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -78,7 +77,7 @@ export function EventBookingCard({ event, notificationRef }: EventBookingCardPro
       <div className="mb-6">
         <h3 className="text-xl font-bold text-gray-900">Informações da Inscrição</h3>
         <p className="mt-2 text-sm text-gray-600">
-          Data: {format(new Date(event.date), "dd 'de' MMMM", { locale: ptBR })}
+          Data: {formatEventDateLong(event.date, event.range_date)}
         </p>
       </div>
 

@@ -9,7 +9,7 @@ import { CalendarDays, MapPin, Clock, Users, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { EventClosedDialog } from '@/components/events/event-closed-dialog';
-import { formatDate, formatTime, formatCurrency } from '@/lib/utils';
+import { formatDate, formatTime, formatCurrency, formatEventDate } from '@/lib/utils';
 import { LoadingPage } from '@/components/shared/Loading';
 
 const fadeInUp = {
@@ -23,6 +23,7 @@ interface EventDetails {
   name: string;
   description: string;
   date: string;
+  range_date?: string;
   location: string;
   startDate: string;
   endDate: string;
@@ -67,9 +68,19 @@ export default function EventPage() {
           
           if (event) {
             console.log('[EventPage] Evento encontrado:', event);
+            
+            // Solução temporária para eventos específicos que sabemos que têm range
+            let eventWithRangeDate = { ...event };
+            if (event.name === 'FederaLideres - Inscrição Completa Gratuito' && !event.range_date) {
+              // Se a data base é 10/01/2026, o range vai até 12/01/2026
+              if (event.date.includes('2026-01-10')) {
+                eventWithRangeDate.range_date = '2026-01-12';
+              }
+            }
+            
             // Usa os dados da API diretamente, apenas adiciona propriedades que não existem na API
             const eventWithDefaults = {
-              ...event,
+              ...eventWithRangeDate,
               cupons: [], // Array vazio (não vem da API)
               tickets: [] // Array vazio (não vem da API)
             };
@@ -205,6 +216,12 @@ export default function EventPage() {
             <p className="text-muted-foreground text-lg leading-relaxed">
               {eventDetails.description || `Um evento incrível que você não pode perder! 
               Uma oportunidade única de vivenciar momentos especiais.`}
+              {eventDetails.name === 'FederaLideres - Inscrição Completa Gratuito' && 
+                eventDetails.range_date && (
+                <span className="block mt-2 font-medium text-primary">
+                  Acampamento realizado nos dias 10, 11 e 12 de Janeiro de 2026.
+                </span>
+              )}
             </p>
 
             <div className="grid grid-cols-2 gap-6">
@@ -212,7 +229,7 @@ export default function EventPage() {
                 <CalendarDays className="h-6 w-6 text-primary" />
                 <div>
                   <p className="text-sm text-muted-foreground">Data</p>
-                  <p className="font-medium">{formatDate(eventDetails.date)}</p>
+                  <p className="font-medium">{formatEventDate(eventDetails.date, eventDetails.range_date)}</p>
                 </div>
               </div>
               <div className="flex items-center gap-3">

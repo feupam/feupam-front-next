@@ -42,11 +42,26 @@ export function formatDate(dateStr: string, options?: {
   try {
     const { format = 'short', includeTime = false, rangeDate } = options || {};
     
+    // Verificar se a data é válida
+    if (!dateStr) {
+      return 'Data não informada';
+    }
+    
     const startDate = parseDate(dateStr);
+    
+    // Verificar se a data parseada é válida
+    if (isNaN(startDate.getTime())) {
+      return 'Data inválida';
+    }
+    
     let endDate: Date | null = null;
     
     if (rangeDate) {
       endDate = parseDate(rangeDate);
+      // Se rangeDate é inválida, ignorar e usar apenas startDate
+      if (isNaN(endDate.getTime())) {
+        endDate = null;
+      }
     }
     
     // Configurações de formatação baseadas no tipo
@@ -133,11 +148,27 @@ export function formatEventDateLong(startDate: string, rangeDate?: string): stri
 export function formatEventDateTime(startDate: string, rangeDate?: string): { date: string; time: string } {
   try {
     const dateOnly = formatDate(startDate, { format: 'short', rangeDate });
-    const timeOnly = formatDate(startDate, { includeTime: true }).split(' ')[1] || 'A definir';
     
+    // Tentar extrair o horário da data
+    const parsedDate = parseDate(startDate);
+    const hours = parsedDate.getHours();
+    const minutes = parsedDate.getMinutes();
+    
+    // Se tem horário definido (não é meia-noite), mostrar o horário
+    if (hours !== 0 || minutes !== 0) {
+      const timeOnly = formatDate(startDate, { includeTime: true }).split(' ')[1] || '';
+      if (timeOnly) {
+        return {
+          date: dateOnly,
+          time: timeOnly
+        };
+      }
+    }
+    
+    // Se não tem horário definido, mostrar apenas a data
     return {
       date: dateOnly,
-      time: timeOnly
+      time: formatDate(startDate, { format: 'short' })
     };
   } catch {
     return { date: 'A definir', time: 'A definir' };

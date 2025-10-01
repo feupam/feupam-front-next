@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, List, ChevronLeft, ChevronRight, MapPin, Clock, Users, ArrowLeft } from 'lucide-react';
-import { formatEventDate } from '@/lib/utils';
+import { formatEventDateLong } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LoadingPage } from '@/components/shared/Loading';
@@ -34,7 +34,27 @@ export default function CalendarioEventosPage() {
     async function fetchEvents() {
       try {
         const response = await eventService.getEventStatus('federa');
-        setEvents(response.events || []);
+        
+        // Processar eventos para adicionar range_date quando apropriado
+        const eventsWithRange = response.events?.map(event => {
+          // Se já tem range_date definido, usar
+          if (event.range_date) {
+            return event;
+          }
+          
+          // Para eventos específicos que sabemos que têm range, adicionar
+          if (event.name.toLowerCase().includes('lideres') || event.name.toLowerCase().includes('líderes')) {
+            // Baseado na descrição: "23 a 25 de janeiro de 2026"
+            return {
+              ...event,
+              range_date: '2026-01-25'
+            };
+          }
+          
+          return event;
+        }) || [];
+        
+        setEvents(eventsWithRange);
       } catch (error) {
         console.error('Erro ao carregar eventos:', error);
       } finally {
@@ -210,7 +230,7 @@ export default function CalendarioEventosPage() {
                           <div className="flex items-center gap-2 text-sm">
                             <Clock className="h-4 w-4 text-muted-foreground" />
                             <span className="font-medium text-foreground">
-                              Evento: {formatEventDate(event.date, event.range_date)}
+                              Evento: {formatEventDateLong(event.date, event.range_date)}
                             </span>
                           </div>
                         </div>

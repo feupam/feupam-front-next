@@ -155,12 +155,17 @@ export default function MultiStepForm({
         if (currentEvent) {
           if (isCurrentEventOpen) {
             // Se evento está aberto: vai para reserva
-            const url = `/reserva/${currentEvent.name}/${ticketKind}`;
+            // Usar o nome do evento encodado para evitar problemas com caracteres especiais
+            const encodedEventName = encodeURIComponent(currentEvent.name);
+            const url = `/reserva/${encodedEventName}/${ticketKind}`;
             console.log('8. Redirecionando para reserva:', url);
+            console.log('   - Event name original:', currentEvent.name);
+            console.log('   - Event name encoded:', encodedEventName);
             window.location.href = url;
           } else {
             // Se evento está fechado: vai para página do evento (mostra card com startDate/endDate)
-            const url = `/event/${currentEvent.name}?fromProfile=true`;
+            const encodedEventName = encodeURIComponent(currentEvent.name);
+            const url = `/event/${encodedEventName}?fromProfile=true`;
             console.log('8. Redirecionando para evento:', url);
             window.location.href = url;
           }
@@ -324,7 +329,7 @@ export default function MultiStepForm({
       {/* Header com progresso */}
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <h1 className="text-xl sm:text-2xl font-bold">Formulário de Inscrição</h1>
+          <h1 className="text-xl sm:text-2xl font-bold">Formulário de Inscrição para o {currentEvent?.name || 'o Evento'}</h1>
           <Badge variant="outline" className="self-start sm:self-auto">
             Etapa {currentStep + 1} de {formSections.length}
           </Badge>

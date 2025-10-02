@@ -19,7 +19,14 @@ interface ReservationPageProps {
 }
 
 export default function ReservationPage({ params }: ReservationPageProps) {
-  const { eventId, ticketKind } = params;
+  // Decodificar o eventId caso tenha caracteres especiais
+  const eventId = decodeURIComponent(params.eventId);
+  const ticketKind = params.ticketKind;
+  
+  console.log('[ReservationPage] Params recebidos:', params);
+  console.log('[ReservationPage] EventId decodificado:', eventId);
+  console.log('[ReservationPage] TicketKind:', ticketKind);
+  
   const [step, setStep] = useState<'checking' | 'reserving' | 'existing' | 'success' | 'error' | 'waiting'>('checking');
   const router = useRouter();
   const processingRef = useRef(false);
@@ -214,10 +221,10 @@ export default function ReservationPage({ params }: ReservationPageProps) {
             <CheckCircle2 className="w-16 h-16 text-green-500 mb-6" />
             <h2 className="text-2xl font-semibold mb-3 text-center">Reserva realizada!</h2>
             <p className="text-muted-foreground text-center mb-2 max-w-xs">
-              Você tem 10 minutos para concluir a compra.
+              Você tem 5 minutos para concluir a compra.
             </p>
             <p className="text-sm text-muted-foreground mb-8 max-w-xs text-center">
-              Após esse período, a reserva será cancelada automaticamente. Avance para o pagamento.
+              Após esse período, a reserva será cancelada automaticamente e você voltará para a fila.
             </p>
             <Button size="lg" className="w-full max-w-xs" onClick={handleProceedToCheckout}>
               Continuar para pagamento

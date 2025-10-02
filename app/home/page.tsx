@@ -81,7 +81,7 @@ export default function HomePage() {
     <div className="min-h-screen bg-black">
       <NetflixHeader events={events} />
       {/* Espaçamento para compensar o header fixo */}
-      <div className="pt-12">
+      <div className="pt-14">
         {currentDate && events.length > 0 && (
           <>
             <HeroCarousel

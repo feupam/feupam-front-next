@@ -21,6 +21,7 @@ export function SpotManagement() {
 
   // Check Spot  
   const [checkSpotEventId, setCheckSpotEventId] = useState<string>('');
+  const [spotStats, setSpotStats] = useState<any>(null);
 
   // Discount
   const [discountData, setDiscountData] = useState({
@@ -60,8 +61,8 @@ export function SpotManagement() {
       const token = await user?.getIdToken();
       
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
-      const response = await fetch(`${API_URL}/events/${checkSpotEventId}/check-spot`, {
-        method: 'POST',
+      const response = await fetch(`${API_URL}/events/${checkSpotEventId}/stats-detailed`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
@@ -69,19 +70,30 @@ export function SpotManagement() {
       });
 
       const result = await response.json();
+      
+      // Log do response no console
+      console.log('Response detalhado:', result);
 
       if (response.ok) {
+        setSpotStats(result);
+        
+        // Formatação da data para exibir
+        const lastRecalculatedDate = result.updatedAt 
+          ? new Date(result.updatedAt).toLocaleString('pt-BR')
+          : 'N/A';
+
         toast({
-          title: "Sucesso",
-          description: `Vagas verificadas: ${JSON.stringify(result)}`,
+          title: "Estatísticas obtidas com sucesso",
+          description: `Dados atualizados em: ${lastRecalculatedDate}`,
         });
       } else {
-        throw new Error('Erro ao verificar vagas');
+        throw new Error('Erro ao obter estatísticas detalhadas');
       }
     } catch (error) {
+      console.error('Erro ao obter estatísticas:', error);
       toast({
         title: "Erro",
-        description: "Erro ao verificar vagas",
+        description: "Erro ao obter estatísticas detalhadas",
         variant: "destructive",
       });
     } finally {
@@ -196,6 +208,7 @@ export function SpotManagement() {
                   onValueChange={(value) => {
                     console.log('Selecionando evento para verificar vagas:', value);
                     setCheckSpotEventId(value || "");
+                    setSpotStats(null); // Limpar estatísticas ao mudar evento
                   }}
                   disabled={eventsLoading}
                 >
@@ -234,6 +247,105 @@ export function SpotManagement() {
                 {loading ? 'Verificando...' : 'Verificar Vagas'}
               </Button>
             </form>
+
+            {/* Exibir estatísticas detalhadas */}
+            {spotStats && (
+              <div className="mt-6 p-4 border rounded-lg bg-muted/50">
+                <h3 className="text-lg font-semibold mb-4">Estatísticas Detalhadas</h3>
+                
+                {/* Estatísticas Principais */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Mulheres Pagas</p>
+                    <p className="text-2xl font-bold text-green-600">{spotStats.statistics?.femalePaid || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Mulheres Reservadas</p>
+                    <p className="text-2xl font-bold text-blue-600">{spotStats.statistics?.femaleReserved || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Homens Pagos</p>
+                    <p className="text-2xl font-bold text-green-600">{spotStats.statistics?.malePaid || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Homens Reservados</p>
+                    <p className="text-2xl font-bold text-blue-600">{spotStats.statistics?.maleReserved || 0}</p>
+                  </div>
+                </div>
+
+                {/* Totais */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Total Inscritos</p>
+                    <p className="text-2xl font-bold text-purple-600">{spotStats.statistics?.totalInscritos || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Total Pagos</p>
+                    <p className="text-2xl font-bold text-green-600">{spotStats.statistics?.totalPaid || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Total Reservados</p>
+                    <p className="text-2xl font-bold text-blue-600">{spotStats.statistics?.totalReserved || 0}</p>
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-muted-foreground">Processamento de Fila</p>
+                    <p className="text-sm font-semibold">
+                      <span className={`px-2 py-1 rounded ${spotStats.enableQueueProcessing ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                        {spotStats.enableQueueProcessing ? 'Ativo' : 'Inativo'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                
+                {/* Informações do Evento */}
+                <div className="pt-4 border-t">
+                  <h4 className="text-md font-semibold mb-3">Informações do Evento</h4>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Nome do Evento</p>
+                      <p className="text-sm font-semibold">{spotStats.eventName || 'N/A'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">ID do Evento</p>
+                      <p className="text-sm font-mono bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">{spotStats.eventId || 'N/A'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Tipo do Evento</p>
+                      <p className="text-sm">{spotStats.eventType || 'N/A'}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Limite Máximo</p>
+                      <p className="text-sm font-semibold text-orange-600">{spotStats.limits?.maxGeneralSpots || 0} vagas</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Vagas Homens</p>
+                      <p className="text-sm text-orange-600 font-semibold">{spotStats.vagasDisponiveis?.male || 0}</p>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Vagas Mulheres</p>
+                      <p className="text-sm text-orange-600 font-semibold">{spotStats.vagasDisponiveis?.female || 0}</p>
+                    </div>
+                    <div className="space-y-1 md:col-span-3">
+                      <p className="text-sm font-medium text-muted-foreground">Última Atualização</p>
+                      <p className="text-sm text-muted-foreground">
+                        {spotStats.updatedAt 
+                          ? new Date(spotStats.updatedAt).toLocaleString('pt-BR', {
+                              timeZone: 'America/Sao_Paulo',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit'
+                            })
+                          : 'N/A'
+                        }
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </TabsContent>

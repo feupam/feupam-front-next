@@ -149,10 +149,26 @@ export function useReservationProcess(
 
     try {
       console.log('Tentando criar nova reserva...');
-      const response = await events.reserveSpot(eventId, {
+      console.log('EventId:', eventId);
+      console.log('TicketKind:', ticketKind);
+      
+      // Validar dados antes de enviar
+      if (!eventId || eventId === 'undefined') {
+        throw new Error('EventId inválido');
+      }
+      
+      if (!ticketKind || ticketKind === 'undefined') {
+        throw new Error('TicketKind inválido');
+      }
+      
+      const requestData = {
         ticket_kind: ticketKind,
-        userType: 'client',
-      });
+        userType: 'client' as const,
+      };
+      
+      console.log('Dados da requisição:', requestData);
+      
+      const response = await events.reserveSpot(eventId, requestData);
 
       const reservationResponse = response as SpotReservationResponse;
       console.log('Reserva criada com sucesso:', reservationResponse);

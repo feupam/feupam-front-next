@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, X, Ticket, Sun, Moon, Home, Shield, CreditCard } from 'lucide-react';
+import { Menu, X, Ticket, Sun, Moon, Home, Shield, CreditCard, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { UserMenu } from '@/components/UserMenu';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
@@ -36,7 +36,6 @@ export default function Header() {
     ...(userIsAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
     { name: 'Home', href: '/home', icon: Home },
     { name: currentEvent?.name || 'Evento', href: currentEvent ? `/event/${encodeURIComponent(currentEvent.name)}` : '/home', icon: Ticket },
-    { name: 'Meus Ingressos', href: '/meus-ingressos', icon: CreditCard },
     { name: 'Perfil', href: '/perfil' },
   ];
 
@@ -47,7 +46,7 @@ export default function Header() {
   };
   
   return (
-    <header className="bg-background/80 backdrop-blur-md sticky top-0 z-50 border-b border-border">
+    <header className="bg-background/80 backdrop-blur-md fixed top-0 left-0 right-0 z-50 border-b border-border">
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8" aria-label="Global">
         <div className="flex lg:flex-1">
           <Link href="/" className="-m-1.5 p-1.5 flex items-center gap-2 min-w-0">
@@ -56,7 +55,15 @@ export default function Header() {
           </Link>
         </div>
         
-        <div className="flex lg:hidden">
+        {/* Carrinho sempre visível no mobile */}
+        <div className="flex lg:hidden items-center gap-2">
+          <Link
+            href="/meus-ingressos"
+            className="p-2 rounded-md bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 flex-shrink-0 shadow-md hover:shadow-lg"
+            aria-label="Meus Ingressos"
+          >
+            <ShoppingCart className="h-5 w-5" />
+          </Link>
           <button
             type="button"
             className="-m-2.5 inline-flex items-center justify-center rounded-md p-2.5 text-foreground hover:bg-muted transition-colors"
@@ -81,6 +88,19 @@ export default function Header() {
               <span className="truncate">{item.name}</span>
             </Link>
           ))}
+          {/* Meus Ingressos sempre visível no desktop também */}
+          <Link
+            href="/meus-ingressos"
+            className={cn(
+              "text-sm font-medium transition-all duration-200 flex items-center gap-2 whitespace-nowrap px-3 py-2 rounded-md shadow-md hover:shadow-lg",
+              pathname === '/meus-ingressos' 
+                ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white" 
+                : "bg-gradient-to-r from-emerald-400 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-600"
+            )}
+          >
+            <ShoppingCart className="h-4 w-4 flex-shrink-0" />
+            <span className="truncate font-semibold">Meus Ingressos</span>
+          </Link>
         </div>
         
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-3 xl:gap-4 min-w-0">
@@ -154,6 +174,20 @@ export default function Header() {
                     <span>{item.name}</span>
                   </Link>
                 ))}
+                {/* Meus Ingressos também no menu mobile para navegação alternativa */}
+                <Link
+                  href="/meus-ingressos"
+                  className={cn(
+                    "flex items-center gap-3 p-3 rounded-md text-base font-medium transition-all duration-200 shadow-md hover:shadow-lg",
+                    pathname === '/meus-ingressos' 
+                      ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white" 
+                      : "bg-gradient-to-r from-emerald-400 to-emerald-500 text-white hover:from-emerald-500 hover:to-emerald-600"
+                  )}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <ShoppingCart className="h-5 w-5 flex-shrink-0" />
+                  <span className="font-semibold">Meus Ingressos</span>
+                </Link>
               </div>
               
               <div className="space-y-2 pt-4 border-t border-border">

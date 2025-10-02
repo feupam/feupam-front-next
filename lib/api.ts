@@ -266,6 +266,27 @@ export const api = {
     }) => {
       const token = await getCurrentToken();
       console.log(`[API] Reservando vaga para evento ${eventId} com dados:`, data);
+      
+      // Verificar se o usuário tem perfil completo antes de fazer reserva
+      try {
+        console.log(`[API] Verificando perfil do usuário antes da reserva...`);
+        const userProfile = await axiosInstance.get('/users/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        
+        if (!userProfile.data || !userProfile.data.name || !userProfile.data.cpf) {
+          throw new Error('Perfil do usuário incompleto. Complete seu cadastro primeiro.');
+        }
+        
+        console.log(`[API] Perfil verificado, prosseguindo com a reserva...`);
+      } catch (profileError: any) {
+        console.error(`[API] Erro ao verificar perfil:`, profileError);
+        if (profileError.response?.status === 404) {
+          throw new Error('Perfil não encontrado. Complete seu cadastro primeiro.');
+        }
+        throw profileError;
+      }
+      
       try {
         const response = await axiosInstance.post(`/events/${eventId}/reserve-spot`, 
           data,
@@ -277,6 +298,12 @@ export const api = {
         console.error(`[API] Erro ao reservar vaga:`, error);
         if (error.response?.status === 409) {
           console.log(`[API] Usuário já possui reserva para este evento`);
+        }
+        if (error.response?.status === 400) {
+          console.error(`[API] Dados inválidos para reserva:`, error.response.data);
+        }
+        if (error.response?.status === 500) {
+          console.error(`[API] Erro interno do servidor. Verifique os logs do backend.`);
         }
         throw error;
       }

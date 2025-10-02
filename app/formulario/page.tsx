@@ -9,9 +9,11 @@ import { Loader2 } from 'lucide-react';
 import userService from '@/services/userService';
 import { UserProfile } from '@/types/user';
 import { useSearchParams } from 'next/navigation';
+import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 
 export default function FormularioInscricaoPage() {
   const { userData, isLoading: userDataLoading, error: userDataError, isExistingUser } = useUserData();
+  const { currentEvent } = useCurrentEventContext();
   
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
@@ -174,20 +176,6 @@ export default function FormularioInscricaoPage() {
     <div className="min-h-screen bg-background py-8">
       <div className="container mx-auto px-4">
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-4">
-            {isExistingUser ? 'Atualizar Dados' : 'Formulário de Inscrição'}
-          </h1>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            {isExistingUser 
-              ? 'Atualize suas informações para o evento. Seus dados atuais estão pré-preenchidos.'
-              : 'Complete suas informações para finalizar a inscrição no evento. Você pode salvar o progresso e continuar depois.'
-            }
-          </p>
-          {isExistingUser && (
-            <div className="mt-4 p-3 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-800 dark:text-emerald-300 rounded-lg inline-block">
-              ✅ Usuário cadastrado - Modo atualização
-            </div>
-          )}
         </div>
 
         <MultiStepForm

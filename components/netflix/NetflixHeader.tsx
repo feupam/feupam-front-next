@@ -24,15 +24,15 @@ export function NetflixHeader({ events = [] }: NetflixHeaderProps) {
     
     try {
       if (user) {
-        // Usuário já está logado, vai direto para o perfil
-        console.log('[NetflixHeader] Usuário logado, indo para /perfil');
-        router.push('/perfil');
+        // Usuário já está logado, vai direto para meus ingressos
+        console.log('[NetflixHeader] Usuário logado, indo para /meus-ingressos');
+        router.push('/meus-ingressos');
       } else {
         // Usuário não está logado, força login primeiro
         console.log('[NetflixHeader] Usuário não logado, forçando login...');
         await signInWithGoogle();
-        console.log('[NetflixHeader] Login bem-sucedido, redirecionando para /perfil');
-        router.push('/perfil');
+        console.log('[NetflixHeader] Login bem-sucedido, redirecionando para /meus-ingressos');
+        router.push('/meus-ingressos');
       }
     } catch (error) {
       console.log('[NetflixHeader] Login cancelado ou falhou');

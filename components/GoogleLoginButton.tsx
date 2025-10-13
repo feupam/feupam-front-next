@@ -4,9 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from './ui/button';
 import { Loader2 } from 'lucide-react';
 import { useLoading } from '@/contexts/LoadingContext';
+import { api } from '@/lib/api';
 
 export function GoogleLoginButton() {
-  const { signInWithGoogle, loading } = useAuth();
+  const { signInWithGoogle, loading, user } = useAuth();
   const { setLoading } = useLoading();
   const searchParams = typeof window !== 'undefined' 
     ? new URLSearchParams(window.location.search) 
@@ -18,6 +19,47 @@ export function GoogleLoginButton() {
     try {
       await signInWithGoogle();
       console.log('[GoogleLoginButton] Login bem-sucedido');
+      
+      // Aguardar um momento para o estado do user ser atualizado
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Criar/atualizar usuário na API automaticamente
+      try {
+        console.log('[GoogleLoginButton] Verificando se usuário existe na API...');
+        
+        // Tentar buscar o usuário existente
+        let userExists = false;
+        try {
+          await api.users.get();
+          userExists = true;
+          console.log('[GoogleLoginButton] Usuário já existe, fazendo PATCH...');
+        } catch (error) {
+          console.log('[GoogleLoginButton] Usuário não existe, fazendo POST...');
+        }
+
+        // Preparar dados básicos do usuário (do Firebase Auth)
+        const userData = {
+          name: user?.displayName || '',
+          email: user?.email || '',
+          photoURL: user?.photoURL || undefined,
+          userType: 'client' as const,
+        };
+
+        console.log('[GoogleLoginButton] Dados do usuário:', userData);
+
+        if (userExists) {
+          // PATCH - Atualizar usuário existente
+          await api.users.update(userData);
+          console.log('[GoogleLoginButton] Usuário atualizado com sucesso (PATCH)');
+        } else {
+          // POST - Criar novo usuário
+          await api.users.post(userData);
+          console.log('[GoogleLoginButton] Usuário criado com sucesso (POST)');
+        }
+      } catch (apiError) {
+        console.error('[GoogleLoginButton] Erro ao criar/atualizar usuário na API:', apiError);
+        // Não bloqueia o fluxo - continua mesmo se falhar
+      }
       
       const redirect = searchParams.get('redirect') || '/';
       console.log('[GoogleLoginButton] Parâmetros da URL:', Object.fromEntries(searchParams));

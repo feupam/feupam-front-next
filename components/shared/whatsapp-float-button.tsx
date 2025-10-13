@@ -58,20 +58,20 @@ export function WhatsAppFloatButton({
         {/* Botão Principal */}
         <div className="relative">
           {/* Indicador de "pulse" para chamar atenção (por trás do botão) */}
-          <span className="absolute top-1 right-1 -z-10 flex h-4 w-4">
+          <span className="absolute top-0 right-0 -z-10 flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-4 w-4 bg-green-500 opacity-60"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 opacity-60"></span>
           </span>
 
           <Button
             onClick={handleWhatsAppClick}
             size="lg"
-            className="p-0 flex items-center justify-center h-14 w-14 rounded-full bg-[#25D366] hover:bg-[#20BA5A] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 text-white"
+            className="p-0 flex items-center justify-center h-12 w-12 rounded-full bg-[#25D366] hover:bg-[#20BA5A] shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-110 text-white"
           >
             {/* Logo oficial do WhatsApp - usa currentColor para preencher */}
             <svg 
               viewBox="0 0 24 24" 
-              className="h-8 w-8 text-white"
+              className="h-6 w-6 text-white"
               fill="currentColor"
               xmlns="http://www.w3.org/2000/svg"
             >

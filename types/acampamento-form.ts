@@ -364,6 +364,11 @@ export function convertAcampamentoToUserProfile(data: Partial<AcampamentoFormDat
   const contato2Phone = data.contato_2 ? extractPhoneData(data.contato_2) : { ddd: '', phone: '' };
   const contato3Phone = data.contato_3 ? extractPhoneData(data.contato_3) : { ddd: '', phone: '' };
   
+  // Converter lgpdConsentAccepted para boolean (pode vir como string 'true'/'false' do formulário)
+  const lgpdConsent = typeof data.lgpdConsentAccepted === 'boolean' 
+    ? data.lgpdConsentAccepted 
+    : data.lgpdConsentAccepted === 'true' || data.lgpdConsentAccepted === true;
+  
   return {
     // Campos padrão do sistema (mantém underscore)
     name: data.name || '',
@@ -374,10 +379,11 @@ export function convertAcampamentoToUserProfile(data: Partial<AcampamentoFormDat
     gender: data.gender || 'male',
     ddd: mainPhone.ddd,
     cellphone: mainPhone.phone,
-    lgpdConsentAccepted: data.lgpdConsentAccepted || false,
+    lgpdConsentAccepted: lgpdConsent,
     userType: 'client' as const,
     
     // Campos de acampamento em camelCase (conforme API externa)
+    idadeNoAcampamento: data.idade_no_acampamento || 0,
     nomeMae: data.nome_mae || '',
     nomePai: data.nome_pai || '',
     contato2: contato2Phone.phone || '', // Apenas o número sem DDD
@@ -397,20 +403,20 @@ export function convertAcampamentoToUserProfile(data: Partial<AcampamentoFormDat
     // Campos obrigatórios do UserProfile
     photoURL: undefined,
     
-    // Campos opcionais do sistema
+    // Campos opcionais do sistema - valores default para campos não no formulário de acampamento
     wantShirt: false,
     isStaff: false,
-    church: '',
-    pastor: '',
-    cep: '',
-    address: '',
-    number: '',
-    neighborhood: '',
+    church: 'Não informado',
+    pastor: 'Não informado',
+    cep: '00000000',
+    address: 'Não informado',
+    number: '0',
+    neighborhood: 'Não informado',
     complemento: '',
-    city: '',
-    state: '',
-    cidade: '',
-    estado: '',
+    city: 'Não informado',
+    state: 'Não informado',
+    cidade: 'Não informado',
+    estado: 'Não informado',
     
     // Compatibilidade com campos antigos (deprecated mas mantidos)
     alergia: data.alergia_alimentar || 'Não',

@@ -24,14 +24,19 @@ export function EventClosedDialog({ open, onClose, startDate, endDate }: EventCl
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>As inscrições ainda não estâo abertas</AlertDialogTitle>
-          <AlertDialogDescription>
-            Este evento estará disponíveis de{" "}
-            <strong>{formatDate(startDate)}</strong> até{" "}
-            <strong>{formatDate(endDate)}</strong>.
-            <br />
-            <br />
-            Fique atento às datas!
-          </AlertDialogDescription>
+            <AlertDialogDescription>
+              Este evento estará disponível de{" "}
+              <strong>
+                {formatDate(startDate)} às {new Date(startDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })} (horário de Brasília)
+              </strong>{" "}
+              até{" "}
+              <strong>
+                {formatDate(endDate)} às {new Date(endDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })} (horário de Brasília)
+              </strong>.
+              <br />
+              <br />
+              Fique atento às datas!
+            </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="flex justify-end space-x-2">
           <AlertDialogCancel asChild>

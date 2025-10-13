@@ -96,10 +96,11 @@ const userService = {
       // Garantir que campos opcionais estejam presentes como strings vazias
       const dataToSend = {
         ...profileData,
+        cpf: profileData.cpf ? profileData.cpf.replace(/\D/g, '') : '', // Garante que CPF está sem máscara
         complemento: profileData.complemento || '',
         info_add: profileData.info_add || '',
         responsavel: profileData.responsavel || '',
-        documento_responsavel: profileData.documento_responsavel || '',
+        documento_responsavel: profileData.documento_responsavel ? profileData.documento_responsavel.replace(/\D/g, '') : '',
         ddd_responsavel: profileData.ddd_responsavel || '',
         cellphone_responsavel: profileData.cellphone_responsavel || ''
       };
@@ -174,7 +175,7 @@ const userService = {
         church: profileData.church,
         pastor: profileData.pastor,
         data_nasc: profileData.data_nasc,
-        cpf: profileData.cpf,
+        cpf: profileData.cpf ? profileData.cpf.replace(/\D/g, '') : '', // Garante que CPF está sem máscara
         alergia: profileData.alergia,
         medicamento: profileData.medicamento,
         ddd: profileData.ddd,

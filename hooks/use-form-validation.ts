@@ -2,19 +2,58 @@ import { useState, useEffect, useCallback } from 'react';
 
 interface ValidationRule {
   pattern?: RegExp;
-  validate?: (value: string) => boolean | string;
+  validate?: (value: string, context?: any) => boolean | string;
   message?: string;
 }
 
 interface UseFormValidationProps {
   initialValues: Record<string, any>;
   validationRules?: Record<string, ValidationRule>;
+  validationContext?: any;
 }
 
-export function useFormValidation({ initialValues, validationRules = {} }: UseFormValidationProps) {
+export function useFormValidation({ initialValues, validationRules = {}, validationContext }: UseFormValidationProps) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [initialValidationDone, setInitialValidationDone] = useState(false);
+
+  // Validação inicial quando o formulário carrega com dados (modo de atualização)
+  // Também revalida quando o contexto de validação muda (evento carregado)
+  useEffect(() => {
+    if (Object.keys(values).length > 0 && validationContext && 
+        (validationContext.idadeMinima !== undefined || validationContext.idadeMaxima !== undefined)) {
+      console.log('[useFormValidation] Executando validação inicial/revalidação dos campos');
+      console.log('[useFormValidation] Contexto:', validationContext);
+      
+      const initialErrors: Record<string, string> = {};
+      
+      Object.keys(validationRules).forEach(fieldName => {
+        const rule = validationRules[fieldName];
+        const value = values[fieldName];
+        
+        if (value && rule?.validate) {
+          const result = rule.validate(String(value), validationContext);
+          if (typeof result === 'string') {
+            initialErrors[fieldName] = result;
+            console.log(`[useFormValidation] Campo '${fieldName}' com erro:`, result);
+          }
+        }
+      });
+      
+      if (Object.keys(initialErrors).length > 0) {
+        setErrors(prevErrors => ({ ...prevErrors, ...initialErrors }));
+        // Marca campos com erro como "touched" para exibir o erro
+        const touchedFields: Record<string, boolean> = {};
+        Object.keys(initialErrors).forEach(field => {
+          touchedFields[field] = true;
+        });
+        setTouched(prevTouched => ({ ...prevTouched, ...touchedFields }));
+      }
+      
+      setInitialValidationDone(true);
+    }
+  }, [validationContext, values, validationRules]);
 
   // Calcula idade automaticamente quando data_nasc é preenchida
   useEffect(() => {
@@ -30,9 +69,39 @@ export function useFormValidation({ initialValues, validationRules = {} }: UseFo
       
       if (age !== values.idade && age >= 0 && age <= 120) {
         setValues(prev => ({ ...prev, idade: age }));
+        
+        console.log('[useFormValidation] Idade calculada:', age);
+        console.log('[useFormValidation] Contexto de validação:', validationContext);
+        
+        // Valida idade contra restrições do evento (SE EXISTIREM AMBOS OS LIMITES)
+        if (validationContext?.idadeMinima !== undefined && validationContext?.idadeMaxima !== undefined) {
+          const minAge = validationContext.idadeMinima;
+          const maxAge = validationContext.idadeMaxima;
+          
+          console.log('[useFormValidation] Validando idade:', { age, minAge, maxAge });
+          
+          if (age < minAge || age > maxAge) {
+            console.log('[useFormValidation] ❌ Idade INVÁLIDA');
+            setErrors(prev => ({ 
+              ...prev, 
+              data_nasc: `Este evento é para idades entre ${minAge} e ${maxAge} anos. Sua idade: ${age} anos.`
+            }));
+            setTouched(prev => ({ ...prev, data_nasc: true }));
+          } else {
+            console.log('[useFormValidation] ✅ Idade VÁLIDA');
+            // Remove erro se idade está válida
+            setErrors(prev => {
+              const newErrors = { ...prev };
+              delete newErrors.data_nasc;
+              return newErrors;
+            });
+          }
+        } else {
+          console.log('[useFormValidation] ℹ️ Evento sem restrições de idade');
+        }
       }
     }
-  }, [values.data_nasc]);
+  }, [values.data_nasc, validationContext]);
 
   // Função para aplicar máscaras
   const applyMask = useCallback((value: string, mask?: string): string => {
@@ -54,6 +123,21 @@ export function useFormValidation({ initialValues, validationRules = {} }: UseFo
     return maskedValue;
   }, []);
 
+  // Formata CPF automaticamente se vier sem máscara do banco
+  useEffect(() => {
+    if (values.cpf && typeof values.cpf === 'string') {
+      const cleanCPF = values.cpf.replace(/\D/g, '');
+      // Se tem 11 dígitos mas não tem pontos e traço, aplicar máscara
+      if (cleanCPF.length === 11 && !values.cpf.includes('.')) {
+        const maskedCPF = applyMask(cleanCPF, '000.000.000-00');
+        if (maskedCPF !== values.cpf) {
+          console.log('[useFormValidation] Formatando CPF:', cleanCPF, '→', maskedCPF);
+          setValues(prev => ({ ...prev, cpf: maskedCPF }));
+        }
+      }
+    }
+  }, [values.cpf, applyMask]);
+
   // Função para validar um campo
   const validateField = useCallback((name: string, value: string): string => {
     const rule = validationRules[name];
@@ -67,13 +151,13 @@ export function useFormValidation({ initialValues, validationRules = {} }: UseFo
     }
 
     if (rule.validate) {
-      const result = rule.validate(value);
+      const result = rule.validate(value, validationContext);
       if (typeof result === 'string') return result;
       if (result === false) return rule.message || 'Valor inválido';
     }
 
     return '';
-  }, [validationRules]);
+  }, [validationRules, validationContext]);
 
   // Função para atualizar um campo
   const updateField = useCallback((name: string, value: string, mask?: string) => {
@@ -91,20 +175,29 @@ export function useFormValidation({ initialValues, validationRules = {} }: UseFo
 
   // Função para validar todos os campos
   const validateAll = useCallback((): boolean => {
+    console.log('[validateAll] Iniciando validação completa');
+    console.log('[validateAll] Contexto:', validationContext);
+    console.log('[validateAll] Valores:', values);
+    
     const newErrors: Record<string, string> = {};
     let isValid = true;
 
     Object.keys(validationRules).forEach(name => {
       const error = validateField(name, values[name] || '');
       if (error) {
+        console.log(`[validateAll] ❌ Campo '${name}' com erro:`, error);
         newErrors[name] = error;
         isValid = false;
+      } else {
+        console.log(`[validateAll] ✅ Campo '${name}' válido`);
       }
     });
 
     setErrors(newErrors);
+    console.log('[validateAll] Resultado final:', isValid ? '✅ VÁLIDO' : '❌ INVÁLIDO');
+    console.log('[validateAll] Erros encontrados:', newErrors);
     return isValid;
-  }, [values, validationRules, validateField]);
+  }, [values, validationRules, validateField, validationContext]);
 
   // Buscar endereço por CEP
   const fetchAddressByCep = useCallback(async (cep: string) => {

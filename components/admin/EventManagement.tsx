@@ -38,7 +38,10 @@ export function EventManagement() {
     startDate: '',
     endDate: '',
     price: '5000',
-    isUnlimited: false
+    isUnlimited: false,
+    idadeMinima: '',
+    idadeMaxima: '',
+    range_date: ''
   });
 
   // Image files
@@ -96,7 +99,10 @@ export function EventManagement() {
     startDate: '',
     endDate: '',
     price: '5000',
-    isUnlimited: false
+    isUnlimited: false,
+    idadeMinima: '',
+    idadeMaxima: '',
+    range_date: ''
   });
 
   // Função para preencher os campos ao selecionar um evento
@@ -141,7 +147,10 @@ export function EventManagement() {
         startDate: formatDateForInput(selectedEvent.startDate || ''),
         endDate: formatDateForInput(selectedEvent.endDate || ''),
         price: String(selectedEvent.price || 5000),
-        isUnlimited: isUnlimited
+        isUnlimited: isUnlimited,
+        idadeMinima: String(selectedEvent.idadeMinima || ''),
+        idadeMaxima: String(selectedEvent.idadeMaxima || ''),
+        range_date: selectedEvent.range_date || ''
       });
     }
   };
@@ -163,7 +172,10 @@ export function EventManagement() {
         startDate: '',
         endDate: '',
         price: '5000',
-        isUnlimited: false
+        isUnlimited: false,
+        idadeMinima: '',
+        idadeMaxima: '',
+        range_date: ''
       });
       
       // Limpar também as imagens
@@ -251,7 +263,9 @@ export function EventManagement() {
         maxStaffMale: eventDataToSend.maxStaffMale,
         maxStaffFemale: eventDataToSend.maxStaffFemale,
         maxGeneralSpots: eventDataToSend.maxGeneralSpots,
-        price: eventDataToSend.price
+        price: eventDataToSend.price,
+        idadeMinima: eventDataToSend.idadeMinima,
+        range_date: eventDataToSend.range_date
       };
 
       // Verificar se todos os campos obrigatórios estão presentes
@@ -259,15 +273,48 @@ export function EventManagement() {
         if (value === undefined || value === null || value === '') {
           throw new Error(`Campo obrigatório '${key}' está vazio`);
         }
-        formData.append(key, String(value));
+        
+        // Validação específica para campos de data
+        if (key === 'date' || key === 'range_date') {
+          const dateValue = String(value);
+          console.log(`[EventManagement] Validando campo '${key}': '${dateValue}'`);
+          
+          // Verificar se é uma data válida no formato YYYY-MM-DD
+          const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+          if (!dateRegex.test(dateValue)) {
+            console.log(`[EventManagement] Campo '${key}' falhou na validação regex. Valor: '${dateValue}'`);
+            throw new Error(`Campo '${key}' deve estar no formato YYYY-MM-DD. Valor atual: '${dateValue}'`);
+          }
+          
+          // Verificar se o ano está em um intervalo razoável (apenas aviso)
+          const year = parseInt(dateValue.substring(0, 4));
+          if (year < 2020 || year > 2030) {
+            console.warn(`[EventManagement] Ano suspeito no campo '${key}': ${year}. Deve estar entre 2020 e 2030`);
+            // Não bloquear, apenas logar
+          }
+          
+          // Converter para ISO 8601 antes de adicionar
+          const dateISO = key === 'date' 
+            ? `${dateValue}T00:00:00.000Z`  // Início do dia para 'date'
+            : `${dateValue}T23:59:59.000Z`; // Final do dia para 'range_date'
+          console.log(`[EventManagement] Convertendo '${key}' de '${dateValue}' para '${dateISO}'`);
+          formData.append(key, dateISO);
+        } else {
+          formData.append(key, String(value));
+        }
       }
       
-      // Converter datas para o formato correto
+      // Converter datas de inscrição para o formato correto
       const startDateISO = createEventData.startDate ? formatBrazilianDateTimeToISO(createEventData.startDate) : '2024-08-19T00:00:00Z';
       const endDateISO = createEventData.endDate ? formatBrazilianDateTimeToISO(createEventData.endDate) : '2024-09-21T23:59:59Z';
       
       formData.append('startDate', startDateISO);
       formData.append('endDate', endDateISO);
+      
+      // Adicionar campos de idade
+      if (createEventData.idadeMaxima && createEventData.idadeMaxima.trim() !== '') {
+        formData.append('idadeMaxima', createEventData.idadeMaxima);
+      }
 
       // Validar arquivos antes de adicionar
       if (!imageFiles.image_capa || !imageFiles.logo_evento) {
@@ -371,7 +418,10 @@ export function EventManagement() {
           startDate: '',
           endDate: '',
           price: '5000',
-          isUnlimited: false
+          isUnlimited: false,
+          idadeMinima: '',
+          idadeMaxima: '',
+          range_date: ''
         });
         // Reset images
         setImageFiles({
@@ -488,11 +538,16 @@ export function EventManagement() {
         maxStaffFemale: number;
         maxGeneralSpots: number;
         price: number;
+        idadeMinima: number;
+        idadeMaxima?: number;
+        range_date: string;
         startDate?: string;
         endDate?: string;
       } = {
         name: eventDataToUpdate.name,
-        date: eventDataToUpdate.date,
+        date: eventDataToUpdate.date.includes('T') 
+          ? eventDataToUpdate.date 
+          : `${eventDataToUpdate.date}T00:00:00.000Z`, // Converter YYYY-MM-DD para ISO 8601
         location: eventDataToUpdate.location,
         description: eventDataToUpdate.description,
         eventType: eventDataToUpdate.eventType,
@@ -501,15 +556,24 @@ export function EventManagement() {
         maxStaffMale: parseInt(eventDataToUpdate.maxStaffMale),
         maxStaffFemale: parseInt(eventDataToUpdate.maxStaffFemale),
         maxGeneralSpots: parseInt(eventDataToUpdate.maxGeneralSpots),
-        price: parseInt(eventDataToUpdate.price)
+        price: parseInt(eventDataToUpdate.price),
+        idadeMinima: parseInt(eventDataToUpdate.idadeMinima),
+        range_date: eventDataToUpdate.range_date.includes('T')
+          ? eventDataToUpdate.range_date
+          : `${eventDataToUpdate.range_date}T23:59:59.000Z` // Converter YYYY-MM-DD para ISO 8601
       };
 
-      // Adicionar datas se fornecidas
+      // Adicionar datas de inscrição se fornecidas
       if (eventDataToUpdate.startDate) {
         updateData.startDate = new Date(eventDataToUpdate.startDate).toISOString();
       }
       if (eventDataToUpdate.endDate) {
         updateData.endDate = new Date(eventDataToUpdate.endDate).toISOString();
+      }
+      
+      // Adicionar idadeMaxima se fornecida
+      if (updateEventData.idadeMaxima && updateEventData.idadeMaxima.trim() !== '') {
+        updateData.idadeMaxima = parseInt(updateEventData.idadeMaxima);
       }
 
       console.log('[EventManagement] Dados JSON preparados:', updateData);
@@ -688,10 +752,43 @@ export function EventManagement() {
                     type="date"
                     value={createEventData.date}
                     onChange={(e) => setCreateEventData({ ...createEventData, date: e.target.value })}
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value) {
+                        const year = parseInt(value.substring(0, 4));
+                        if (year < 2020 || year > 2030) {
+                          alert(`Ano inválido: ${year}. Deve estar entre 2020 e 2030`);
+                          setCreateEventData({ ...createEventData, date: '' });
+                        }
+                      }
+                    }}
                     required
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Use os campos de data/hora de início e fim para horários específicos
+                  </p>
+                </div>
+                                <div>
+                  <Label htmlFor="range_date">Data de Fim do Evento</Label>
+                  <Input
+                    id="range_date"
+                    type="date"
+                    value={createEventData.range_date}
+                    onChange={(e) => setCreateEventData({ ...createEventData, range_date: e.target.value })}
+                    onBlur={(e) => {
+                      const value = e.target.value;
+                      if (value) {
+                        const year = parseInt(value.substring(0, 4));
+                        if (year < 2020 || year > 2030) {
+                          alert(`Ano inválido: ${year}. Deve estar entre 2020 e 2030`);
+                          setCreateEventData({ ...createEventData, range_date: '' });
+                        }
+                      }
+                    }}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Data de término do evento (diferente das datas de inscrição)
                   </p>
                 </div>
               </div>
@@ -740,6 +837,30 @@ export function EventManagement() {
                     value={createEventData.price}
                     onChange={(e) => setCreateEventData({ ...createEventData, price: e.target.value })}
                     required
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="idadeMinima">Idade Mínima</Label>
+                  <Input
+                    id="idadeMinima"
+                    type="number"
+                    value={createEventData.idadeMinima}
+                    onChange={(e) => setCreateEventData({ ...createEventData, idadeMinima: e.target.value })}
+                    placeholder="Ex: 18"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="idadeMaxima">Idade Máxima (opcional)</Label>
+                  <Input
+                    id="idadeMaxima"
+                    type="number"
+                    value={createEventData.idadeMaxima}
+                    onChange={(e) => setCreateEventData({ ...createEventData, idadeMaxima: e.target.value })}
+                    placeholder="Ex: 65"
                   />
                 </div>
               </div>
@@ -824,7 +945,7 @@ export function EventManagement() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="startDate">Data e Hora de Início</Label>
+                  <Label htmlFor="startDate">Data e Hora de Início das inscrições</Label>
                   <Input
                     id="startDate"
                     type="datetime-local"
@@ -839,7 +960,7 @@ export function EventManagement() {
                   )}
                 </div>
                 <div>
-                  <Label htmlFor="endDate">Data e Hora de Fim</Label>
+                  <Label htmlFor="endDate">Encerramento das Inscrições</Label>
                   <Input
                     id="endDate"
                     type="datetime-local"
@@ -1074,6 +1195,32 @@ export function EventManagement() {
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="updateIdadeMinima">Idade Mínima</Label>
+                      <Input
+                        id="updateIdadeMinima"
+                        type="number"
+                        min="0"
+                        value={updateEventData.idadeMinima}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, idadeMinima: e.target.value })}
+                        placeholder="Ex: 18"
+                        required
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="updateIdadeMaxima">Idade Máxima (opcional)</Label>
+                      <Input
+                        id="updateIdadeMaxima"
+                        type="number"
+                        min="0"
+                        value={updateEventData.idadeMaxima}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, idadeMaxima: e.target.value })}
+                        placeholder="Ex: 65"
+                      />
+                    </div>
+                  </div>
+
                   {/* Configuração de Vagas baseada no tipo */}
                   {updateEventData.eventType === 'general' ? (
                     <div className="space-y-4">
@@ -1151,6 +1298,47 @@ export function EventManagement() {
                       </div>
                     </div>
                   )}
+
+                  {/* Configuração de Idades */}
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">Restrições de Idade</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="updateIdadeMinima">Idade Mínima</Label>
+                        <Input
+                          id="updateIdadeMinima"
+                          type="number"
+                          value={updateEventData.idadeMinima}
+                          onChange={(e) => setUpdateEventData({ ...updateEventData, idadeMinima: e.target.value })}
+                          placeholder="Ex: 18"
+                          required
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="updateIdadeMaxima">Idade Máxima (Opcional)</Label>
+                        <Input
+                          id="updateIdadeMaxima"
+                          type="number"
+                          value={updateEventData.idadeMaxima}
+                          onChange={(e) => setUpdateEventData({ ...updateEventData, idadeMaxima: e.target.value })}
+                          placeholder="Ex: 65"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <Label htmlFor="updateRangeDate">Data de Fim do Evento</Label>
+                      <Input
+                        id="updateRangeDate"
+                        type="date"
+                        value={updateEventData.range_date}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, range_date: e.target.value })}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Data de término do evento (diferente das datas de inscrição)
+                      </p>
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div>

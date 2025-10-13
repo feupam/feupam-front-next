@@ -61,7 +61,7 @@ export function SpotManagement() {
       const token = await user?.getIdToken();
       
       const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
-      const response = await fetch(`${API_URL}/events/${checkSpotEventId}/stats-detailed`, {
+      const response = await fetch(`${API_URL}/events/${checkSpotEventId}/stats`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -87,13 +87,13 @@ export function SpotManagement() {
           description: `Dados atualizados em: ${lastRecalculatedDate}`,
         });
       } else {
-        throw new Error('Erro ao obter estatísticas detalhadas');
+        throw new Error('Erro ao obter estatísticas');
       }
     } catch (error) {
       console.error('Erro ao obter estatísticas:', error);
       toast({
         title: "Erro",
-        description: "Erro ao obter estatísticas detalhadas",
+        description: "Erro ao obter estatísticas",
         variant: "destructive",
       });
     } finally {
@@ -288,19 +288,15 @@ export function SpotManagement() {
                     <p className="text-2xl font-bold text-blue-600">{spotStats.statistics?.totalReserved || 0}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-sm font-medium text-muted-foreground">Processamento de Fila</p>
-                    <p className="text-sm font-semibold">
-                      <span className={`px-2 py-1 rounded ${spotStats.enableQueueProcessing ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                        {spotStats.enableQueueProcessing ? 'Ativo' : 'Inativo'}
-                      </span>
-                    </p>
+                    <p className="text-sm font-medium text-muted-foreground">Total Ocupado</p>
+                    <p className="text-2xl font-bold text-orange-600">{spotStats.statistics?.totalOccupied || 0}</p>
                   </div>
                 </div>
                 
                 {/* Informações do Evento */}
                 <div className="pt-4 border-t">
                   <h4 className="text-md font-semibold mb-3">Informações do Evento</h4>
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">Nome do Evento</p>
                       <p className="text-sm font-semibold">{spotStats.eventName || 'N/A'}</p>
@@ -314,6 +310,14 @@ export function SpotManagement() {
                       <p className="text-sm">{spotStats.eventType || 'N/A'}</p>
                     </div>
                     <div className="space-y-1">
+                      <p className="text-sm font-medium text-muted-foreground">Processamento de Fila</p>
+                      <p className="text-sm font-semibold">
+                        <span className={`px-2 py-1 rounded ${spotStats.enableQueueProcessing ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                          {spotStats.enableQueueProcessing ? 'Ativo' : 'Inativo'}
+                        </span>
+                      </p>
+                    </div>
+                    <div className="space-y-1">
                       <p className="text-sm font-medium text-muted-foreground">Limite Máximo</p>
                       <p className="text-sm font-semibold text-orange-600">{spotStats.limits?.maxGeneralSpots || 0} vagas</p>
                     </div>
@@ -325,7 +329,7 @@ export function SpotManagement() {
                       <p className="text-sm font-medium text-muted-foreground">Vagas Mulheres</p>
                       <p className="text-sm text-orange-600 font-semibold">{spotStats.vagasDisponiveis?.female || 0}</p>
                     </div>
-                    <div className="space-y-1 md:col-span-3">
+                    <div className="space-y-1 md:col-span-4">
                       <p className="text-sm font-medium text-muted-foreground">Última Atualização</p>
                       <p className="text-sm text-muted-foreground">
                         {spotStats.updatedAt 

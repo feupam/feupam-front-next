@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle, CheckCircle2, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formSections, FormField } from '@/types/user';
+import { acampamentoFormSections, AcampamentoFormField, isAcampamentoEvent, getTermosDownloadUrl } from '@/types/acampamento-form';
 import { useFormValidation } from '@/hooks/use-form-validation';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { useLoading } from '@/contexts/LoadingContext';
@@ -41,11 +42,26 @@ export default function MultiStepForm({
   const { currentEvent, isCurrentEventOpen, setCurrentEventByName } = useCurrentEventContext();
   const { setLoading } = useLoading();
 
+  // Determina qual formulário usar baseado no evento
+  const isAcampamento = currentEvent ? isAcampamentoEvent(currentEvent.name) : false;
+  const sections = isAcampamento ? acampamentoFormSections : formSections;
+  
+  console.log('[MultiStepForm] ========================================');
+  console.log('[MultiStepForm] Tipo de formulário:', isAcampamento ? 'ACAMPAMENTO' : 'PADRÃO');
+  console.log('[MultiStepForm] Evento:', currentEvent?.name);
+  console.log('[MultiStepForm] Número de seções:', sections.length);
+  console.log('[MultiStepForm] Nome das seções:', sections.map(s => s.title));
+  console.log('[MultiStepForm] ========================================');
+
   // Se não tem evento no contexto, busca o evento padrão
   useEffect(() => {
     console.log('=== DEBUG CONTEXT ===');
     console.log('currentEvent no useEffect:', currentEvent);
     console.log('isCurrentEventOpen:', isCurrentEventOpen);
+    console.log('Restrições de idade:', {
+      idadeMinima: currentEvent?.idadeMinima,
+      idadeMaxima: currentEvent?.idadeMaxima
+    });
     
     if (!currentEvent) {
       console.log('Não tem currentEvent, buscando federa...');
@@ -54,7 +70,7 @@ export default function MultiStepForm({
   }, [currentEvent, setCurrentEventByName, isCurrentEventOpen]);
 
   // Regras de validação
-  const validationRules = formSections.reduce((acc, section) => {
+  const validationRules = sections.reduce((acc, section) => {
     section.fields.forEach(field => {
       if (field.validation) {
         acc[field.name] = field.validation;
@@ -62,6 +78,19 @@ export default function MultiStepForm({
     });
     return acc;
   }, {} as Record<string, any>);
+
+  // Contexto de validação com restrições de idade do evento
+  const validationContext = {
+    idadeMinima: currentEvent?.idadeMinima,
+    idadeMaxima: currentEvent?.idadeMaxima
+  };
+  
+  console.log('[MultiStepForm] Contexto de validação:', validationContext);
+  console.log('[MultiStepForm] Evento atual:', {
+    nome: currentEvent?.name,
+    idadeMinima: currentEvent?.idadeMinima,
+    idadeMaxima: currentEvent?.idadeMaxima
+  });
 
   const {
     values,
@@ -74,16 +103,24 @@ export default function MultiStepForm({
     fetchAddressByCep
   } = useFormValidation({
     initialValues,
-    validationRules
+    validationRules,
+    validationContext
   });
 
   // Verificar se um step está completo
   const isStepComplete = (stepIndex: number): boolean => {
-    const section = formSections[stepIndex];
+    const section = sections[stepIndex];
     return section.fields.every(field => {
       if (!field.required) return true;
       const value = values[field.name];
       const status = getFieldStatus(field.name);
+      
+      console.log(`[isStepComplete] Campo '${field.name}':`, {
+        value,
+        hasError: status.hasError,
+        error: status.error
+      });
+      
       return value && !status.hasError;
     });
   };
@@ -91,13 +128,13 @@ export default function MultiStepForm({
   // Atualizar steps completos
   useEffect(() => {
     const newCompletedSteps = new Set<number>();
-    formSections.forEach((_, index) => {
+    sections.forEach((_, index) => {
       if (isStepComplete(index)) {
         newCompletedSteps.add(index);
       }
     });
     setCompletedSteps(newCompletedSteps);
-  }, [values, errors]);
+  }, [values, errors, sections]);
 
   // Buscar CEP quando preenchido
   useEffect(() => {
@@ -107,7 +144,7 @@ export default function MultiStepForm({
   }, [values.cep, fetchAddressByCep]);
 
   const nextStep = () => {
-    if (currentStep < formSections.length - 1) {
+    if (currentStep < sections.length - 1) {
       setCurrentStep(currentStep + 1);
       setSubmitError(null); // Limpa erro ao navegar
     }
@@ -125,12 +162,26 @@ export default function MultiStepForm({
     setLoading(true);
     console.log('=== DEBUG SUBMIT ===');
     console.log('1. Evento prevenido');
+    console.log('1.1. É acampamento?', isAcampamento);
+    console.log('1.2. isExistingUser?', isExistingUser);
     
-    // TEMPORÁRIO: bypassar validação
-    const isValid = true; // validateAll();
-    console.log('2. Validação resultado (bypass):', isValid);
-    console.log('3. Erros atuais:', errors);
+    // Para acampamento: não valida, apenas submete os dados básicos que já existem
+    // O formulário de acampamento é apenas informativo, não bloqueia a inscrição
+    const skipValidation = isAcampamento;
+    
+    let isValid = true;
+    
+    if (!skipValidation) {
+      // Valida todos os campos antes de submeter (apenas para formulário padrão)
+      isValid = validateAll();
+      console.log('2. Validação resultado:', isValid);
+      console.log('3. Erros atuais:', errors);
+    } else {
+      console.log('2. Validação pulada (acampamento) - submetendo direto');
+    }
+    
     console.log('4. Valores atuais:', values);
+    console.log('5. Idade do usuário:', values.idade);
     
     if (isValid) {
       console.log('5. Validação passou, executando onSubmit...');
@@ -195,16 +246,42 @@ export default function MultiStepForm({
       }
     } else {
       console.log('5. Validação falhou, não executando submit');
+      console.log('5.1. Erros encontrados:', errors);
+      console.log('5.2. Campos com erro:', Object.keys(errors));
+      
+      // Mostra mensagem de erro específica se for problema de idade
+      if (errors.data_nasc) {
+        setSubmitError(errors.data_nasc);
+      } else {
+        setSubmitError('Por favor, corrija os erros no formulário antes de continuar.');
+      }
+      
+      // Vai para a primeira etapa com erro
+      const firstStepWithError = sections.findIndex(section => 
+        section.fields.some(field => errors[field.name])
+      );
+      
+      console.log('5.3. Primeira etapa com erro (índice):', firstStepWithError);
+      if (firstStepWithError !== -1) {
+        console.log('5.4. Nome da seção com erro:', sections[firstStepWithError].title);
+        console.log('5.5. Campos com erro nessa seção:', 
+          sections[firstStepWithError].fields
+            .filter(field => errors[field.name])
+            .map(field => ({ nome: field.name, erro: errors[field.name] }))
+        );
+        setCurrentStep(firstStepWithError);
+      }
+      
       setLoading(false);
     }
   };
 
-  const renderField = (field: FormField) => {
+  const renderField = (field: FormField | AcampamentoFormField) => {
     const status = getFieldStatus(field.name);
     let value = values[field.name];
     
     // Se o campo não tem valor e tem defaultValue, usar o defaultValue e definir nos values
-    if (!value && field.defaultValue) {
+    if (!value && 'defaultValue' in field && field.defaultValue) {
       value = field.defaultValue;
       // Define o valor padrão nos values se ainda não foi definido
       if (values[field.name] === undefined) {
@@ -229,6 +306,53 @@ export default function MultiStepForm({
     switch (field.type) {
       case 'text':
       case 'tel':
+        // Tratamento especial para o campo de download de termos
+        if (field.name === 'termos_baixados' && isAcampamento && currentEvent) {
+          const downloadUrl = getTermosDownloadUrl(currentEvent.name);
+          const isDownloaded = value === 'downloaded';
+          
+          return (
+            <div className="space-y-3">
+              <a
+                href={downloadUrl}
+                download
+                onClick={() => {
+                  // Marca como baixado após o clique
+                  setTimeout(() => {
+                    updateField(field.name, 'downloaded');
+                  }, 500);
+                }}
+                className={cn(
+                  "flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all",
+                  isDownloaded 
+                    ? "bg-green-100 text-green-700 border-2 border-green-500" 
+                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                )}
+              >
+                {isDownloaded ? (
+                  <>
+                    <CheckCircle2 className="w-5 h-5" />
+                    Documento baixado com sucesso
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    Baixar Documento de Termos e Condições
+                  </>
+                )}
+              </a>
+              {isDownloaded && (
+                <p className="text-sm text-green-600 flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4" />
+                  Você já baixou o documento. Leia-o antes de aceitar os termos.
+                </p>
+              )}
+            </div>
+          );
+        }
+        
         return (
           <Input
             {...fieldProps}
@@ -316,13 +440,13 @@ export default function MultiStepForm({
     }
   };
 
-  const currentSection = formSections[currentStep];
+  const currentSection = sections[currentStep];
   console.log('=== DEBUG SECTION ===');
   console.log('currentStep:', currentStep);
-  console.log('formSections.length:', formSections.length);
+  console.log('sections.length:', sections.length);
   console.log('currentSection:', currentSection);
   
-  const progress = ((currentStep + 1) / formSections.length) * 100;
+  const progress = ((currentStep + 1) / sections.length) * 100;
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
@@ -331,9 +455,28 @@ export default function MultiStepForm({
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <h1 className="text-xl sm:text-2xl font-bold">Formulário de Inscrição para o {currentEvent?.name || 'o Evento'}</h1>
           <Badge variant="outline" className="self-start sm:self-auto">
-            Etapa {currentStep + 1} de {formSections.length}
+            Etapa {currentStep + 1} de {sections.length}
           </Badge>
         </div>
+        
+        {/* Aviso de restrição de idade se existir */}
+        {currentEvent?.idadeMinima !== undefined && currentEvent?.idadeMaxima !== undefined && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0">
+                <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-medium text-blue-800">Restrição de Idade</h3>
+                <p className="mt-1 text-sm text-blue-700">
+                  Este evento é exclusivo para participantes com idade entre <strong>{currentEvent.idadeMinima}</strong> e <strong>{currentEvent.idadeMaxima}</strong> anos.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
@@ -369,7 +512,7 @@ export default function MultiStepForm({
         {/* Steps indicator */}
         <div className="w-full">
           <div className="flex overflow-x-auto pb-2 px-1 scrollbar-hide">
-            {formSections.map((section, index) => (
+            {sections.map((section, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentStep(index)}
@@ -439,6 +582,13 @@ export default function MultiStepForm({
                     
                     {renderField(field)}
                     
+                    {/* Helper text */}
+                    {'helperText' in field && field.helperText && (
+                      <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">
+                        {field.helperText}
+                      </p>
+                    )}
+                    
                     {status.showError && (
                       <p className="text-sm text-red-600 flex items-center space-x-1">
                         <AlertCircle className="w-4 h-4" />
@@ -447,11 +597,30 @@ export default function MultiStepForm({
                     )}
 
                     {/* Exibir idade calculada automaticamente */}
-                    {field.name === 'data_nasc' && values.idade && (
-                      <p className="text-sm text-green-600 flex items-center space-x-1">
-                        <CheckCircle2 className="w-4 h-4" />
-                        <span>Idade calculada: {values.idade} anos</span>
-                      </p>
+                    {field.name === 'data_nasc' && values.idade !== undefined && values.idade !== null && (
+                      <div className="mt-2">
+                        {!status.hasError ? (
+                          <p className="text-sm text-green-600 flex items-center space-x-1 font-medium">
+                            <CheckCircle2 className="w-4 h-4" />
+                            <span>Idade calculada: {values.idade} anos ✓</span>
+                          </p>
+                        ) : (
+                          <div className="bg-red-50 border border-red-200 rounded-md p-3 mt-2">
+                            <p className="text-sm text-red-700 flex items-start space-x-2">
+                              <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+                              <span>
+                                <strong>⚠️ Idade atual: {values.idade} anos</strong>
+                                <br />
+                                {currentEvent?.idadeMinima !== undefined && currentEvent?.idadeMaxima !== undefined && (
+                                  <span className="text-xs mt-1 block">
+                                    Este evento aceita participantes entre {currentEvent.idadeMinima} e {currentEvent.idadeMaxima} anos.
+                                  </span>
+                                )}
+                              </span>
+                            </p>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 );
@@ -474,19 +643,32 @@ export default function MultiStepForm({
           </Button>
 
           <div className="flex justify-end w-full sm:w-auto">
-            {currentStep < formSections.length - 1 ? (
-              <Button
-                type="button"
-                onClick={nextStep}
-                className="flex items-center justify-center space-x-2 w-full sm:w-auto"
-                disabled={!isStepComplete(currentStep)}
-              >
-                <span>Próximo</span>
-                <ChevronRight className="w-4 h-4" />
-              </Button>
+            {currentStep < sections.length - 1 ? (
+              <div className="flex flex-col items-end space-y-2 w-full sm:w-auto">
+                {!isStepComplete(currentStep) && (
+                  <div className="text-sm text-red-600 text-right">
+                    {errors.data_nasc ? (
+                      <p>⚠️ {errors.data_nasc}</p>
+                    ) : Object.keys(errors).length > 0 ? (
+                      <p>⚠️ Corrija os erros antes de continuar</p>
+                    ) : (
+                      <p>⚠️ Preencha todos os campos obrigatórios</p>
+                    )}
+                  </div>
+                )}
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  className="flex items-center justify-center space-x-2 w-full sm:w-auto"
+                  disabled={!isStepComplete(currentStep)}
+                >
+                  <span>Próximo</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </div>
             ) : (
               // Verifica se está na seção dos termos LGPD e se foi rejeitado
-              currentStep === formSections.length - 1 && values.lgpdConsentAccepted === 'false' ? (
+              currentStep === sections.length - 1 && values.lgpdConsentAccepted === 'false' ? (
                 <div className="flex flex-col items-center sm:items-end space-y-2 w-full sm:w-auto">
                   <div className="text-red-600 text-sm font-medium text-center sm:text-right">
                     ⚠️ Para continuar, é necessário aceitar os termos da LGPD
@@ -502,7 +684,7 @@ export default function MultiStepForm({
               ) : (
                 <Button
                   type="submit"
-                  disabled={currentStep === formSections.length - 1 && values.lgpdConsentAccepted !== 'true'}
+                  disabled={currentStep === sections.length - 1 && values.lgpdConsentAccepted !== 'true'}
                   className="flex items-center justify-center space-x-2 w-full sm:min-w-[140px]"
                 >
                   {isLoading ? (

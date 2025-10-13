@@ -12,6 +12,8 @@ export interface EventData {
   isOpen: boolean;
   image_capa?: string;
   logo_evento?: string;
+  idadeMinima?: number;
+  idadeMaxima?: number;
 }
 
 export interface EventStatusResponse {

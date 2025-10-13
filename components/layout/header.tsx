@@ -60,7 +60,7 @@ export default function Header() {
           <Link
             href="/meus-ingressos"
             className="p-2 rounded-md bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 transition-all duration-200 flex-shrink-0 shadow-md hover:shadow-lg"
-            aria-label="Meus Ingressos"
+            aria-label="Minhas Inscrições"
           >
             <ShoppingCart className="h-5 w-5" />
           </Link>
@@ -186,7 +186,7 @@ export default function Header() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <ShoppingCart className="h-5 w-5 flex-shrink-0" />
-                  <span className="font-semibold">Meus Ingressos</span>
+                  <span className="font-semibold">Minhas Inscrições</span>
                 </Link>
               </div>
               

@@ -82,8 +82,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     
     console.log("Iniciando processamento de reserva");
     try {
-      // 1. Verifica se o usuário já comprou o ingresso
-      console.log("1. Verificando se já comprou o ingresso...");
+      // 1. Verifica se o usuário já comprou o ingresso ou tem reserva pendente
+      console.log("1. Verificando se já comprou o ingresso ou tem reserva...");
       try {
         const reservations = await api.users.getReservations();
         const currentReservation = reservations.find((res: any) => res.eventName === eventId);
@@ -94,20 +94,40 @@ export default function ReservationPage({ params }: ReservationPageProps) {
           return;
         }
         
-        // Se há reserva válida (não paga), mostrar como existente
-        if (currentReservation && currentReservation.status === 'reserved') {
-          console.log("Usuário já possui reserva válida na API:", currentReservation);
+        // Se há reserva pendente (não paga), verificar disponibilidade e redirecionar para checkout
+        if (currentReservation && currentReservation.status !== 'Pago') {
+          console.log("Usuário já possui reserva pendente na API:", currentReservation);
+          
+          // Verificar se ainda há vagas disponíveis
+          console.log("2. Verificando disponibilidade de vagas...");
+          setStep('checking');
+          const isAvailable = await checkSpotAvailability();
+          console.log("Disponibilidade:", isAvailable);
+          
+          if (!isAvailable) {
+            console.log("Não há vagas disponíveis");
+            setStep('error');
+            return;
+          }
+          
+          // Se há vagas e já tem reserva, ir direto para o checkout
+          console.log("Reserva existente válida, redirecionando para checkout");
           setLocalReservationData(currentReservation);
-          setStep('existing');
+          
+          // Salvar dados no localStorage e redirecionar
+          localStorage.setItem('reservationData', JSON.stringify(currentReservation));
+          localStorage.setItem('reservationTimestamp', new Date().toISOString());
+          
+          router.push(`/checkout/${eventId}`);
           return;
         }
         
-        console.log("Nenhuma reserva válida encontrada na API");
+        console.log("Nenhuma reserva encontrada na API, criando nova");
       } catch (error) {
         console.error("Erro ao verificar reservas na API:", error);
       }
       
-      // 2. Verifica disponibilidade de vagas
+      // 2. Verifica disponibilidade de vagas para nova reserva
       console.log("2. Verificando disponibilidade de vagas...");
       setStep('checking');
       const isAvailable = await checkSpotAvailability();

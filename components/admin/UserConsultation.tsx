@@ -90,8 +90,7 @@ interface Reservation {
 
 interface UserWithReservations {
   user: User;
-  reservations: Reservation[];
-  totalReservations: number;
+  reservation: Reservation;
   totalAmount: number;
 }
 
@@ -99,7 +98,6 @@ interface ApiResponse {
   page: number;
   limit: number;
   eventId: string;
-  totalUsers: number;
   totalReservations: number;
   data: UserWithReservations[];
 }
@@ -114,7 +112,7 @@ export function UserConsultation() {
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [itemsPerPage] = useState(50);
+  const [itemsPerPage] = useState(1000);
   
   // Filtros
   const [selectedEvent, setSelectedEvent] = useState<string>('');
@@ -151,7 +149,7 @@ export function UserConsultation() {
     return null;
   };
 
-  const loadReservationReport = async (eventId: string, page: number = 1, limit: number = 50) => {
+  const loadReservationReport = async (eventId: string, page: number = 1, limit: number = itemsPerPage) => {
     try {
       setLoading(true);
       setGlobalLoading(true);
@@ -202,12 +200,12 @@ export function UserConsultation() {
       )).sort();
       setAvailableChurches(churches);
       
-      // Calcular total de páginas
-      setTotalPages(Math.ceil(data.totalUsers / limit));
+      // Calcular total de páginas usando o limit enviado
+      setTotalPages(Math.ceil(data.totalReservations / limit));
       
       toast({
         title: 'Sucesso',
-        description: `Página ${page} carregada: ${data.data.length} usuários de ${data.totalUsers} total`,
+        description: `Página ${page} carregada: ${data.data.length} usuários de ${data.totalReservations} total`,
         variant: 'default',
       });
       
@@ -264,20 +262,20 @@ export function UserConsultation() {
     }
 
     if (selectedStatus && selectedStatus !== 'todos') {
-      filtered = filtered.filter(item => 
-        item.reservations.some(res => res.status === selectedStatus)
+      filtered = filtered.filter(item =>
+        item.reservation.status === selectedStatus
       );
     }
 
     if (selectedGender && selectedGender !== 'todos') {
-      filtered = filtered.filter(item => 
-        item.reservations.some(res => res.gender === selectedGender)
+      filtered = filtered.filter(item =>
+        item.reservation.gender === selectedGender
       );
     }
 
     if (selectedUserType && selectedUserType !== 'todos') {
-      filtered = filtered.filter(item => 
-        item.reservations.some(res => res.userType === selectedUserType)
+      filtered = filtered.filter(item =>
+        item.reservation.userType === selectedUserType
       );
     }
 
@@ -402,28 +400,28 @@ export function UserConsultation() {
 
     const csvRows: (string | number)[][] = [];
     filteredData.forEach(item => {
-      item.reservations.forEach(reservation => {
-        const mainCharge = reservation.charges && reservation.charges.length > 0 
-          ? reservation.charges[reservation.charges.length - 1] 
-          : (reservation.chargeId && reservation.chargeId.length > 0 
-              ? reservation.chargeId[reservation.chargeId.length - 1] 
-              : null);
+      // Como agora cada item tem apenas uma reservation, não precisamos do forEach
+      const reservation = item.reservation;
+      const mainCharge = reservation.charges && reservation.charges.length > 0
+        ? reservation.charges[reservation.charges.length - 1]
+        : (reservation.chargeId && reservation.chargeId.length > 0
+            ? reservation.chargeId[reservation.chargeId.length - 1]
+            : null);
 
-        csvRows.push([
-          item.user.name || '',
-          item.user.email || '',
-          new Date(item.user.createdAt).toLocaleDateString('pt-BR'),
-          reservation.event || reservation.eventName || reservation.eventId,
-          reservation.status,
-          reservation.ticketKind,
-          `R$ ${reservation.price ? (reservation.price / 100).toFixed(2) : '0,00'}`,
-          reservation.gender === 'male' ? 'Masculino' : 'Feminino',
-          reservation.userType === 'staff' ? 'Staff' : 'Cliente',
-          mainCharge?.meio || 'N/A',
-          mainCharge ? `R$ ${(mainCharge.amount / 100).toFixed(2)}` : 'R$ 0,00',
-          reservation.spotId || ''
-        ]);
-      });
+      csvRows.push([
+        item.user.name || '',
+        item.user.email || '',
+        new Date(item.user.createdAt).toLocaleDateString('pt-BR'),
+        reservation.event || reservation.eventName || reservation.eventId,
+        reservation.status,
+        reservation.ticketKind,
+        `R$ ${reservation.price ? (reservation.price / 100).toFixed(2) : '0,00'}`,
+        reservation.gender === 'male' ? 'Masculino' : 'Feminino',
+        reservation.userType === 'staff' ? 'Staff' : 'Cliente',
+        mainCharge?.meio || 'N/A',
+        mainCharge ? `R$ ${(mainCharge.amount / 100).toFixed(2)}` : 'R$ 0,00',
+        reservation.spotId || ''
+      ]);
     });
 
     const csvContent = [csvHeaders, ...csvRows]
@@ -598,9 +596,9 @@ export function UserConsultation() {
               Usuários e Reservas - {selectedEvent}
             </CardTitle>
             <CardDescription>
-              {loading ? 'Carregando...' : apiResponse 
-                ? `${apiResponse.totalUsers} usuários • ${apiResponse.totalReservations} reservas • ${filteredData.length} filtrados • Página ${currentPage} de ${totalPages}` 
-                : `${filteredData.length} usuários encontrados`}
+              {loading ? 'Carregando...' : apiResponse
+                ? `${apiResponse.totalReservations} reservas • ${filteredData.length} filtrados • Página ${currentPage} de ${totalPages}`
+                : `${filteredData.length} registros encontrados`}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -623,12 +621,10 @@ export function UserConsultation() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredData.map((item, index) => {
-                        const user = item.user;
-                        const reservations = item.reservations;
-                        const emailLink = formatWhatsAppLink(user.email);
-                        
-                        return (
+                        {filteredData.map((item, index) => {
+                          const user = item.user;
+                          const reservation = item.reservation;
+                          const emailLink = formatWhatsAppLink(user.email);                        return (
                           <TableRow key={`${user.id}-${index}`}>
                             {/* Coluna Usuário */}
                             <TableCell>
@@ -695,15 +691,16 @@ export function UserConsultation() {
                             {/* Coluna Reservas */}
                             <TableCell>
                               <div className="space-y-2 min-w-[250px]">
-                                {reservations.map((reservation, resIndex) => {
-                                  const mainCharge = reservation.charges && reservation.charges.length > 0 
-                                    ? reservation.charges[reservation.charges.length - 1] 
+                                {(() => {
+                                  const reservation = item.reservation;
+                                  const mainCharge = reservation.charges && reservation.charges.length > 0
+                                    ? reservation.charges[reservation.charges.length - 1]
                                     : (reservation.chargeId && reservation.chargeId.length > 0 
                                         ? reservation.chargeId[reservation.chargeId.length - 1] 
                                         : null);
                                   
                                   return (
-                                    <div key={`${reservation.id}-${resIndex}`} className="p-3 border rounded-lg bg-blue-50 dark:bg-blue-900/20 space-y-2">
+                                    <div key={reservation.id} className="p-3 border rounded-lg bg-blue-50 dark:bg-blue-900/20 space-y-2">
                                       <div className="flex items-center justify-between">
                                         <Badge className={getStatusBadgeColor(reservation.status)}>
                                           {reservation.status}
@@ -737,31 +734,27 @@ export function UserConsultation() {
                                       </div>
                                     </div>
                                   );
-                                })}
+                                })()}
                                 <div className="text-center">
                                   <Badge variant="secondary">
-                                    {item.totalReservations} reserva{item.totalReservations !== 1 ? 's' : ''}
+                                    1 reserva
                                   </Badge>
                                 </div>
                               </div>
                             </TableCell>
                             
-                            {/* Coluna Cliente/Staff */}
-                            <TableCell>
-                              <div className="space-y-2">
-                                {reservations.map((reservation, resIndex) => (
-                                  <Badge 
-                                    key={resIndex}
+                              {/* Coluna Cliente/Staff */}
+                              <TableCell>
+                                <div className="space-y-2">
+                                  {/* Como agora cada item tem apenas uma reservation, não precisamos do map */}
+                                  <Badge
                                     variant={reservation.userType === 'staff' ? 'default' : 'secondary'}
                                     className={reservation.userType === 'staff' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400' : ''}
                                   >
                                     {reservation.userType === 'staff' ? 'Staff' : 'Cliente'}
                                   </Badge>
-                                ))}
-                              </div>
-                            </TableCell>
-                            
-                            {/* Coluna Total */}
+                                </div>
+                              </TableCell>                            {/* Coluna Total */}
                             <TableCell>
                               <div className="space-y-1">
                                 <div className="text-lg font-medium text-green-600">

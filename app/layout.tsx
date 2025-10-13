@@ -7,7 +7,7 @@ import { LoadingProvider } from '@/contexts/LoadingContext';
 import { LoadingModalWrapper } from '@/components/shared/LoadingModalWrapper';
 
 export const metadata: Metadata = {
-  title: 'Feupam - Secure your spot at exciting events',
+  title: 'Feupam',
   description: 'Find and purchase tickets for the best events with our seamless experience, including waiting rooms and virtual queues for high-demand shows.',
 };
 

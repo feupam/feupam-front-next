@@ -110,7 +110,9 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
       image: '',
       tickets: [],
       cupons: [],
-      isOpen: eventData.isOpen
+      isOpen: eventData.isOpen,
+      idadeMinima: eventData.idadeMinima,
+      idadeMaxima: eventData.idadeMaxima
     };
     
     console.log('[CurrentEventContext] Evento processado:', event);

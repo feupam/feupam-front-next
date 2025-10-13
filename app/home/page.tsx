@@ -84,14 +84,6 @@ export default function HomePage() {
       <div className="pt-14">
         {currentDate && events.length > 0 && (
           <>
-            <HeroCarousel
-              events={events.map(event => ({
-                ...event,
-                description: event.description ?? "",
-              }))}
-              onEventSelect={handleEventSelect}
-              selectedIndex={selectedEventIndex}
-            />
             <EventGrid
               events={events.map(event => ({
                 ...event,

@@ -12,7 +12,7 @@ export default function Footer() {
               <span className="font-bold text-lg text-foreground">Feupam</span>
             </Link>
             <p className="text-sm text-muted-foreground">
-              Secure your spot at the most exciting events with our seamless ticket purchasing system.
+              Site de inscrição para os eventos da Feupam
             </p>
             <div className="flex space-x-6">
               <a href="#" className="text-muted-foreground hover:text-foreground">

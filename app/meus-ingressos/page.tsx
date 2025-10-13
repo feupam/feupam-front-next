@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
-import { Ticket, MapPin, Calendar, Loader2, QrCode, CheckCircle, XCircle, CreditCard } from 'lucide-react';
+import { Ticket, MapPin, Calendar, Loader2, QrCode, CheckCircle, XCircle, CreditCard, Download } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -13,6 +13,7 @@ import { cn } from '@/lib/utils';
 import { NotificationToast, NotificationToastRef } from '@/components/notifications/notification-toast';
 import { formatEventPrice } from '@/lib/event-prices';
 import { auth } from '@/lib/firebase';
+import { isAcampamentoEvent, getTermosDownloadUrl, getTermosFileName } from '@/types/acampamento-form';
 
 interface Reservation {
   id: string;
@@ -342,6 +343,22 @@ export default function MyTicketsPage() {
                           )}
                         </div>
                         
+                        {/* Aviso especial para eventos de acampamento */}
+                        {isAcampamentoEvent(reservation.eventName) && (
+                          <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                            <p className="text-xs font-medium text-amber-900 dark:text-amber-100 mb-1">
+                              📋 Documentos Necessários para o Acampamento:
+                            </p>
+                            <ul className="text-xs text-amber-800 dark:text-amber-200 space-y-1 ml-4 list-disc">
+                              <li>RG ou Carteira de Identidade Nacional ou Certidão de Nascimento</li>
+                              <li>Autorização dos pais ASSINADA e AUTENTICADA (baixe abaixo)</li>
+                            </ul>
+                            <p className="text-xs font-semibold text-amber-900 dark:text-amber-100 mt-2">
+                              ⚠️ Não será permitida entrada sem essa documentação!
+                            </p>
+                          </div>
+                        )}
+                        
                         {/* Status do pagamento */}
                         <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
                           <div className="flex items-center">
@@ -372,7 +389,7 @@ export default function MyTicketsPage() {
                           </div>
                           
                           {/* Botões de ação */}
-                          <div>
+                          <div className="flex flex-col gap-2">
                             {/* Botão para visualizar QR Code do PIX (só aparece se o PIX estiver pendente e não for gratuito) */}
                             {hasPixPayment && event.price > 0 && (
                               <Button 
@@ -401,6 +418,33 @@ export default function MyTicketsPage() {
                               >
                                 <CreditCard className="h-4 w-4 mr-1" />
                                 Continuar Pagamento
+                              </Button>
+                            )}
+                            
+                            {/* Botão para baixar autorização (apenas para eventos de acampamento) */}
+                            {isAcampamentoEvent(reservation.eventName) && (
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => {
+                                  // Usa a mesma lógica do formulário - cada evento tem seu próprio documento
+                                  const downloadUrl = getTermosDownloadUrl(reservation.eventName);
+                                  const fileName = getTermosFileName(reservation.eventName);
+                                  
+                                  if (downloadUrl && fileName) {
+                                    const link = document.createElement('a');
+                                    link.href = downloadUrl;
+                                    link.download = fileName;
+                                    document.body.appendChild(link);
+                                    link.click();
+                                    document.body.removeChild(link);
+                                  } else {
+                                    console.error('Documento de autorização não encontrado para:', reservation.eventName);
+                                  }
+                                }}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Baixar Autorização
                               </Button>
                             )}
                           </div>

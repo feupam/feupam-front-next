@@ -28,26 +28,9 @@ export function GoogleLoginButton() {
         console.log('[GoogleLoginButton] Redirecionando para:', redirect);
         window.location.href = redirect;
       } else {
-        // Fallback para o comportamento anterior
-        const eventId = searchParams.get('eventId');
-        const eventName = searchParams.get('eventName');
-        const isOpen = searchParams.get('isOpen');
-        
-        console.log('[GoogleLoginButton] Fallback - eventId:', eventId, 'eventName:', eventName, 'isOpen:', isOpen);
-        
-        if (eventName) {
-          const params = new URLSearchParams();
-          if (eventId) params.set('eventId', eventId);
-          if (eventName) params.set('eventName', eventName);
-          if (isOpen) params.set('isOpen', isOpen);
-          
-          const formularioUrl = `/formulario?${params.toString()}`;
-          console.log('[GoogleLoginButton] Redirecionando para formulário:', formularioUrl);
-          window.location.href = formularioUrl;
-        } else {
-          console.log('[GoogleLoginButton] Redirecionando para home');
-          window.location.href = '/';
-        }
+        // Redireciona para formulário (evento já está no contexto)
+        console.log('[GoogleLoginButton] Redirecionando para formulário');
+        window.location.href = '/formulario';
       }
     } catch (error) {
       console.error('[GoogleLoginButton] Erro no login:', error);

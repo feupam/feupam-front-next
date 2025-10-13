@@ -10,6 +10,7 @@ import userService from '@/services/userService';
 import { UserProfile } from '@/types/user';
 import { useSearchParams } from 'next/navigation';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
+import { isAcampamentoEvent, convertAcampamentoToUserProfile } from '@/types/acampamento-form';
 
 export default function FormularioInscricaoPage() {
   const { userData, isLoading: userDataLoading, error: userDataError, isExistingUser } = useUserData();
@@ -115,9 +116,40 @@ export default function FormularioInscricaoPage() {
     try {
       console.log('Dados do formulário:', values);
       
-      // Prepara os dados com valores padrão
-      const cleanedData = prepareUserData(values);
-      console.log('Dados limpos para envio:', cleanedData);
+      // Verifica se é formulário de acampamento
+      const isAcampamento = currentEvent ? isAcampamentoEvent(currentEvent.name) : false;
+      console.log('É formulário de acampamento?', isAcampamento);
+      
+      let cleanedData: UserProfile;
+      
+      if (isAcampamento) {
+        // Converte dados do formulário de acampamento
+        const acampamentoData = convertAcampamentoToUserProfile(values) as UserProfile;
+        
+        // Se é usuário existente, preserva campos obrigatórios do perfil
+        if (isExistingUser && userData) {
+          cleanedData = {
+            ...acampamentoData,
+            // Preserva campos obrigatórios do perfil existente
+            church: userData.church || acampamentoData.church,
+            pastor: userData.pastor || acampamentoData.pastor,
+            cep: userData.cep || acampamentoData.cep,
+            address: userData.address || acampamentoData.address,
+            cidade: userData.cidade || acampamentoData.cidade,
+            estado: userData.estado || acampamentoData.estado,
+            number: userData.number || acampamentoData.number,
+            neighborhood: userData.neighborhood || acampamentoData.neighborhood,
+          };
+          console.log('Dados de acampamento mesclados com perfil existente:', cleanedData);
+        } else {
+          cleanedData = acampamentoData;
+          console.log('Dados de acampamento convertidos:', cleanedData);
+        }
+      } else {
+        // Prepara os dados com valores padrão (formulário normal)
+        cleanedData = prepareUserData(values);
+        console.log('Dados limpos para envio:', cleanedData);
+      }
       
       if (isExistingUser) {
         // Atualiza perfil existente
@@ -128,7 +160,38 @@ export default function FormularioInscricaoPage() {
         console.log('Criando novo perfil...');
         await userService.createProfile(cleanedData);
       }
+      
+      // Se é acampamento, envia também para API externa
+      if (isAcampamento && currentEvent) {
+        console.log('📤 Enviando dados para API externa /events...');
+        try {
+          const response = await fetch('https://us-central1-federa-api.cloudfunctions.net/api/events', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cleanedData)
+          });
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('❌ Erro da API externa:', errorData);
+            throw new Error(errorData.message || 'Erro ao enviar dados para API externa');
+          }
+          
+          const result = await response.json();
+          console.log('✅ Resposta da API externa:', result);
+        } catch (apiError: any) {
+          console.error('❌ Erro ao comunicar com API externa:', apiError);
+          // Não bloqueia o fluxo - dados já foram salvos localmente
+          // throw apiError; // Descomente se quiser bloquear em caso de erro
+        }
+      }
+      
+      console.log('✅ handleSubmit concluído com sucesso - dados salvos!');
       // Redirecionamento é feito no componente MultiStepForm
+      // IMPORTANTE: A Promise precisa ser resolvida para o MultiStepForm continuar
+      return Promise.resolve();
     } catch (error) {
       console.error('Erro ao salvar formulário:', error);
       throw error; // Propaga o erro para que o MultiStepForm possa tratá-lo

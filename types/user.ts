@@ -110,11 +110,37 @@ export const formSections: FormSection[] = [
         required: true,
         placeholder: 'DD/MM/AAAA',
         validation: {
-          validate: (value: string) => {
-            const date = new Date(value.split('/').reverse().join('-'));
-            const now = new Date();
-            const age = now.getFullYear() - date.getFullYear();
-            return age >= 6 && age <= 100 ? true : 'Idade deve estar entre 6 e 100 anos';
+          validate: (value: string, context?: { idadeMinima?: number; idadeMaxima?: number }) => {
+            if (!value) return 'Data de nascimento é obrigatória';
+            
+            // O input type="date" retorna no formato YYYY-MM-DD
+            const birthDate = new Date(value);
+            const today = new Date();
+            
+            // Calcula idade precisa
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+              age--;
+            }
+            
+            // Se o evento tem restrições de idade, valida
+            if (context?.idadeMinima !== undefined && context?.idadeMaxima !== undefined) {
+              console.log('[VALIDAÇÃO] Idade calculada:', age);
+              console.log('[VALIDAÇÃO] Restrições:', context);
+              
+              if (age < context.idadeMinima || age > context.idadeMaxima) {
+                return `Este evento é para idades entre ${context.idadeMinima} e ${context.idadeMaxima} anos. Sua idade: ${age} anos.`;
+              }
+            }
+            
+            // Validação geral de sanidade (idade entre 0 e 120 anos)
+            if (age < 0 || age > 120) {
+              return 'Data de nascimento inválida';
+            }
+            
+            return true;
           }
         }
       }

@@ -16,6 +16,9 @@ export interface AdminEvent {
   startDate?: string;
   endDate?: string;
   price?: number;
+  idadeMinima?: number;
+  idadeMaxima?: number;
+  range_date?: string;
   logo_evento?: string;
   image_capa?: string;
 }

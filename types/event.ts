@@ -36,6 +36,9 @@ export interface Event {
   availability?: number;
   isHighDemand?: boolean;
   isOpen: boolean;
+  // Restrições de idade
+  idadeMinima?: number;
+  idadeMaxima?: number;
 }
 
 // Tipos de reserva

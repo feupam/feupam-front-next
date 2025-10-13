@@ -187,18 +187,36 @@ const userService = {
         idade: profileData.idade,
         complemento: profileData.complemento,
         info_add: profileData.info_add,
-        userType: profileData.userType
+        userType: profileData.userType,
+        // Campos do responsável/contato de emergência
+        responsavel: profileData.responsavel,
+        documento_responsavel: profileData.documento_responsavel ? profileData.documento_responsavel.replace(/\D/g, '') : '',
+        ddd_responsavel: profileData.ddd_responsavel,
+        cellphone_responsavel: profileData.cellphone_responsavel,
+        // Campos adicionais do UserProfile
+        wantShirt: profileData.wantShirt,
+        lgpdConsentAccepted: profileData.lgpdConsentAccepted,
+        isStaff: profileData.isStaff,
+        staffPassword: profileData.staffPassword
       };
 
       console.log('Atualizando perfil existente com PATCH');
+      console.log('Dados que serão enviados para API:', fieldsToUpdate);
+      
       try {
         const dataToUpdate = {
           ...fieldsToUpdate,
           complemento: fieldsToUpdate.complemento || '',
-          info_add: fieldsToUpdate.info_add || ''
+          info_add: fieldsToUpdate.info_add || '',
+          responsavel: fieldsToUpdate.responsavel || '',
+          documento_responsavel: fieldsToUpdate.documento_responsavel || '',
+          ddd_responsavel: fieldsToUpdate.ddd_responsavel || '',
+          cellphone_responsavel: fieldsToUpdate.cellphone_responsavel || ''
         };
 
+        console.log('Dados finais para PATCH:', dataToUpdate);
         const response = await apiService.users.updateUser(dataToUpdate);
+        console.log('Resposta da API após PATCH:', response.data);
         return processUserResponse(response.data);
       } catch (error: any) {
         console.error('Erro ao atualizar perfil com PATCH:', error);

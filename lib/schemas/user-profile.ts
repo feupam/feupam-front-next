@@ -20,6 +20,8 @@ const createValidatorWithLogs = (fieldName: string, validator: (val: any) => boo
 
 export const userProfileSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
+  email: z.string().email('E-mail inválido'),
+  userType: z.enum(['client', 'staff']).default('client'),
   church: z.string().min(2, 'Nome da igreja é obrigatório'),
   pastor: z.string().min(2, 'Nome do pastor é obrigatório'),
   ddd: z.string().refine(
@@ -90,7 +92,7 @@ export const userProfileSchema = z.object({
     )
     .or(z.literal('')),
   address: z.string().min(5, 'Endereço deve ter no mínimo 5 caracteres'),
-  complemento: z.string().min(1, 'Complemento é obrigatório'),
+  complemento: z.string().optional().or(z.literal('')),
   cidade: z.string().min(2, 'Cidade é obrigatória'),
   estado: z.string().length(2, 'Estado inválido'),
   alergia: z.string().refine(
@@ -109,7 +111,17 @@ export const userProfileSchema = z.object({
     },
     'Se marcou que toma medicamento, por favor especifique qual'
   ),
-  info_add: z.string().min(1, 'Informações adicionais são obrigatórias'),
+  info_add: z.string().optional().or(z.literal('')),
+  lgpdConsentAccepted: z.boolean(),
+  wantShirt: z.boolean().default(false),
+  isStaff: z.boolean().optional(),
+  staffPassword: z.string().optional().or(z.literal('')),
+  photoURL: z.string().optional().or(z.literal('')).or(z.undefined()),
+  // Campos legados para compatibilidade
+  city: z.string().optional(),
+  number: z.string().optional(),
+  neighborhood: z.string().optional(),
+  state: z.string().optional(),
 }).refine((data) => {
   console.log('Validando dados de menor de idade:', {
     idade: data.idade,

@@ -286,10 +286,17 @@ export function useReservationProcess(
         }
       } else {
         setIsError(true);
-        setErrorMessage('Não foi possível reservar sua vaga');
+        // Tentar extrair mensagem de erro da API
+        const apiErrorMessage = 
+          error.response?.data?.message || 
+          error.response?.data?.error || 
+          error.message || 
+          'Não foi possível reservar sua vaga';
+        
+        setErrorMessage(apiErrorMessage);
         toast({
           title: 'Erro',
-          description: 'Não foi possível reservar sua vaga',
+          description: apiErrorMessage,
           variant: 'destructive',
         });
         return null;

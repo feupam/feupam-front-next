@@ -28,6 +28,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
   console.log('[ReservationPage] TicketKind:', ticketKind);
   
   const [step, setStep] = useState<'checking' | 'reserving' | 'existing' | 'success' | 'error' | 'waiting'>('checking');
+  const [customErrorMessage, setCustomErrorMessage] = useState<string>('');
   const router = useRouter();
   const processingRef = useRef(false);
   const [localReservationData, setLocalReservationData] = useState<ReservationData | null>(null);
@@ -40,13 +41,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
     }
   }, [eventId, setCurrentEventByName]);
 
-  // Se o evento não estiver aberto, redirecionar para formulário
-  useEffect(() => {
-    if (currentEvent && !isCurrentEventOpen) {
-      console.log('[ReservationPage] Evento não está aberto, redirecionando para formulário');
-      router.push('/perfil');
-    }
-  }, [currentEvent, isCurrentEventOpen, router]);
+  // Removido: Não redireciona mais para /perfil
+  // Permite que usuários com reservas pendentes continuem para checkout mesmo se evento não estiver aberto
 
   // Initialize hook
   const reservationProcess = useReservationProcess(
@@ -162,10 +158,18 @@ export default function ReservationPage({ params }: ReservationPageProps) {
         }
       } else {
         console.log("Erro na reserva");
+        // Captura mensagem de erro da API
+        if (errorMessage) {
+          setCustomErrorMessage(errorMessage);
+        }
         setStep('error');
       }
     } catch (error) {
       console.error("Erro no processamento:", error);
+      // Tenta capturar mensagem do erro
+      if (error instanceof Error) {
+        setCustomErrorMessage(error.message);
+      }
       setStep('error');
     }
   }
@@ -268,12 +272,12 @@ export default function ReservationPage({ params }: ReservationPageProps) {
           <div className="flex flex-col items-center justify-center py-12 px-4">
             <XCircle className="w-16 h-16 text-destructive mb-6" />
             <h2 className="text-2xl font-semibold mb-3 text-center">
-              {isWaitingList ? 'Lista de espera' : 'Vagas já preenchidas'}
+              {isWaitingList ? 'Lista de espera' : 'Erro na reserva'}
             </h2>
             <p className="text-muted-foreground text-center mb-6 max-w-xs">
               {isWaitingList 
                 ? 'Não há mais vagas disponíveis para este evento. Você entrou para a lista de espera.'
-                : 'Infelizmente todas as vagas para este evento já foram preenchidas. Tente novamente mais tarde ou entre em contato conosco.'}
+                : (customErrorMessage || errorMessage || 'Não foi possível processar sua reserva. Tente novamente mais tarde ou entre em contato conosco.')}
             </p>
             {!isWaitingList && (
               <Button size="lg" className="w-full max-w-xs" onClick={handleTryAgain}>

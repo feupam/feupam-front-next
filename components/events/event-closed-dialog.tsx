@@ -27,11 +27,11 @@ export function EventClosedDialog({ open, onClose, startDate, endDate }: EventCl
             <AlertDialogDescription>
               Este evento estará disponível de{" "}
               <strong>
-                {formatDate(startDate)} às {new Date(startDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })} (horário de Brasília)
+                {formatDate(startDate)} às {new Date(startDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })} 
               </strong>{" "}
               até{" "}
               <strong>
-                {formatDate(endDate)} às {new Date(endDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })} (horário de Brasília)
+                {formatDate(endDate)} às {new Date(endDate).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })}
               </strong>.
               <br />
               <br />

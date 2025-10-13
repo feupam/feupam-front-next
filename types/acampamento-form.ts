@@ -25,6 +25,12 @@ export interface AcampamentoFormData {
   ddd: string;
   gender: 'male' | 'female';
   lgpdConsentAccepted: boolean;
+  // Campos de endereço
+  cep: string;
+  address: string;
+  complemento?: string;
+  cidade: string;
+  estado: string;
 }
 
 export interface AcampamentoFormField {
@@ -202,7 +208,81 @@ export const acampamentoFormSections: AcampamentoFormSection[] = [
     ]
   },
   {
-    title: '🏥 Informações de Saúde - Alergias',
+    title: '� Endereço',
+    fields: [
+      {
+        label: 'CEP',
+        name: 'cep',
+        type: 'text',
+        required: true,
+        mask: '00.000-000',
+        placeholder: '00.000-000',
+        validation: {
+          pattern: /^\d{2}\.\d{3}-\d{3}$/,
+          message: 'Formato: 12.345-678'
+        }
+      },
+      {
+        label: 'Endereço Completo',
+        name: 'address',
+        type: 'text',
+        required: true,
+        placeholder: 'Rua, Avenida, número...'
+      },
+      {
+        label: 'Complemento',
+        name: 'complemento',
+        type: 'text',
+        required: false,
+        placeholder: 'Apartamento, bloco, casa... (opcional)'
+      },
+      {
+        label: 'Cidade',
+        name: 'cidade',
+        type: 'text',
+        required: true,
+        placeholder: 'Nome da cidade'
+      },
+      {
+        label: 'Estado',
+        name: 'estado',
+        type: 'select',
+        required: true,
+        placeholder: 'Selecione o estado',
+        options: [
+          { value: 'MG', label: 'Minas Gerais' },
+          { value: 'AC', label: 'Acre' },
+          { value: 'AL', label: 'Alagoas' },
+          { value: 'AP', label: 'Amapá' },
+          { value: 'AM', label: 'Amazonas' },
+          { value: 'BA', label: 'Bahia' },
+          { value: 'CE', label: 'Ceará' },
+          { value: 'DF', label: 'Distrito Federal' },
+          { value: 'ES', label: 'Espírito Santo' },
+          { value: 'GO', label: 'Goiás' },
+          { value: 'MA', label: 'Maranhão' },
+          { value: 'MT', label: 'Mato Grosso' },
+          { value: 'MS', label: 'Mato Grosso do Sul' },
+          { value: 'PA', label: 'Pará' },
+          { value: 'PB', label: 'Paraíba' },
+          { value: 'PR', label: 'Paraná' },
+          { value: 'PE', label: 'Pernambuco' },
+          { value: 'PI', label: 'Piauí' },
+          { value: 'RJ', label: 'Rio de Janeiro' },
+          { value: 'RN', label: 'Rio Grande do Norte' },
+          { value: 'RS', label: 'Rio Grande do Sul' },
+          { value: 'RO', label: 'Rondônia' },
+          { value: 'RR', label: 'Roraima' },
+          { value: 'SC', label: 'Santa Catarina' },
+          { value: 'SP', label: 'São Paulo' },
+          { value: 'SE', label: 'Sergipe' },
+          { value: 'TO', label: 'Tocantins' }
+        ]
+      }
+    ]
+  },
+  {
+    title: '�🏥 Informações de Saúde - Alergias',
     fields: [
       {
         label: 'Tem alergia alimentar? Especifique',
@@ -408,15 +488,17 @@ export function convertAcampamentoToUserProfile(data: Partial<AcampamentoFormDat
     isStaff: false,
     church: 'Não informado',
     pastor: 'Não informado',
-    cep: '00000000',
-    address: 'Não informado',
-    number: '0',
-    neighborhood: 'Não informado',
-    complemento: '',
-    city: 'Não informado',
-    state: 'Não informado',
-    cidade: 'Não informado',
-    estado: 'Não informado',
+    
+    // Campos de endereço (agora vêm do formulário)
+    cep: data.cep ? data.cep.replace(/\D/g, '') : '00000000',
+    address: data.address || 'Não informado',
+    number: '0', // Não coletado no formulário de acampamento
+    neighborhood: 'Não informado', // Não coletado no formulário de acampamento
+    complemento: data.complemento || '',
+    city: data.cidade || 'Não informado',
+    state: data.estado || 'MG',
+    cidade: data.cidade || 'Não informado',
+    estado: data.estado || 'MG',
     
     // Compatibilidade com campos antigos (deprecated mas mantidos)
     alergia: data.alergia_alimentar || 'Não',

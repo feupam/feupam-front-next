@@ -141,17 +141,6 @@ export const acampamentoFormSections: AcampamentoFormSection[] = [
         placeholder: 'Nome completo do pai'
       },
       {
-        label: 'E-mail do Responsável',
-        name: 'email',
-        type: 'text',
-        required: true,
-        placeholder: 'email@exemplo.com',
-        validation: {
-          pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-          message: 'E-mail inválido'
-        }
-      },
-      {
         label: 'CPF do Responsável',
         name: 'cpf',
         type: 'text',

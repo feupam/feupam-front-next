@@ -11,6 +11,7 @@ import { UserProfile } from '@/types/user';
 import { useSearchParams } from 'next/navigation';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { isAcampamentoEvent, convertAcampamentoToUserProfile } from '@/types/acampamento-form';
+import { auth } from '@/lib/firebase';
 
 export default function FormularioInscricaoPage() {
   const { userData, isLoading: userDataLoading, error: userDataError, isExistingUser } = useUserData();
@@ -123,8 +124,15 @@ export default function FormularioInscricaoPage() {
       let cleanedData: UserProfile;
       
       if (isAcampamento) {
+        // Captura email do Firebase Auth
+        const currentUser = auth.currentUser;
+        const userEmail = currentUser?.email || userData?.email || '';
+        
         // Converte dados do formulário de acampamento
-        const acampamentoData = convertAcampamentoToUserProfile(values) as UserProfile;
+        const acampamentoData = convertAcampamentoToUserProfile({
+          ...values,
+          email: userEmail // Email vem do Firebase Auth, não do formulário
+        }) as UserProfile;
         
         // Se é usuário existente, preserva campos obrigatórios do perfil
         if (isExistingUser && userData) {
@@ -146,8 +154,15 @@ export default function FormularioInscricaoPage() {
           console.log('Dados de acampamento convertidos:', cleanedData);
         }
       } else {
+        // Captura email do Firebase Auth para formulário normal
+        const currentUser = auth.currentUser;
+        const userEmail = currentUser?.email || userData?.email || '';
+        
         // Prepara os dados com valores padrão (formulário normal)
-        cleanedData = prepareUserData(values);
+        cleanedData = {
+          ...prepareUserData(values),
+          email: userEmail // Email vem do Firebase Auth, não do formulário
+        };
         console.log('Dados limpos para envio:', cleanedData);
       }
       

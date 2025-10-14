@@ -6,6 +6,7 @@ import type { UserProfile } from '@/types/user';
 import { useCallback, useState } from 'react';
 import userService from '@/services/userService';
 import { useRouter } from 'next/navigation';
+import { auth } from '@/lib/firebase';
 
 interface UseProfileFormProps {
   initialData?: Partial<UserProfile>;
@@ -50,9 +51,14 @@ export function useProfileForm({ initialData, redirectToEvent, ticketKind = 'ful
       console.log('[useProfileForm] Setando isSubmitting=true');
       setIsSubmitting(true);
       
+      // Captura email do Firebase Auth (não deve ser editável pelo usuário)
+      const currentUser = auth.currentUser;
+      const userEmail = currentUser?.email || data.email || '';
+      
       // Garante que userType esteja definido e converte idade para número
       let dataToSubmit = {
         ...data,
+        email: userEmail, // Sempre pega do Firebase Auth
         userType: data.userType || 'client',
         idade: typeof data.idade === 'string' 
           ? (/^\d+$/.test(String(data.idade).trim()) ? parseInt(String(data.idade).trim(), 10) : 0) 

@@ -20,7 +20,7 @@ const createValidatorWithLogs = (fieldName: string, validator: (val: any) => boo
 
 export const userProfileSchema = z.object({
   name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
-  email: z.string().email('E-mail inválido'),
+  email: z.string().email('E-mail inválido').optional(), // Email vem do Firebase Auth, não é editável
   userType: z.enum(['client', 'staff']).default('client'),
   church: z.string().min(2, 'Nome da igreja é obrigatório'),
   pastor: z.string().min(2, 'Nome do pastor é obrigatório'),

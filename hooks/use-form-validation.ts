@@ -84,7 +84,7 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
             console.log('[useFormValidation] ❌ Idade INVÁLIDA');
             setErrors(prev => ({ 
               ...prev, 
-              data_nasc: `Este evento é para idades entre ${minAge} e ${maxAge} anos. Sua idade: ${age} anos.`
+              data_nasc: `Este evento é para idades de ${minAge} a ${maxAge} anos (incluindo ${minAge} e ${maxAge}). Sua idade: ${age} anos.`
             }));
             setTouched(prev => ({ ...prev, data_nasc: true }));
           } else {

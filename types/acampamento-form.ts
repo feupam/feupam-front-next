@@ -91,7 +91,7 @@ export const acampamentoFormSections: AcampamentoFormSection[] = [
             
             if (context?.idadeMinima !== undefined && context?.idadeMaxima !== undefined) {
               if (age < context.idadeMinima || age > context.idadeMaxima) {
-                return `Este evento é para idades entre ${context.idadeMinima} e ${context.idadeMaxima} anos. Sua idade: ${age} anos.`;
+                return `Este evento é para idades de ${context.idadeMinima} a ${context.idadeMaxima} anos (incluindo ${context.idadeMinima} e ${context.idadeMaxima}). Sua idade: ${age} anos.`;
               }
             }
             

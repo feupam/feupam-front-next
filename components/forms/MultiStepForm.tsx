@@ -471,7 +471,7 @@ export default function MultiStepForm({
               <div className="flex-1">
                 <h3 className="text-sm font-medium text-blue-800">Restrição de Idade</h3>
                 <p className="mt-1 text-sm text-blue-700">
-                  Este evento é exclusivo para participantes com idade entre <strong>{currentEvent.idadeMinima}</strong> e <strong>{currentEvent.idadeMaxima}</strong> anos.
+                  Este evento é exclusivo para participantes com idade de <strong>{currentEvent.idadeMinima}</strong> a <strong>{currentEvent.idadeMaxima}</strong> anos (incluindo {currentEvent.idadeMinima} e {currentEvent.idadeMaxima} anos).
                 </p>
               </div>
             </div>
@@ -613,7 +613,7 @@ export default function MultiStepForm({
                                 <br />
                                 {currentEvent?.idadeMinima !== undefined && currentEvent?.idadeMaxima !== undefined && (
                                   <span className="text-xs mt-1 block">
-                                    Este evento aceita participantes entre {currentEvent.idadeMinima} e {currentEvent.idadeMaxima} anos.
+                                    Este evento aceita participantes de {currentEvent.idadeMinima} a {currentEvent.idadeMaxima} anos (incluindo {currentEvent.idadeMinima} e {currentEvent.idadeMaxima}).
                                   </span>
                                 )}
                               </span>

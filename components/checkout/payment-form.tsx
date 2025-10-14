@@ -312,7 +312,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
           <Select 
             value={selectedInstallment.toString()} 
             onValueChange={(value) => setSelectedInstallment(parseInt(value))}
-            disabled={loadingInstallments || installmentOptions.length === 0}
+            disabled={loadingInstallments}
           >
             <SelectTrigger className="w-full">
               <SelectValue placeholder={loadingInstallments ? "Carregando opções..." : "Selecione o número de parcelas"} />
@@ -325,7 +325,9 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="1">1x sem juros</SelectItem>
+                <SelectItem value="1">
+                  1x de R$ {((event.price || 0) / 100).toFixed(2).replace('.', ',')}
+                </SelectItem>
               )}
             </SelectContent>
           </Select>

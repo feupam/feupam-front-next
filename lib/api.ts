@@ -317,8 +317,14 @@ export const api = {
         );
         console.log(`[API] Resposta do parcelamento: ${JSON.stringify(response.data)}`);
         return response.data;
-      } catch (error) {
+      } catch (error: any) {
         console.error(`[API] Erro ao buscar parcelamento:`, error);
+        // Se o erro for "No spots available", retorna array vazio ao invés de lançar erro
+        // Isso permite que o checkout continue funcionando mesmo quando não há vagas disponíveis
+        if (error?.message === 'No spots available' || error?.response?.data?.message === 'No spots available') {
+          console.warn(`[API] Sem vagas disponíveis para ${eventId}, retornando opções vazias`);
+          return [];
+        }
         throw error;
       }
     },

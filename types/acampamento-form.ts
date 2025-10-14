@@ -204,11 +204,13 @@ export const acampamentoFormSections: AcampamentoFormSection[] = [
         name: 'cep',
         type: 'text',
         required: true,
-        mask: '00.000-000',
-        placeholder: '00.000-000',
+        placeholder: '00000000',
         validation: {
-          pattern: /^\d{2}\.\d{3}-\d{3}$/,
-          message: 'Formato: 12.345-678'
+          validate: (value: string) => {
+            const cep = value.replace(/\D/g, '');
+            if (cep.length !== 8) return 'CEP deve ter 8 dígitos';
+            return true;
+          }
         }
       },
       {

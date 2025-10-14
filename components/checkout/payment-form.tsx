@@ -82,9 +82,11 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
   // Carrega opções de parcelamento ao montar o componente
   useEffect(() => {
     if (event && event.name) {
+      console.log('[PaymentForm] Carregando parcelas para evento:', event.name);
       fetchInstallments(event.name);
     }
-  }, [event, fetchInstallments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [event.name]); // Apenas event.name para evitar loop infinito
 
   // Pega o email do usuário autenticado no Firebase
   const userEmail = typeof window !== 'undefined' ? auth.currentUser?.email : undefined;
@@ -130,11 +132,11 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
 
       console.log("Opção de parcelamento selecionada:", selectedOption);
 
-      // Calcula o valor total multiplicando o valor da parcela pelo número de parcelas
-      const valorParcela = selectedOption.valueInCents;
-      const totalAmountInCents = valorParcela * selectedOption.number;
+      // O valueInCents já vem como valor TOTAL com juros da API
+      // Não precisa multiplicar, apenas usar o valor que vem
+      const totalAmountInCents = selectedOption.valueInCents;
 
-      console.log(`Calculando valor total: ${valorParcela} (parcela) x ${selectedOption.number} (parcelas) = ${totalAmountInCents}`);
+      console.log(`Valor total a cobrar: ${totalAmountInCents} centavos (${selectedOption.number}x parcelas)`);
 
       const paymentData: PaymentData & { spotId?: string } = {
         items: [{

@@ -25,7 +25,7 @@ export interface UserReservation {
   spotId?: string;
   ticketKind?: string;
   userType?: string;
-  charges?: Array<{
+  chargeId?: Array<{
     amount: number;
     chargeId: string;
     email: string;

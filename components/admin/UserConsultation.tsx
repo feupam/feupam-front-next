@@ -79,7 +79,6 @@ interface Reservation {
   userType: string;
   gender: string;
   spotId: string;
-  charges?: Charge[];
   chargeId?: Charge[];
   event?: string;
   updatedAt?: {
@@ -402,8 +401,8 @@ export function UserConsultation() {
     filteredData.forEach(item => {
       // Como agora cada item tem apenas uma reservation, não precisamos do forEach
       const reservation = item.reservation;
-      const mainCharge = reservation.charges && reservation.charges.length > 0
-        ? reservation.charges[reservation.charges.length - 1]
+      const mainCharge = reservation.chargeId && reservation.chargeId.length > 0
+        ? reservation.chargeId[reservation.chargeId.length - 1]
         : (reservation.chargeId && reservation.chargeId.length > 0
             ? reservation.chargeId[reservation.chargeId.length - 1]
             : null);
@@ -693,8 +692,8 @@ export function UserConsultation() {
                               <div className="space-y-2 min-w-[250px]">
                                 {(() => {
                                   const reservation = item.reservation;
-                                  const mainCharge = reservation.charges && reservation.charges.length > 0
-                                    ? reservation.charges[reservation.charges.length - 1]
+                                  const mainCharge = reservation.chargeId && reservation.chargeId.length > 0
+                                    ? reservation.chargeId[reservation.chargeId.length - 1]
                                     : (reservation.chargeId && reservation.chargeId.length > 0 
                                         ? reservation.chargeId[reservation.chargeId.length - 1] 
                                         : null);

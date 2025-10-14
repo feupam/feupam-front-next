@@ -30,7 +30,7 @@ interface Reservation {
     _seconds: number;
     _nanoseconds: number;
   };
-  charges?: Array<ChargeInfo>;
+  chargeId?: Array<ChargeInfo>;
 }
 
 interface ChargeInfo {
@@ -104,8 +104,8 @@ export default function MyTicketsPage() {
           
           // Se não tiver price diretamente, tentar pegar do charges
           let finalPrice = reservation.price;
-          if ((!finalPrice || finalPrice === 0) && reservation.charges && reservation.charges.length > 0) {
-            finalPrice = reservation.charges[0].amount;
+          if ((!finalPrice || finalPrice === 0) && reservation.chargeId && reservation.chargeId.length > 0) {
+            finalPrice = reservation.chargeId[0].amount;
             console.log('[MyTickets] Price taken from charges:', finalPrice);
           }
           
@@ -290,12 +290,12 @@ export default function MyTicketsPage() {
                   }
                   
                   // Verificar se tem pagamento PIX pendente
-                  const hasPixPayment = reservation.charges?.some(
+                  const hasPixPayment = reservation.chargeId?.some(
                     charge => charge.meio === 'pix' && charge.status !== 'Pago'
                   );
                   
-                  const currentCharge = reservation.charges && reservation.charges.length > 0 
-                    ? reservation.charges[reservation.charges.length - 1] 
+                  const currentCharge = reservation.chargeId && reservation.chargeId.length > 0 
+                    ? reservation.chargeId[reservation.chargeId.length - 1] 
                     : undefined;
                   
                   return (
@@ -396,7 +396,7 @@ export default function MyTicketsPage() {
                                 variant="outline" 
                                 size="sm" 
                                 onClick={() => {
-                                  const pixCharge = reservation.charges?.find(
+                                  const pixCharge = reservation.chargeId?.find(
                                     charge => charge.meio === 'pix' && charge.status !== 'Pago'
                                   );
                                   if (pixCharge) {

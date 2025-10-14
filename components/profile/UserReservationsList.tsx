@@ -197,7 +197,7 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
       {reservations.map((reservation, index) => {
         const reservationId = `${reservation.eventName}-${reservation.spotId}`;
         const isExpanded = expandedReservations.has(reservationId);
-        const mainCharge = reservation.charges?.[0];
+        const mainCharge = reservation.chargeId?.[0];
 
         return (
           <Card key={reservationId} className="overflow-hidden">

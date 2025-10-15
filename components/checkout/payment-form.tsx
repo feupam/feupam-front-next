@@ -153,7 +153,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
           payment_method: 'credit_card',
           credit_card: {
             installments: selectedOption.number,
-            statement_descriptor: 'FEDERA',
+            statement_descriptor: event.name,
             card: {
               number: formData.cardNumber.replace(/\D/g, ''),
               holder_name: formData.holderName,

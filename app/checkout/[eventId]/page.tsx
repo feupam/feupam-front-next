@@ -638,18 +638,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
   const handlePaymentError = (error: any) => {
     console.error("Erro no pagamento:", error);
     
-    // Verifica o tipo específico de erro
-    if (error?.message?.includes("Valor menor que o ingresso")) {
-      notificationRef.current?.showNotification(
-        'O valor do pagamento é menor que o preço da Inscrição. Por favor, tente novamente.',
-        'error'
-      );
-    } else {
-      notificationRef.current?.showNotification(
-        error?.message || 'Erro ao processar pagamento. Por favor, tente novamente.',
-        'error'
-      );
-    }
+    notificationRef.current?.showNotification(
+      error?.message || 'Erro ao processar pagamento. Por favor, tente novamente.',
+      'error'
+    );
+    
   };
 
   // Formata o tempo restante (segundos) para MM:SS

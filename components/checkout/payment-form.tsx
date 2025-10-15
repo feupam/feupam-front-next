@@ -132,11 +132,14 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
 
       console.log("Opção de parcelamento selecionada:", selectedOption);
 
-      // O valueInCents já vem como valor TOTAL com juros da API
-      // Não precisa multiplicar, apenas usar o valor que vem
-      const totalAmountInCents = selectedOption.valueInCents;
+      // O valueInCents da API vem como valor POR PARCELA
+      // Precisamos multiplicar pelo número de parcelas para obter o valor total
+      const valorPorParcela = selectedOption.valueInCents;
+      const totalAmountInCents = valorPorParcela * selectedOption.number;
 
-      console.log(`Valor total a cobrar: ${totalAmountInCents} centavos (${selectedOption.number}x parcelas)`);
+      console.log(`Valor por parcela: ${valorPorParcela} centavos`);
+      console.log(`Número de parcelas: ${selectedOption.number}`);
+      console.log(`Valor total a cobrar: ${totalAmountInCents} centavos (${selectedOption.number}x de ${valorPorParcela})`);
 
       const paymentData: PaymentData & { spotId?: string } = {
         items: [{

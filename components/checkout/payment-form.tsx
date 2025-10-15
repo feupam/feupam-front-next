@@ -143,7 +143,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
 
       const paymentData: PaymentData & { spotId?: string } = {
         items: [{
-          amount: totalAmountInCents || Number(event.price),
+          amount: totalAmountInCents,
           description: event.name
         }],
         customer: {
@@ -152,7 +152,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
         payments: {
           payment_method: 'credit_card',
           credit_card: {
-            installments: selectedInstallment,
+            installments: selectedOption.number,
             statement_descriptor: 'FEDERA',
             card: {
               number: formData.cardNumber.replace(/\D/g, ''),

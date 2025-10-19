@@ -525,10 +525,13 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         // Continuamos mesmo se ocorrer erro na verificação
       }
       
-      const reservationId = reservationData.id || reservationData.spotId;
-      if (!reservationId) {
-        throw new Error('ID da reserva não encontrado');
+      // ✅ CORRIGIDO: Usar email como identificador (email é o ID da reserva)
+      const reservationEmail = reservationData.email || auth.currentUser?.email;
+      if (!reservationEmail) {
+        throw new Error('Email da reserva não encontrado');
       }
+      
+      console.log('[PIX Payment] Email da reserva:', reservationEmail);
       
       // Garante que usamos o valor correto para o pagamento
       const eventPrice = currentEvent?.price || 0;
@@ -552,19 +555,19 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           description: currentEvent?.name || 'Evento'
         }],
         customer: {
-          email: reservationData.email || auth.currentUser?.email || '',
+          email: reservationEmail,
         },
         payments: {
           payment_method: 'pix'
         },
-        spotId: reservationId
+        spotId: reservationData.spotId || reservationEmail // Backend pode usar spotId ou email
       };
       
       console.log('[PIX Payment] Dados enviados para API:', paymentData);
       console.log('[PIX Payment] Current Event:', currentEvent);
       console.log('[PIX Payment] Current Event Name:', currentEvent?.name);
       console.log('[PIX Payment] Reservation Data:', reservationData);
-      console.log('[PIX Payment] SpotId usado:', reservationId);
+      console.log('[PIX Payment] Email usado:', reservationEmail);
       
       const response = await api.payments.create(paymentData);
       

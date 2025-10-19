@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useReservationProcess, ReservationData } from '@/hooks/useReservationProcess';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
 import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
@@ -29,6 +30,8 @@ export default function ReservationPage({ params }: ReservationPageProps) {
   
   const [step, setStep] = useState<'checking' | 'reserving' | 'existing' | 'success' | 'error' | 'waiting'>('checking');
   const [customErrorMessage, setCustomErrorMessage] = useState<string>('');
+  const [showDuplicateModal, setShowDuplicateModal] = useState(false);
+  const [duplicateErrorData, setDuplicateErrorData] = useState<{ message: string; details?: any } | null>(null);
   const router = useRouter();
   const processingRef = useRef(false);
   const [localReservationData, setLocalReservationData] = useState<ReservationData | null>(null);
@@ -146,27 +149,35 @@ export default function ReservationPage({ params }: ReservationPageProps) {
       
       const response = await reserveSpot();
       if (response) {
-        console.log("Resposta da reserva:", response);
-        
-        // Se a resposta contém indicadores de reserva já existente no spotId
-        if (response.spotId?.includes('existing') || response.spotId?.includes('fallback') || response.spotId?.includes('409')) {
-          console.log("Reserva já existia");
-          setStep('existing');
-        } else {
-          console.log("Nova reserva criada com sucesso");
-          setStep('success');
-        }
+        console.log("✅ Nova reserva criada com sucesso:", response);
+        setStep('success');
       } else {
-        console.log("Erro na reserva");
-        // Captura mensagem de erro da API
+        console.log("❌ Erro na reserva");
         if (errorMessage) {
           setCustomErrorMessage(errorMessage);
         }
         setStep('error');
       }
-    } catch (error) {
-      console.error("Erro no processamento:", error);
-      // Tenta capturar mensagem do erro
+    } catch (error: any) {
+      console.error("❌ Erro no processamento:", error);
+      
+      // Verificar se é erro de duplicação
+      if (error.message === 'DUPLICATE_RESERVATION' || error.status === 409) {
+        console.log("🚫 RESERVA DUPLICADA - Mostrando modal");
+        
+        // Capturar mensagem da API
+        const apiMessage = error.userMessage || error.response?.data?.message || 'Você já possui uma reserva para este evento.';
+        
+        setDuplicateErrorData({
+          message: apiMessage,
+          details: error.apiData
+        });
+        setShowDuplicateModal(true);
+        
+        return; // NÃO continuar o fluxo
+      }
+      
+      // Outros erros
       if (error instanceof Error) {
         setCustomErrorMessage(error.message);
       }
@@ -316,6 +327,40 @@ export default function ReservationPage({ params }: ReservationPageProps) {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de reserva duplicada */}
+      <Dialog open={showDuplicateModal} onOpenChange={setShowDuplicateModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <AlertTriangle className="h-5 w-5" />
+              Reserva já existente
+            </DialogTitle>
+            <DialogDescription className="text-base pt-4">
+              {duplicateErrorData?.message || 'Você já possui uma reserva para este evento.'}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowDuplicateModal(false);
+                router.push('/eventos');
+              }}
+            >
+              Ver outros eventos
+            </Button>
+            <Button
+              onClick={() => {
+                setShowDuplicateModal(false);
+                router.push('/meus-ingressos');
+              }}
+            >
+              Ver meus ingressos
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ProtectedRoute>
   );
 } 

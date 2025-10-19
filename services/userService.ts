@@ -89,9 +89,12 @@ const userService = {
   /**
    * Cria um novo perfil de usuário
    */
-  createProfile: async (profileData: UserProfile): Promise<UserProfile> => {
+  createProfile: async (profileData: UserProfile, eventName?: string): Promise<UserProfile> => {
     try {
       console.log('Criando novo perfil com método POST');
+      if (eventName) {
+        console.log('EventName para adicionar:', eventName);
+      }
       
       // Garantir que campos opcionais estejam presentes como strings vazias
       const dataToSend = {
@@ -105,7 +108,7 @@ const userService = {
         cellphone_responsavel: profileData.cellphone_responsavel || ''
       };
 
-      const response = await apiService.users.createUser(dataToSend);
+      const response = await apiService.users.createUser(dataToSend, eventName);
       
       // Verifica se a resposta é HTML em vez de JSON
       const contentType = response.headers?.['content-type'];
@@ -156,7 +159,7 @@ const userService = {
   /**
    * Atualiza o perfil do usuário ou cria se não existir
    */
-  updateProfile: async (profileData: UserProfile): Promise<UserProfile> => {
+  updateProfile: async (profileData: UserProfile, eventName?: string): Promise<UserProfile> => {
     try {
       // Verifica se o perfil existe
       const profileExists = await userService.checkProfileExists();
@@ -164,7 +167,7 @@ const userService = {
       // Se o perfil não existe, usa POST (criar), senão usa PATCH (atualizar)
       if (!profileExists) {
         console.log('Perfil não existe, redirecionando para createProfile');
-        return await userService.createProfile(profileData);
+        return await userService.createProfile(profileData, eventName);
       }
       
       // Filtra apenas os campos que serão atualizados
@@ -215,7 +218,7 @@ const userService = {
         };
 
         console.log('Dados finais para PATCH:', dataToUpdate);
-        const response = await apiService.users.updateUser(dataToUpdate);
+        const response = await apiService.users.updateUser(dataToUpdate, eventName);
         console.log('Resposta da API após PATCH:', response.data);
         return processUserResponse(response.data);
       } catch (error: any) {

@@ -166,21 +166,26 @@ export default function FormularioInscricaoPage() {
         console.log('Dados limpos para envio:', cleanedData);
       }
       
+      // Pega o nome do evento atual do contexto
+      const eventNameToAdd = currentEvent?.name;
+      console.log('Nome do evento atual para adicionar:', eventNameToAdd);
+      
       if (isExistingUser) {
         // Atualiza perfil existente
         console.log('Atualizando perfil existente...');
-        await userService.updateProfile(cleanedData);
+        await userService.updateProfile(cleanedData, eventNameToAdd);
       } else {
         // Cria novo perfil
         console.log('Criando novo perfil...');
-        await userService.createProfile(cleanedData);
+        await userService.createProfile(cleanedData, eventNameToAdd);
       }
       
       // Se é acampamento, envia também para API externa
       if (isAcampamento && currentEvent) {
         console.log('📤 Enviando dados para API externa /events...');
         try {
-          const response = await fetch('https://us-central1-federa-api.cloudfunctions.net/api/events', {
+          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
+          const response = await fetch(`${API_URL}/events`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

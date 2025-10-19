@@ -172,8 +172,10 @@ export const users = {
   },
 
   // Create a new user
-  createUser: async (userData: any) => {
-    const response = await api.post('/users', userData);
+  createUser: async (userData: any, eventName?: string) => {
+    const url = eventName ? `/users?eventAdd=${encodeURIComponent(eventName)}` : '/users';
+    console.log('[API] POST', url);
+    const response = await api.post(url, userData);
     return {
       data: response.data,
       headers: response.headers
@@ -181,8 +183,10 @@ export const users = {
   },
 
   // Update existing user
-  updateUser: async (userData: any) => {
-    const response = await api.patch('/users', userData);
+  updateUser: async (userData: any, eventName?: string) => {
+    const url = eventName ? `/users?eventAdd=${encodeURIComponent(eventName)}` : '/users';
+    console.log('[API] PATCH', url);
+    const response = await api.patch(url, userData);
     return {
       data: response.data,
       headers: response.headers
@@ -275,7 +279,7 @@ export const events = {
     }
   },
 
-  // Reservation
+  // Reservation - Backend valida duplicação
   reserveSpot: async (eventId: string, ticketData: { ticket_kind: string, userType: string }) => {
     try {
       const response = await api.post(`/events/${eventId}/reserve-spot`, ticketData);

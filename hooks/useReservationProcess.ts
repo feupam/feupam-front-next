@@ -191,99 +191,30 @@ export function useReservationProcess(
       console.error('Erro ao reservar vaga:', error);
 
       if (error.response?.status === 409) {
-        console.log('Erro 409: Usuário já possui reserva para este evento');
+        console.log('❌ Erro 409: Usuário já possui reserva para este evento');
+        console.log('🚫 BLOQUEANDO criação de nova reserva');
         
-        // Se erro 409, significa que já existe reserva - buscar na API
-        try {
-          console.log('Buscando reserva existente na API...');
-          const reservations = await users.getReservations();
-          console.log('Reservas encontradas:', reservations);
-          
-          // Procurar a reserva para este evento
-          const currentReservation = reservations.find((res: any) => {
-            return res.eventId === eventId || res.event_id === eventId;
-          });
-          
-          if (currentReservation) {
-            console.log('Reserva existente encontrada:', currentReservation);
-            
-            // Converter para o formato correto
-            const reservationData: ReservationData = {
-              spotId: currentReservation.spotId || currentReservation.spot_id || `${eventId}-existing`,
-              email: currentReservation.email || 'user@example.com',
-              eventId: currentReservation.eventId || currentReservation.event_id || eventId,
-              ticketKind: currentReservation.ticketKind || currentReservation.ticket_kind || ticketKind,
-              userType: currentReservation.userType || currentReservation.user_type || 'client',
-              status: currentReservation.status || 'reserved',
-              id: currentReservation.id || `existing-${Date.now()}`,
-              price: currentReservation.price // Usar preço real da API, não 0
-            };
-            
-            setReservationData(reservationData);
-            
-            localStorage.setItem('reservationTimestamp', new Date().toISOString());
-            localStorage.setItem('reservationData', JSON.stringify(reservationData));
-            
-            toast({
-              title: 'Reserva existente',
-              description: 'Você já possui uma reserva para este evento!',
-            });
-            
-            return reservationData;
-          } else {
-            console.log('Erro 409 mas reserva não encontrada - inconsistência na API');
-            
-            // Se erro 409 mas não encontrou reserva, criar estrutura mínima
-            const fallbackReservation: ReservationData = {
-              spotId: `${eventId}-fallback`,
-              email: 'user@example.com',
-              eventId: eventId,
-              ticketKind: ticketKind,
-              userType: 'client',
-              status: 'reserved',
-              id: `fallback-${Date.now()}`,
-              price: undefined // Não definir preço aqui, deixar para o contexto do evento
-            };
-            
-            setReservationData(fallbackReservation);
-            
-            localStorage.setItem('reservationTimestamp', new Date().toISOString());
-            localStorage.setItem('reservationData', JSON.stringify(fallbackReservation));
-            
-            toast({
-              title: 'Reserva existente',
-              description: 'Você já possui uma reserva para este evento!',
-            });
-            
-            return fallbackReservation;
-          }
-        } catch (fetchError) {
-          console.error('Erro ao buscar reservas após 409:', fetchError);
-          
-          // Mesmo assim, criar reserva fallback pois API disse que existe (409)
-          const fallbackReservation: ReservationData = {
-            spotId: `${eventId}-409`,
-            email: 'user@example.com',
-            eventId: eventId,
-            ticketKind: ticketKind,
-            userType: 'client',
-            status: 'reserved',
-            id: `409-${Date.now()}`,
-            price: undefined // Não definir preço aqui, deixar para o contexto do evento
-          };
-          
-          setReservationData(fallbackReservation);
-          
-          localStorage.setItem('reservationTimestamp', new Date().toISOString());
-          localStorage.setItem('reservationData', JSON.stringify(fallbackReservation));
-          
-          toast({
-            title: 'Reserva existente',
-            description: 'Você já possui uma reserva para este evento!',
-          });
-          
-          return fallbackReservation;
-        }
+        // Extrair mensagem da API
+        const apiMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          'Você já possui uma inscrição PAGA para este evento com esse CPF';
+        
+        console.log('Mensagem da API:', apiMessage);
+        
+        // IMPORTANTE: Lançar erro para interromper o fluxo
+        // Não retornar dados, pois isso faria o frontend continuar
+        toast({
+          title: 'Reserva já existente',
+          description: apiMessage,
+          variant: 'destructive',
+        });
+        
+        // Lançar erro com informações para a página tratar
+        const duplicateError = new Error('DUPLICATE_RESERVATION');
+        (duplicateError as any).status = 409;
+        (duplicateError as any).userMessage = apiMessage; // ✅ Mensagem da API
+        (duplicateError as any).apiData = error.response?.data; // ✅ Dados completos da API
+        throw duplicateError;
       } else {
         setIsError(true);
         // Tentar extrair mensagem de erro da API

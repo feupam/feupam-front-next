@@ -15,9 +15,10 @@ interface UseProfileFormProps {
   alergiaExtra?: string;
   medicamentoExtra?: string;
   isOpen?: boolean;
+  eventName?: string;
 }
 
-export function useProfileForm({ initialData, redirectToEvent, ticketKind = 'full', alergiaExtra = '', medicamentoExtra = '', isOpen = true }: UseProfileFormProps = {}): {
+export function useProfileForm({ initialData, redirectToEvent, ticketKind = 'full', alergiaExtra = '', medicamentoExtra = '', isOpen = true, eventName }: UseProfileFormProps = {}): {
   form: UseFormReturn<UserProfile>;
   onSubmit: (e: React.FormEvent | UserProfile) => Promise<any>;
   isSubmitting: boolean;
@@ -96,12 +97,15 @@ export function useProfileForm({ initialData, redirectToEvent, ticketKind = 'ful
       // Usa o método apropriado com base na existência do perfil
       let updatedProfile;
       // Sempre salvamos o perfil
+      if (eventName) {
+        console.log('[useProfileForm] Adicionando evento:', eventName);
+      }
       if (isNewProfile) {
         console.log('[useProfileForm] Criando novo perfil...');
-        updatedProfile = await userService.createProfile(dataToSubmit);
+        updatedProfile = await userService.createProfile(dataToSubmit, eventName);
       } else {
         console.log('[useProfileForm] Atualizando perfil existente...');
-        updatedProfile = await userService.updateProfile(dataToSubmit);
+        updatedProfile = await userService.updateProfile(dataToSubmit, eventName);
       }
       console.log('[useProfileForm] Perfil salvo com sucesso:', updatedProfile);
       

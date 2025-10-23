@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import MultiStepForm from '@/components/forms/MultiStepForm';
 import { useUserData } from '@/hooks/use-user-data';
 import { Card } from '@/components/ui/card';
@@ -12,20 +12,50 @@ import { useSearchParams } from 'next/navigation';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { isAcampamentoEvent, convertAcampamentoToUserProfile } from '@/types/acampamento-form';
 import { auth } from '@/lib/firebase';
+import { useEventStorage } from '@/hooks/useEventStorage';
 
 export default function FormularioInscricaoPage() {
   const { userData, isLoading: userDataLoading, error: userDataError, isExistingUser } = useUserData();
-  const { currentEvent } = useCurrentEventContext();
+  const { currentEvent, setCurrentEventByName, setCurrentEventFromData } = useCurrentEventContext();
+  const { selectedEvent } = useEventStorage();
   
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
   const ticketKind = searchParams?.get('ticketKind') || 'full';
+  const eventNameFromUrl = searchParams?.get('eventName');
 
   console.log('=== FORMULARIO PAGE ===');
   console.log('userDataLoading:', userDataLoading);
   console.log('userDataError:', userDataError);
   console.log('userData:', userData);
   console.log('isExistingUser:', isExistingUser);
+  console.log('eventNameFromUrl:', eventNameFromUrl);
+  console.log('currentEvent:', currentEvent?.name);
+  console.log('selectedEvent:', selectedEvent?.name);
+
+  // Carregar evento do localStorage ou URL
+  useEffect(() => {
+    console.log('[Formulario] Verificando evento...');
+    console.log('[Formulario] eventNameFromUrl:', eventNameFromUrl);
+    console.log('[Formulario] selectedEvent:', selectedEvent?.name);
+    console.log('[Formulario] currentEvent:', currentEvent?.name);
+
+    // Prioridade 1: localStorage (selected_event)
+    if (selectedEvent && selectedEvent.eventStatus) {
+      const eventName = selectedEvent.name;
+      
+      // Se o currentEvent não existe ou é diferente do selectedEvent, atualizar
+      if (!currentEvent || currentEvent.name !== eventName) {
+        console.log('[Formulario] Carregando evento do localStorage:', eventName);
+        setCurrentEventFromData(selectedEvent.eventStatus);
+      }
+    }
+    // Prioridade 2: URL params
+    else if (eventNameFromUrl && (!currentEvent || currentEvent.name !== eventNameFromUrl)) {
+      console.log('[Formulario] Carregando evento da URL:', eventNameFromUrl);
+      setCurrentEventByName(eventNameFromUrl);
+    }
+  }, [eventNameFromUrl, selectedEvent, currentEvent, setCurrentEventByName, setCurrentEventFromData]);
 
   // Função para reconstruir telefone no formato (xx) xxxxx-xxxx a partir de ddd e numero separados
   const formatPhoneFromParts = (ddd: string, phone: string) => {

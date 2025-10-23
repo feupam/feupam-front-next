@@ -204,6 +204,17 @@ export default function MultiStepForm({
         console.log('   - ticketKind:', ticketKind);
         
         if (currentEvent) {
+          // Salvar evento no localStorage antes de redirecionar
+          sessionStorage.setItem('navigating', 'true');
+          const eventData = {
+            id: currentEvent.uuid || currentEvent.name,
+            name: currentEvent.name,
+            eventStatus: currentEvent,
+            savedAt: new Date().toISOString(),
+          };
+          localStorage.setItem('selected_event', JSON.stringify(eventData));
+          console.log('7.5. Evento salvo no localStorage:', eventData);
+          
           if (isCurrentEventOpen) {
             // Se evento está aberto: vai para reserva
             // Usar o nome do evento encodado para evitar problemas com caracteres especiais

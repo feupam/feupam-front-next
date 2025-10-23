@@ -491,10 +491,10 @@ export function convertAcampamentoToUserProfile(data: Partial<AcampamentoFormDat
     cidade: data.cidade || 'Não informado',
     estado: data.estado || 'MG',
     
-    // Compatibilidade com campos antigos (deprecated mas mantidos)
+    // Campos de responsável (obrigatórios para menores)
     alergia: data.alergia_alimentar || 'Não',
     medicamento: data.medicamento_continuado || 'Não usa',
-    responsavel: data.nome_mae || '', // Mãe como responsável principal
+    responsavel: data.nome_mae || '',
     documento_responsavel: data.cpf ? data.cpf.replace(/\D/g, '') : '',
     ddd_responsavel: mainPhone.ddd,
     cellphone_responsavel: mainPhone.phone

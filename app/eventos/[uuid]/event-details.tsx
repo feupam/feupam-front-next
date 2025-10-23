@@ -1,10 +1,7 @@
 'use client';
 
 import { Event } from '@/types/event';
-import { EventHeader } from '@/components/events/event-header';
-import { EventInfo } from '@/components/events/event-info';
-import { EventSpotsDistribution } from '@/components/events/event-spots-distribution';
-import { EventBookingCard } from '@/components/events/event-booking-card';
+import { EventHeader, EventInfo, EventSpotsDistribution, EventBookingCard } from '@/src/features/events';
 
 interface EventDetailsProps {
   event: Event;

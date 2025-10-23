@@ -294,3 +294,57 @@ export function generateMockQueueStatus(eventUuid: string): QueueStatus {
     updated: new Date().toISOString()
   };
 }
+
+/**
+ * Funções utilitárias para limpeza e formatação de strings
+ */
+
+/**
+ * Remove todos os caracteres não numéricos de uma string
+ * @param value - String a ser limpa
+ * @returns String contendo apenas números
+ */
+export function removeNonNumeric(value: string | undefined | null): string {
+  if (!value) return '';
+  return value.replace(/\D/g, '');
+}
+
+/**
+ * Formata CPF com máscara
+ * @param cpf - CPF sem formatação (apenas números)
+ * @returns CPF formatado (000.000.000-00)
+ */
+export function formatCPF(cpf: string | undefined | null): string {
+  if (!cpf) return '';
+  const cleaned = removeNonNumeric(cpf);
+  if (cleaned.length !== 11) return cpf;
+  return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+}
+
+/**
+ * Formata CEP com máscara
+ * @param cep - CEP sem formatação (apenas números)
+ * @returns CEP formatado (00000-000)
+ */
+export function formatCEP(cep: string | undefined | null): string {
+  if (!cep) return '';
+  const cleaned = removeNonNumeric(cep);
+  if (cleaned.length !== 8) return cep;
+  return cleaned.replace(/(\d{5})(\d{3})/, '$1-$2');
+}
+
+/**
+ * Formata telefone com máscara
+ * @param phone - Telefone sem formatação (apenas números)
+ * @returns Telefone formatado ((00) 00000-0000 ou (00) 0000-0000)
+ */
+export function formatPhone(phone: string | undefined | null): string {
+  if (!phone) return '';
+  const cleaned = removeNonNumeric(phone);
+  if (cleaned.length === 11) {
+    return cleaned.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+  } else if (cleaned.length === 10) {
+    return cleaned.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+  }
+  return phone;
+}

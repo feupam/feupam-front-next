@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/src/features/auth'
 import { isEventExpired, formatDate } from '@/lib/utils'
 
 interface CarouselImage {

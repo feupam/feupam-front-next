@@ -1,6 +1,6 @@
 'use client';
 
-import { GoogleLoginButton } from '@/components/GoogleLoginButton';
+import { GoogleLoginButton } from '@/src/features/auth';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 

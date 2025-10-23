@@ -6,16 +6,13 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { LoadingCard } from '@/components/shared/Loading';
 import { useRouter } from 'next/navigation';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { ProtectedRoute } from '@/src/features/auth';
 import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 export default function ProfilePage() {
   const { profile, loading: profileLoading, error: profileError } = useUserProfile();
   const router = useRouter();
-
-  console.log('[ProfilePage] profileLoading:', profileLoading);
-  console.log('[ProfilePage] profile:', profile);
 
   const handleEditProfile = () => {
     router.push('/formulario');

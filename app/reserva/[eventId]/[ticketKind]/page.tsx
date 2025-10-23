@@ -8,9 +8,10 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useReservationProcess, ReservationData } from '@/hooks/useReservationProcess';
 import { Loader2, CheckCircle2, XCircle, AlertTriangle } from 'lucide-react';
-import { ProtectedRoute } from '@/components/auth/ProtectedRoute';
+import { ProtectedRoute } from '@/src/features/auth';
 import { api } from '@/lib/api';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
+import { useEventStorage } from '@/hooks/useEventStorage';
 
 interface ReservationPageProps {
   params: {
@@ -35,14 +36,30 @@ export default function ReservationPage({ params }: ReservationPageProps) {
   const router = useRouter();
   const processingRef = useRef(false);
   const [localReservationData, setLocalReservationData] = useState<ReservationData | null>(null);
-  const { currentEvent, isCurrentEventOpen, setCurrentEventByName } = useCurrentEventContext();
+  const { currentEvent, isCurrentEventOpen, setCurrentEventByName, setCurrentEventFromData } = useCurrentEventContext();
+  const { selectedEvent } = useEventStorage();
 
-  // Verificar se o evento está aberto
+  // Verificar se o evento está no localStorage e carregar no contexto
   useEffect(() => {
-    if (eventId && eventId !== 'undefined') {
+    console.log('[ReservationPage] Verificando localStorage...');
+    console.log('[ReservationPage] selectedEvent:', selectedEvent);
+    console.log('[ReservationPage] currentEvent:', currentEvent);
+    
+    // Evita loop infinito: só carrega se o evento atual não estiver definido ou for diferente
+    if (selectedEvent && selectedEvent.eventStatus && selectedEvent.name === eventId) {
+      // Verifica se já está carregado
+      if (!currentEvent || currentEvent.name !== selectedEvent.name) {
+        console.log('[ReservationPage] Evento encontrado no localStorage, carregando no contexto...');
+        setCurrentEventFromData(selectedEvent.eventStatus);
+      } else {
+        console.log('[ReservationPage] Evento já está carregado no contexto, pulando...');
+      }
+    } else if (eventId && eventId !== 'undefined' && (!currentEvent || currentEvent.name !== eventId)) {
+      // Fallback: buscar pelo nome (somente se não estiver carregado)
+      console.log('[ReservationPage] Buscando evento pelo nome:', eventId);
       setCurrentEventByName(eventId);
     }
-  }, [eventId, setCurrentEventByName]);
+  }, [eventId, selectedEvent?.savedAt, currentEvent?.name, setCurrentEventByName, setCurrentEventFromData]);
 
   // Removido: Não redireciona mais para /perfil
   // Permite que usuários com reservas pendentes continuem para checkout mesmo se evento não estiver aberto
@@ -89,7 +106,7 @@ export default function ReservationPage({ params }: ReservationPageProps) {
         
         if (currentReservation && currentReservation.status === 'Pago') {
           console.log("Usuário já comprou este ingresso");
-          router.push('/meus-ingressos');
+          window.location.href = '/meus-ingressos';
           return;
         }
         

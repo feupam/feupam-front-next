@@ -3,7 +3,8 @@
 import { ThemeProvider } from '@/components/theme-provider';
 import { EventsProvider } from '@/contexts/EventsContext';
 import { CurrentEventProvider } from '@/contexts/CurrentEventContext';
-import { AuthProvider } from '@/contexts/AuthContext';
+import { AuthProvider } from '@/src/features/auth';
+import { ReactQueryProvider } from '@/lib/react-query';
 import { Toaster } from '@/components/ui/toaster';
 import { PropsWithChildren, createContext, useState, useContext, useEffect, useRef } from 'react';
 import { api } from '@/lib/api';
@@ -168,17 +169,19 @@ export function InstallmentsProvider({ children }: PropsWithChildren) {
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AuthProvider>
-        <EventsProvider>
-          <CurrentEventProvider>
-            <InstallmentsProvider>
-              {children}
-              <Toaster />
-            </InstallmentsProvider>
-          </CurrentEventProvider>
-        </EventsProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <ReactQueryProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AuthProvider>
+          <EventsProvider>
+            <CurrentEventProvider>
+              <InstallmentsProvider>
+                {children}
+                <Toaster />
+              </InstallmentsProvider>
+            </CurrentEventProvider>
+          </EventsProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </ReactQueryProvider>
   );
 } 

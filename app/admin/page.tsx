@@ -3,15 +3,13 @@
 import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { EventManagement } from '@/components/admin/EventManagement';
-import { UserManagement } from '@/components/admin/UserManagement';
-import { SpotManagement } from '@/components/admin/SpotManagement';
-import { UserConsultation } from '@/components/admin/UserConsultation';
-import { useAuth } from '@/contexts/AuthContext';
+import { EventManagement, UserManagement, SpotManagement, UserConsultation, TotalConsultation } from '@/src/features/admin';
+import { useAuth } from '@/src/features/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { isAdmin } from '@/lib/admin';
-import { AlertCircle, Shield } from 'lucide-react';
+import { AlertCircle, Shield, ArrowLeft } from 'lucide-react';
+import { ActionButton } from '@/components/shared/ActionButton';
 
 export default function AdminPage() {
   const { user, loading } = useAuth();
@@ -60,12 +58,14 @@ export default function AdminPage() {
               Entre em contato com os responsáveis se acredita que isso é um erro.
             </p>
             <div className="pt-4">
-              <button
+              <ActionButton
+                variant="default"
+                icon={ArrowLeft}
                 onClick={() => router.back()}
-                className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                className="w-full"
               >
                 Voltar
-              </button>
+              </ActionButton>
             </div>
           </CardContent>
         </Card>
@@ -135,11 +135,24 @@ export default function AdminPage() {
             <CardHeader>
               <CardTitle>Consultas de Usuários e Reservas</CardTitle>
               <CardDescription>
-                Consultar usuários e suas reservas por evento
+                Consultar usuários e suas reservas
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <UserConsultation />
+              <Tabs defaultValue="by-event" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="by-event">Consulta por Evento</TabsTrigger>
+                  <TabsTrigger value="total">Consulta Total</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="by-event" className="mt-4">
+                  <UserConsultation />
+                </TabsContent>
+
+                <TabsContent value="total" className="mt-4">
+                  <TotalConsultation />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
         </TabsContent>

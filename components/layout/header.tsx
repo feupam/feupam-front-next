@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { Menu, X, Ticket, Sun, Moon, Home, Shield, CreditCard, ShoppingCart } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
+import { Menu, X, Ticket, Sun, Moon, Home, Shield, CreditCard, ShoppingCart, Trash2 } from 'lucide-react';
+import { useAuth } from '@/src/features/auth';
 import { UserMenu } from '@/components/UserMenu';
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { useTheme } from 'next-themes';
@@ -16,6 +16,7 @@ export default function Header() {
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
   const pathname = usePathname();
+  const router = useRouter();
   const { user } = useAuth();
   const { currentEvent } = useCurrentEventContext();
 
@@ -27,22 +28,33 @@ export default function Header() {
     setMounted(true);
   }, []);
 
-  // Debug do contexto apenas
-  useEffect(() => {
-    console.log('[Header] currentEvent do contexto:', currentEvent);
-  }, [currentEvent]);
-
   const navigation = [
     ...(userIsAdmin ? [{ name: 'Admin', href: '/admin', icon: Shield }] : []),
     { name: 'Home', href: '/home', icon: Home },
     { name: currentEvent?.name || 'Evento', href: currentEvent ? `/event/${encodeURIComponent(currentEvent.name)}` : '/home', icon: Ticket },
     { name: 'Perfil', href: '/perfil' },
   ];
-
-  console.log('[Header] Renderizando com evento:', currentEvent?.name || 'Nenhum evento');
   
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const clearCache = () => {
+    // Limpar localStorage e sessionStorage
+    localStorage.clear();
+    sessionStorage.clear();
+    
+    // Tentar limpar service workers
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        registrations.forEach((registration) => {
+          registration.unregister();
+        });
+      });
+    }
+
+    // Recarregar a página
+    window.location.href = '/home';
   };
   
   return (
@@ -105,17 +117,27 @@ export default function Header() {
         
         <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-3 xl:gap-4 min-w-0">
           {mounted && (
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-md text-foreground/80 hover:text-primary hover:bg-muted transition-colors flex-shrink-0"
-              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-            >
-              {theme === 'light' ? (
-                <Moon className="h-4 w-4 sm:h-5 sm:w-5" />
-              ) : (
-                <Sun className="h-4 w-4 sm:h-5 sm:w-5" />
-              )}
-            </button>
+            <>
+              <button
+                onClick={clearCache}
+                className="p-2 rounded-md text-foreground/80 hover:text-red-500 hover:bg-muted transition-colors flex-shrink-0"
+                aria-label="Limpar cache"
+                title="Limpar cache"
+              >
+                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+              </button>
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-md text-foreground/80 hover:text-primary hover:bg-muted transition-colors flex-shrink-0"
+                aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              >
+                {theme === 'light' ? (
+                  <Moon className="h-4 w-4 sm:h-5 sm:w-5" />
+                ) : (
+                  <Sun className="h-4 w-4 sm:h-5 sm:w-5" />
+                )}
+              </button>
+            </>
           )}
           
           <div className="min-w-0 flex-shrink-0">
@@ -192,25 +214,36 @@ export default function Header() {
               
               <div className="space-y-2 pt-4 border-t border-border">
                 {mounted && (
-                  <button
-                    onClick={() => {
-                      toggleTheme();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="flex items-center gap-3 p-3 rounded-md text-base font-medium text-card-foreground hover:bg-muted transition-colors w-full text-left"
-                  >
-                    {theme === 'light' ? (
-                      <>
-                        <Moon className="h-5 w-5 flex-shrink-0" />
-                        <span>Modo Escuro</span>
-                      </>
-                    ) : (
-                      <>
-                        <Sun className="h-5 w-5 flex-shrink-0" />
-                        <span>Modo Claro</span>
-                      </>
-                    )}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => {
+                        clearCache();
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-md text-base font-medium text-red-500 hover:bg-muted transition-colors w-full text-left"
+                    >
+                      <Trash2 className="h-5 w-5 flex-shrink-0" />
+                      <span>Limpar Cache</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        toggleTheme();
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-3 p-3 rounded-md text-base font-medium text-card-foreground hover:bg-muted transition-colors w-full text-left"
+                    >
+                      {theme === 'light' ? (
+                        <>
+                          <Moon className="h-5 w-5 flex-shrink-0" />
+                          <span>Modo Escuro</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sun className="h-5 w-5 flex-shrink-0" />
+                          <span>Modo Claro</span>
+                        </>
+                      )}
+                    </button>
+                  </>
                 )}
                 
                 {user ? (

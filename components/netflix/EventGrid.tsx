@@ -7,6 +7,7 @@ import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
 import { useLoading } from '@/contexts/LoadingContext'
 import { isEventExpired, formatDate, formatEventDate } from '@/lib/utils'
+import { useEventStorage } from '@/hooks/useEventStorage'
 
 interface EventGridProps {
   events: EventData[]
@@ -16,13 +17,25 @@ interface EventGridProps {
 
 export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridProps) {
   const { setCurrentEventFromData } = useCurrentEventContext()
+  const { setSelectedEvent } = useEventStorage()
   const router = useRouter()
   const { setLoading } = useLoading()
 
   const handleEventClick = async (event: EventData) => {
     setLoading(true);
     console.log('[EventGrid] Clique em inscrição para:', event.name);
+    
+    // Salvar no contexto
     setCurrentEventFromData(event);
+    
+    // Salvar no localStorage
+    sessionStorage.setItem('navigating', 'true');
+    setSelectedEvent({
+      id: String(event.id),
+      name: event.name,
+      eventStatus: event,
+    });
+    console.log('[EventGrid] Evento salvo no localStorage:', event.name);
     
     try {
       if (event.isOpen) {
@@ -49,6 +62,15 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     
     // Define o evento no contexto
     setCurrentEventFromData(event);
+    
+    // Salvar no localStorage
+    sessionStorage.setItem('navigating', 'true');
+    setSelectedEvent({
+      id: String(event.id),
+      name: event.name,
+      eventStatus: event,
+    });
+    console.log('[EventGrid] Evento salvo no localStorage (Saiba Mais):', event.name);
     
     // Aguarda um pouco antes de navegar para garantir que o contexto foi definido
     setTimeout(() => {

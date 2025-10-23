@@ -3,7 +3,7 @@
 import { ShoppingCart } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { useAuth } from "@/contexts/AuthContext"
+import { useAuth } from "@/src/features/auth"
 import { useRouter } from "next/navigation"
 import { EventsViewer } from "@/components/calendar/EventsViewer"
 import { EventData } from "@/services/eventService"

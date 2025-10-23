@@ -1,7 +1,6 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
-import { LogoutButton } from './LogoutButton';
+import { useAuth, LogoutButton } from '@/src/features/auth';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from './ui/dropdown-menu';
 import { Sun, Moon } from 'lucide-react';

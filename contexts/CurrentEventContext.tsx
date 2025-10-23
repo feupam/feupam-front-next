@@ -21,23 +21,11 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
   const [currentEvent, setCurrentEventState] = useState<Event | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [initialized, setInitialized] = useState(false);
 
   // Log para rastrear mudanças no contexto
   useEffect(() => {
     console.log('[CurrentEventContext] Provider montado');
-    
-    // Carrega evento do localStorage na inicialização
-    try {
-      const savedEvent = localStorage.getItem('currentEvent');
-      if (savedEvent) {
-        const event = JSON.parse(savedEvent);
-        console.log('[CurrentEventContext] Carregando evento do localStorage:', event.name);
-        setCurrentEventState(event);
-      }
-    } catch (error) {
-      console.error('[CurrentEventContext] Erro ao carregar do localStorage:', error);
-    }
-    
     return () => {
       console.log('[CurrentEventContext] Provider desmontado');
     };
@@ -93,9 +81,15 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
   const setCurrentEventFromData = useCallback((eventData: any) => {
     console.log('[CurrentEventContext] Definindo evento a partir de dados:', eventData);
     console.log('[CurrentEventContext] eventData.price:', eventData.price, 'Type:', typeof eventData.price);
+    console.log('[CurrentEventContext] eventData.id:', eventData.id);
+    console.log('[CurrentEventContext] eventData.uuid:', eventData.uuid);
+    
+    // Prioriza: uuid > id (convertido para string)
+    const eventId = eventData.uuid || String(eventData.id || '');
+    console.log('[CurrentEventContext] UUID final:', eventId);
     
     const event: Event = {
-      uuid: String(eventData.id),
+      uuid: eventId,
       name: eventData.name,
       location: eventData.location || '',
       description: eventData.description || '',
@@ -116,16 +110,55 @@ export function CurrentEventProvider({ children }: { children: ReactNode }) {
     };
     
     console.log('[CurrentEventContext] Evento processado:', event);
-    setCurrentEventState(event);
     
-    // Salva no localStorage para persistir entre navegações
-    try {
-      localStorage.setItem('currentEvent', JSON.stringify(event));
-      console.log('[CurrentEventContext] Evento salvo no localStorage');
-    } catch (error) {
-      console.error('[CurrentEventContext] Erro ao salvar no localStorage:', error);
-    }
+    // Verifica se o evento já está definido e é o mesmo
+    setCurrentEventState(prevEvent => {
+      if (prevEvent && prevEvent.name === event.name && prevEvent.uuid === event.uuid) {
+        console.log('[CurrentEventContext] Evento já está definido, pulando atualização');
+        return prevEvent;
+      }
+      
+      // Salva no localStorage apenas quando o evento muda
+      try {
+        localStorage.setItem('currentEvent', JSON.stringify(event));
+        console.log('[CurrentEventContext] Evento salvo no localStorage');
+      } catch (error) {
+        console.error('[CurrentEventContext] Erro ao salvar no localStorage:', error);
+      }
+      
+      return event;
+    });
   }, []); // Empty dependency array since it only uses the passed parameter
+
+  // Carrega evento do localStorage na inicialização (roda após setCurrentEventFromData ser definido)
+  useEffect(() => {
+    if (initialized) return;
+    
+    console.log('[CurrentEventContext] Inicializando contexto com dados do localStorage...');
+    
+    try {
+      const selectedEventStr = localStorage.getItem('selected_event');
+      const currentEventStr = localStorage.getItem('currentEvent');
+      
+      if (selectedEventStr) {
+        const selectedEvent = JSON.parse(selectedEventStr);
+        console.log('[CurrentEventContext] Carregando evento de selected_event:', selectedEvent.name);
+        
+        // selected_event contém { id, name, eventStatus, savedAt }
+        if (selectedEvent.eventStatus) {
+          setCurrentEventFromData(selectedEvent.eventStatus);
+        }
+      } else if (currentEventStr) {
+        const event = JSON.parse(currentEventStr);
+        console.log('[CurrentEventContext] Carregando evento do currentEvent (fallback):', event.name);
+        setCurrentEventState(event);
+      }
+    } catch (error) {
+      console.error('[CurrentEventContext] Erro ao carregar do localStorage:', error);
+    }
+    
+    setInitialized(true);
+  }, [initialized, setCurrentEventFromData]);
 
   // Função para definir evento atual pelo nome (busca na API)
   const setCurrentEventByName = useCallback(async (eventName: string) => {

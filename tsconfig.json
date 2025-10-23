@@ -25,7 +25,8 @@
     "strictNullChecks": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./*"],
+      "@/features/*": ["./src/features/*"]
     }
   },
   "include": [

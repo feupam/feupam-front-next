@@ -23,8 +23,6 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
   useEffect(() => {
     if (Object.keys(values).length > 0 && validationContext && 
         (validationContext.idadeMinima !== undefined || validationContext.idadeMaxima !== undefined)) {
-      console.log('[useFormValidation] Executando validação inicial/revalidação dos campos');
-      console.log('[useFormValidation] Contexto:', validationContext);
       
       const initialErrors: Record<string, string> = {};
       
@@ -36,7 +34,6 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
           const result = rule.validate(String(value), validationContext);
           if (typeof result === 'string') {
             initialErrors[fieldName] = result;
-            console.log(`[useFormValidation] Campo '${fieldName}' com erro:`, result);
           }
         }
       });
@@ -70,25 +67,18 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
       if (age !== values.idade && age >= 0 && age <= 120) {
         setValues(prev => ({ ...prev, idade: age }));
         
-        console.log('[useFormValidation] Idade calculada:', age);
-        console.log('[useFormValidation] Contexto de validação:', validationContext);
-        
         // Valida idade contra restrições do evento (SE EXISTIREM AMBOS OS LIMITES)
         if (validationContext?.idadeMinima !== undefined && validationContext?.idadeMaxima !== undefined) {
           const minAge = validationContext.idadeMinima;
           const maxAge = validationContext.idadeMaxima;
           
-          console.log('[useFormValidation] Validando idade:', { age, minAge, maxAge });
-          
           if (age < minAge || age > maxAge) {
-            console.log('[useFormValidation] ❌ Idade INVÁLIDA');
             setErrors(prev => ({ 
               ...prev, 
               data_nasc: `Este evento é para idades de ${minAge} a ${maxAge} anos (incluindo ${minAge} e ${maxAge}). Sua idade: ${age} anos.`
             }));
             setTouched(prev => ({ ...prev, data_nasc: true }));
           } else {
-            console.log('[useFormValidation] ✅ Idade VÁLIDA');
             // Remove erro se idade está válida
             setErrors(prev => {
               const newErrors = { ...prev };
@@ -96,8 +86,6 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
               return newErrors;
             });
           }
-        } else {
-          console.log('[useFormValidation] ℹ️ Evento sem restrições de idade');
         }
       }
     }
@@ -131,7 +119,6 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
       if (cleanCPF.length === 11 && !values.cpf.includes('.')) {
         const maskedCPF = applyMask(cleanCPF, '000.000.000-00');
         if (maskedCPF !== values.cpf) {
-          console.log('[useFormValidation] Formatando CPF:', cleanCPF, '→', maskedCPF);
           setValues(prev => ({ ...prev, cpf: maskedCPF }));
         }
       }
@@ -175,27 +162,18 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
 
   // Função para validar todos os campos
   const validateAll = useCallback((): boolean => {
-    console.log('[validateAll] Iniciando validação completa');
-    console.log('[validateAll] Contexto:', validationContext);
-    console.log('[validateAll] Valores:', values);
-    
     const newErrors: Record<string, string> = {};
     let isValid = true;
 
     Object.keys(validationRules).forEach(name => {
       const error = validateField(name, values[name] || '');
       if (error) {
-        console.log(`[validateAll] ❌ Campo '${name}' com erro:`, error);
         newErrors[name] = error;
         isValid = false;
-      } else {
-        console.log(`[validateAll] ✅ Campo '${name}' válido`);
       }
     });
 
     setErrors(newErrors);
-    console.log('[validateAll] Resultado final:', isValid ? '✅ VÁLIDO' : '❌ INVÁLIDO');
-    console.log('[validateAll] Erros encontrados:', newErrors);
     return isValid;
   }, [values, validationRules, validateField, validationContext]);
 

@@ -2,7 +2,7 @@
 
 import { UserReservationsList } from '@/components/profile/UserReservationsList';
 import { useUserReservations } from '@/hooks/useUserReservations';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/src/features/auth';
 import { useEffect } from 'react';
 
 export default function TestReservationsPage() {

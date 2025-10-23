@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Filter } from 'lucide-react';
-import FilterBar from '@/components/events/filter-bar';
-import EventCard from '@/components/events/event-card';
+import { FilterBar } from '@/src/features/events';
+import { EventCardWithStorage } from '@/components/events/EventCardWithStorage';
 import { Event } from '@/types/event';
 import { useEvents } from '@/contexts/EventsContext';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -64,7 +64,7 @@ export default function EventsPage() {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
         {filteredEvents.map((event, index) => (
-          <EventCard key={event.uuid} event={event} index={index} />
+          <EventCardWithStorage key={event.uuid} event={event} />
         ))}
       </div>
 

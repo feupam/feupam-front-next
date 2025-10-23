@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { CalendarDays, MapPin, Clock, Users, ChevronDown } from 'lucide-react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { EventClosedDialog } from '@/components/events/event-closed-dialog';
+import { EventClosedDialog } from '@/src/features/events';
 import { formatDate, formatTime, formatCurrency, formatEventDate } from '@/lib/utils';
 import { LoadingPage } from '@/components/shared/Loading';
 
@@ -56,8 +56,6 @@ export default function EventPage() {
         setLoading(true);
         setError(null);
         
-        console.log('[EventPage] Buscando detalhes do evento:', eventName);
-        
         // Busca todos os eventos para encontrar o específico
         const response = await eventService.getEventStatus('federa');
         
@@ -67,8 +65,6 @@ export default function EventPage() {
           );
           
           if (event) {
-            console.log('[EventPage] Evento encontrado:', event);
-            
             // Solução temporária para eventos específicos que sabemos que têm range
             let eventWithRangeDate = { ...event };
             if (event.name === 'FederaLideres - Inscrição Completa Gratuito' && !event.range_date) {
@@ -89,7 +85,6 @@ export default function EventPage() {
             
             // Define no contexto se não estiver definido ou for diferente
             if (!currentEvent || currentEvent.name !== event.name) {
-              console.log('[EventPage] Atualizando contexto com evento:', event.name);
               setCurrentEventFromData(event);
             }
           } else {
@@ -114,7 +109,6 @@ export default function EventPage() {
   // Mostrar diálogo automaticamente se evento estiver fechado
   useEffect(() => {
     if (eventDetails && !eventDetails.isOpen) {
-      console.log('[EventPage] Mostrando diálogo - evento fechado');
       // Pequeno delay para garantir que a página carregou completamente
       const timer = setTimeout(() => {
         setShowDialog(true);
@@ -145,11 +139,8 @@ export default function EventPage() {
   };
 
   const handleEventClick = () => {
-    console.log('[EventPage] Clique em inscrição para:', eventDetails.name);
     setCurrentEventFromData(eventDetails);
-
     router.push('/formulario');
-
   };
 
   return (

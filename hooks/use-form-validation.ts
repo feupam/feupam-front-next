@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { validateRequiredField, validateChurchField } from '@/lib/form-validators';
 
 interface ValidationRule {
   pattern?: RegExp;
@@ -10,9 +11,15 @@ interface UseFormValidationProps {
   initialValues: Record<string, any>;
   validationRules?: Record<string, ValidationRule>;
   validationContext?: any;
+  requiredFields?: string[]; // Lista de campos obrigatórios
 }
 
-export function useFormValidation({ initialValues, validationRules = {}, validationContext }: UseFormValidationProps) {
+export function useFormValidation({ 
+  initialValues, 
+  validationRules = {}, 
+  validationContext,
+  requiredFields = []
+}: UseFormValidationProps) {
   const [values, setValues] = useState(initialValues);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -128,23 +135,40 @@ export function useFormValidation({ initialValues, validationRules = {}, validat
   // Função para validar um campo
   const validateField = useCallback((name: string, value: string): string => {
     const rule = validationRules[name];
-    if (!rule) return '';
-
+    
     // Se o campo está vazio e não é obrigatório, não valida
-    if (!value) return '';
+    if (!value && !requiredFields.includes(name)) return '';
 
-    if (rule.pattern && !rule.pattern.test(value)) {
+    // Validação especial para igreja
+    if (name === 'church') {
+      const churchValidation = validateChurchField(value);
+      if (typeof churchValidation === 'string') {
+        return churchValidation;
+      }
+    }
+
+    // Validação contra placeholders inválidos para campos obrigatórios
+    if (requiredFields.includes(name)) {
+      const requiredValidation = validateRequiredField(value, name);
+      if (typeof requiredValidation === 'string') {
+        return requiredValidation;
+      }
+    }
+
+    // Validações de padrão (regex)
+    if (rule?.pattern && !rule.pattern.test(value)) {
       return rule.message || 'Formato inválido';
     }
 
-    if (rule.validate) {
+    // Validações customizadas
+    if (rule?.validate) {
       const result = rule.validate(value, validationContext);
       if (typeof result === 'string') return result;
       if (result === false) return rule.message || 'Valor inválido';
     }
 
     return '';
-  }, [validationRules, validationContext]);
+  }, [validationRules, validationContext, requiredFields]);
 
   // Função para atualizar um campo
   const updateField = useCallback((name: string, value: string, mask?: string) => {

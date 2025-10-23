@@ -79,6 +79,16 @@ export default function MultiStepForm({
     return acc;
   }, {} as Record<string, any>);
 
+  // Lista de campos obrigatórios
+  const requiredFields = sections.reduce((acc, section) => {
+    section.fields.forEach(field => {
+      if (field.required) {
+        acc.push(String(field.name));
+      }
+    });
+    return acc;
+  }, [] as string[]);
+
   // Contexto de validação com restrições de idade do evento
   const validationContext = {
     idadeMinima: currentEvent?.idadeMinima,
@@ -86,6 +96,7 @@ export default function MultiStepForm({
   };
   
   console.log('[MultiStepForm] Contexto de validação:', validationContext);
+  console.log('[MultiStepForm] Campos obrigatórios:', requiredFields);
   console.log('[MultiStepForm] Evento atual:', {
     nome: currentEvent?.name,
     idadeMinima: currentEvent?.idadeMinima,
@@ -104,7 +115,8 @@ export default function MultiStepForm({
   } = useFormValidation({
     initialValues,
     validationRules,
-    validationContext
+    validationContext,
+    requiredFields
   });
 
   // Verificar se um step está completo
@@ -118,10 +130,15 @@ export default function MultiStepForm({
       console.log(`[isStepComplete] Campo '${field.name}':`, {
         value,
         hasError: status.hasError,
-        error: status.error
+        error: status.error,
+        required: field.required
       });
       
-      return value && !status.hasError;
+      // Campo é válido se:
+      // 1. Tem valor não vazio
+      // 2. Não tem erros de validação
+      // 3. O valor não é um placeholder inválido (validado pelo hook)
+      return value && String(value).trim() !== '' && !status.hasError;
     });
   };
 

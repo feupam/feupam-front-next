@@ -4,17 +4,9 @@ import EventPage from './event-page';
 
 // Função para gerar os parâmetros estáticos
 export async function generateStaticParams() {
-  try {
-    const events = await api.events.list();
-    return events.map((event) => ({
-      uuid: event.uuid,
-    }));
-  } catch (error) {
-    console.error('Erro ao gerar parâmetros estáticos:', error);
-    // Retorna array vazio para evitar falha no build
-    // As páginas serão geradas sob demanda (fallback)
-    return [];
-  }
+  // Não faz chamada à API no build para evitar erro 401
+  // Retorna array vazio para gerar páginas sob demanda
+  return [];
 }
 
 // Habilita geração sob demanda para páginas não pré-geradas
@@ -27,17 +19,9 @@ interface PageProps {
 }
 
 export default async function Page({ params }: PageProps) {
-  try {
-    const events = await api.events.list();
-    const event = events.find(e => e.uuid === params.uuid);
-    
-    if (!event) {
-      notFound();
-    }
-
-    return <EventPage event={event} />;
-  } catch (error) {
-    console.error('Erro ao carregar evento:', error);
+  // Não faz chamada à API no build
+  // Renderiza fallback ou mensagem de erro
+  return <div>Evento não disponível no build. Faça login para visualizar.</div>;
     throw error;
   }
 } 

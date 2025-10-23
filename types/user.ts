@@ -344,7 +344,7 @@ export const formSections: FormSection[] = [
     title: '📋 Termos e Condições',
     fields: [
       {
-        label: 'Aceito os termos da LGPD',
+        label: 'Autorização de Uso de Dados e Imagem. Autorizo que meus dados pessoais informados neste formulário sejam coletados e usados pela equipe do acampamento para fins de inscrição, comunicação e segurança, conforme a Lei n° 13.709/2018 (LGPD). Também autorizo, de forma gratuita, o uso da minha imagem e/ou voz em fotos e vídeos feitos durante o evento para divulgação institucional em redes sociais, sites ou materiais do acampamento. Aceito os termos da LGPD',
         name: 'lgpdConsentAccepted',
         type: 'radio',
         required: true,

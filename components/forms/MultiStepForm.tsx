@@ -126,19 +126,21 @@ export default function MultiStepForm({
       if (!field.required) return true;
       const value = values[field.name];
       const status = getFieldStatus(field.name);
-      
-      console.log(`[isStepComplete] Campo '${field.name}':`, {
-        value,
-        hasError: status.hasError,
-        error: status.error,
-        required: field.required
-      });
-      
-      // Campo é válido se:
-      // 1. Tem valor não vazio
-      // 2. Não tem erros de validação
-      // 3. O valor não é um placeholder inválido (validado pelo hook)
-      return value && String(value).trim() !== '' && !status.hasError;
+
+      // Para campos de texto obrigatórios, não pode ser vazio ou só espaços
+      if ((field.type === 'text' || field.type === 'textarea') && field.required) {
+        if (!value || String(value).trim() === '') {
+          return false;
+        }
+      }
+
+      // Para todos os campos obrigatórios, não pode ter erro de validação
+      if (status.hasError) {
+        return false;
+      }
+
+      // Se chegou aqui, campo está ok
+      return true;
     });
   };
 

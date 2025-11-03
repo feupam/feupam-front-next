@@ -345,6 +345,16 @@ export default function CalendarioEventosPage() {
                   const hasEventDays = eventDayEvents.length > 0;
                   const hasOpenEventDays = eventDayEvents.some(e => e.isOpen);
                   const hasRegistrationDays = regDayEvents.length > 0;
+                  const y = currentDate.getFullYear();
+                  const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+                  const dStr = day ? String(day).padStart(2, '0') : '';
+                  const checkYmd = day ? `${y}-${m}-${dStr}` : '';
+
+                  // Detectar inícios e términos exatos
+                  const eventStartsToday = hasEventDays && eventDayEvents.some(ev => toYmdBR(ev.date) === checkYmd);
+                  const eventEndsToday = hasEventDays && eventDayEvents.some(ev => toYmdBR(ev.range_date || ev.date) === checkYmd);
+                  const regStartsToday = hasRegistrationDays && regDayEvents.some(ev => toYmdBR(ev.startDate) === checkYmd);
+                  const regEndsToday = hasRegistrationDays && regDayEvents.some(ev => toYmdBR(ev.endDate) === checkYmd);
 
                   const baseClasses = `h-12 w-12 flex items-center justify-center text-sm rounded-lg cursor-pointer transition-all mx-auto relative`;
                   const bgClasses = hasEventDays
@@ -354,16 +364,37 @@ export default function CalendarioEventosPage() {
                   const DayCell = (
                     <div className={`${baseClasses} ${bgClasses}`}>
                       {day}
-                      {hasEventDays && (
-                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-                          <div className="w-1.5 h-1.5 bg-current rounded-full"></div>
-                        </div>
-                      )}
-                      {hasRegistrationDays && (
-                        <div className="absolute top-0 right-0 m-1">
-                          <div className="w-2 h-2 rounded-full bg-violet-500 border border-background" title="Inscrições abertas"></div>
-                        </div>
-                      )}
+                      {/* Barras de período (estilo Google Calendar) */}
+                      <div className="absolute left-1 right-1 bottom-1 space-y-0.5 pointer-events-none">
+                        {hasEventDays && (
+                          <div
+                            className={`h-1 bg-emerald-500/80 ${
+                              eventStartsToday && eventEndsToday
+                                ? 'rounded-full'
+                                : eventStartsToday
+                                  ? 'rounded-l-full'
+                                  : eventEndsToday
+                                    ? 'rounded-r-full'
+                                    : ''
+                            }`}
+                            title="Dias do evento"
+                          />
+                        )}
+                        {hasRegistrationDays && (
+                          <div
+                            className={`h-1 bg-violet-500/80 ${
+                              regStartsToday && regEndsToday
+                                ? 'rounded-full'
+                                : regStartsToday
+                                  ? 'rounded-l-full'
+                                  : regEndsToday
+                                    ? 'rounded-r-full'
+                                    : ''
+                            }`}
+                            title="Período de inscrições"
+                          />
+                        )}
+                      </div>
                     </div>
                   );
 
@@ -381,8 +412,16 @@ export default function CalendarioEventosPage() {
                             {eventDayEvents.map(ev => (
                               <li key={`${ev.id}-event`} className="flex items-center justify-between gap-2">
                                 <span className="truncate" title={ev.name}>{ev.name}</span>
-                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${ev.isOpen ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'bg-orange-500/20 text-orange-600 dark:text-orange-300'}`}>
-                                  {ev.isOpen ? 'Aberto' : 'Fechado'}
+                                <span className="flex items-center gap-1">
+                                  {(toYmdBR(ev.date) === checkYmd) && (
+                                    <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-600">início</span>
+                                  )}
+                                  {(toYmdBR(ev.range_date || ev.date) === checkYmd) && (
+                                    <span className="text-[10px] px-1 py-0.5 rounded bg-emerald-500/10 text-emerald-600">fim</span>
+                                  )}
+                                  <span className={`text-[10px] px-1.5 py-0.5 rounded ${ev.isOpen ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'bg-orange-500/20 text-orange-600 dark:text-orange-300'}`}>
+                                    {ev.isOpen ? 'Aberto' : 'Fechado'}
+                                  </span>
                                 </span>
                               </li>
                             ))}
@@ -394,7 +433,17 @@ export default function CalendarioEventosPage() {
                           <div className="text-xs font-semibold mb-1">Inscrições</div>
                           <ul className="text-xs space-y-1 max-w-[220px]">
                             {regDayEvents.map(ev => (
-                              <li key={`${ev.id}-reg`} className="truncate" title={`Inscrições para ${ev.name}`}>Inscrições: {ev.name}</li>
+                              <li key={`${ev.id}-reg`} className="flex items-center justify-between gap-2">
+                                <span className="truncate" title={`Inscrições para ${ev.name}`}>Inscrições: {ev.name}</span>
+                                <span className="flex items-center gap-1">
+                                  {(toYmdBR(ev.startDate) === checkYmd) && (
+                                    <span className="text-[10px] px-1 py-0.5 rounded bg-violet-500/10 text-violet-600">início</span>
+                                  )}
+                                  {(toYmdBR(ev.endDate) === checkYmd) && (
+                                    <span className="text-[10px] px-1 py-0.5 rounded bg-violet-500/10 text-violet-600">fim</span>
+                                  )}
+                                </span>
+                              </li>
                             ))}
                           </ul>
                         </div>

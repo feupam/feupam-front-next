@@ -721,10 +721,10 @@ export function EventManagement() {
 
   return (
     <Tabs defaultValue="create" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="create">Criar Evento</TabsTrigger>
-        <TabsTrigger value="update">Atualizar Evento</TabsTrigger>
-        <TabsTrigger value="delete">Excluir Evento</TabsTrigger>
+      <TabsList className="w-full h-auto flex flex-wrap justify-start gap-2">
+        <TabsTrigger className="flex-none" value="create">Criar Evento</TabsTrigger>
+        <TabsTrigger className="flex-none" value="update">Atualizar Evento</TabsTrigger>
+        <TabsTrigger className="flex-none" value="delete">Excluir Evento</TabsTrigger>
       </TabsList>
 
       <TabsContent value="create">

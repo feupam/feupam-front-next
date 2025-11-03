@@ -159,10 +159,10 @@ export function UserManagement() {
 
   return (
     <Tabs defaultValue="fast-user" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="fast-user">Criar Usuário Rápido</TabsTrigger>
-        <TabsTrigger value="staff">Gerenciar Staff</TabsTrigger>
-        <TabsTrigger value="email">Atualizar Email</TabsTrigger>
+      <TabsList className="w-full h-auto flex flex-wrap justify-start gap-2">
+        <TabsTrigger className="flex-none" value="fast-user">Criar Usuário Rápido</TabsTrigger>
+        <TabsTrigger className="flex-none" value="staff">Gerenciar Staff</TabsTrigger>
+        <TabsTrigger className="flex-none" value="email">Atualizar Email</TabsTrigger>
       </TabsList>
 
       <TabsContent value="fast-user">

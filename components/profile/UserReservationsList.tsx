@@ -32,9 +32,11 @@ interface UserReservationsListProps {
 export function UserReservationsList({ reservations, loading, error, onRefetch }: UserReservationsListProps) {
   const { setLoading } = useLoading();
   
-  console.log('[UserReservationsList] Reservations recebidas:', reservations);
-  console.log('[UserReservationsList] Loading:', loading);
-  console.log('[UserReservationsList] Error:', error);
+  if (process.env.NODE_ENV === 'development') {
+    // Evitar logar PII em produção
+    // eslint-disable-next-line no-console
+    console.log('[UserReservationsList] count:', reservations?.length, 'loading:', loading, 'error?', Boolean(error));
+  }
 
   const handleRefetch = () => {
     setLoading(true);
@@ -81,7 +83,10 @@ export function UserReservationsList({ reservations, loading, error, onRefetch }
 
   // Using centralized price formatting utility
   const formatPrice = (price: number | undefined, eventId?: string) => {
-    console.log('[UserReservationsList] formatPrice called with:', price, 'type:', typeof price, 'eventId:', eventId);
+    if (process.env.NODE_ENV === 'development') {
+      // eslint-disable-next-line no-console
+      console.log('[UserReservationsList] formatPrice called with:', price, 'eventId:', eventId);
+    }
     return formatEventPrice(price, eventId);
   };
 

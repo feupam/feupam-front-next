@@ -31,6 +31,52 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
   const { signInWithGoogle } = useAuth()
   const router = useRouter()
 
+  // Tilt/Parallax para o slide ativo (suave)
+  const MAX_TILT = 2 // graus
+  const IMG_PARALLAX = 10 // px
+
+  const handleTiltMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Evita tilt em dispositivos touch (pointer coarse)
+    if (typeof window !== 'undefined') {
+      try {
+        if (!window.matchMedia('(pointer: fine)').matches) return
+      } catch {}
+    }
+    const wrap = e.currentTarget
+    const card = wrap.querySelector<HTMLDivElement>('.hero-tilt')
+    const img = wrap.querySelector<HTMLImageElement>('.hero-img')
+    if (!card) return
+    const rect = wrap.getBoundingClientRect()
+    const px = (e.clientX - rect.left) / rect.width
+    const py = (e.clientY - rect.top) / rect.height
+    const rx = (py - 0.5) * -2 * MAX_TILT
+    const ry = (px - 0.5) * 2 * MAX_TILT
+    card.style.willChange = 'transform'
+    card.style.transform = `perspective(1200px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg)`
+    card.style.transition = 'transform 100ms ease-out'
+    if (img) {
+      const tx = (px - 0.5) * IMG_PARALLAX
+      const ty = (py - 0.5) * IMG_PARALLAX
+      img.style.willChange = 'transform'
+      img.style.transform = `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(1.01)`
+      img.style.transition = 'transform 100ms ease-out'
+    }
+  }
+
+  const handleTiltLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    const wrap = e.currentTarget
+    const card = wrap.querySelector<HTMLDivElement>('.hero-tilt')
+    const img = wrap.querySelector<HTMLImageElement>('.hero-img')
+    if (card) {
+      card.style.transform = ''
+      card.style.transition = 'transform 200ms ease'
+    }
+    if (img) {
+      img.style.transform = ''
+      img.style.transition = 'transform 200ms ease'
+    }
+  }
+
   useEffect(() => {
     setMounted(true)
 
@@ -180,15 +226,22 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
                 setCurrentEventFromData(image.event);
                 router.push(`/event/${encodeURIComponent(image.event.name)}`);
               }}
+              onMouseMove={handleTiltMove}
+              onMouseLeave={handleTiltLeave}
             >
-              <img
-                src={image.src}
-                alt={image.alt}
-                className="w-full h-full object-cover rounded-lg border border-emerald-400/20 shadow-2xl"
-                loading="lazy"
-              />
-              {/* Overlay com gradiente */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent rounded-lg" />
+              {/* Wrapper com borda gradiente sutil */}
+              <div className="absolute inset-0 rounded-xl p-[1px] bg-gradient-to-br from-emerald-400/30 via-transparent to-transparent">
+                <div className="hero-tilt relative w-full h-full rounded-[11px] overflow-hidden bg-zinc-900/40 backdrop-blur-sm">
+                  <img
+                    src={image.src}
+                    alt={image.alt}
+                    className="hero-img w-full h-full object-cover rounded-[11px] border border-emerald-400/15 shadow-[0_20px_60px_rgba(16,185,129,0.20)]"
+                    loading="lazy"
+                  />
+                  {/* Overlay com gradiente */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                </div>
+              </div>
               
               {/* Informações do evento - só aparecem se NÃO houver imagem */}
               {!image.event.image_capa && (
@@ -219,7 +272,7 @@ export function HeroCarousel({ events, onEventSelect, selectedIndex, speed = 50 
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="bg-black/50 backdrop-blur-sm border-emerald-400 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100 transition-all duration-300"
+                  className="bg-black/50 backdrop-blur-sm border-emerald-400/60 text-emerald-200 hover:bg-emerald-500/20 hover:text-emerald-100 transition-all duration-300 shadow-[0_8px_24px_rgba(16,185,129,0.25)]"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();

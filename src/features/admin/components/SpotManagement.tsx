@@ -114,10 +114,10 @@ export function SpotManagement() {
 
   return (
     <Tabs defaultValue="check-spot" className="space-y-4">
-      <TabsList>
-        <TabsTrigger value="check-spot">Verificar Vagas</TabsTrigger>
-        <TabsTrigger value="discount">Aplicar Desconto</TabsTrigger>
-        <TabsTrigger value="free-event">Inscrição Gratuita</TabsTrigger>
+      <TabsList className="w-full h-auto flex flex-wrap justify-start gap-2">
+        <TabsTrigger className="flex-none" value="check-spot">Verificar Vagas</TabsTrigger>
+        <TabsTrigger className="flex-none" value="discount">Aplicar Desconto</TabsTrigger>
+        <TabsTrigger className="flex-none" value="free-event">Inscrição Gratuita</TabsTrigger>
       </TabsList>
 
       <TabsContent value="check-spot">

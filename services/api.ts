@@ -24,10 +24,17 @@ export const api = axios.create({
 // Interceptor para adicionar o token de autenticação
 api.interceptors.request.use(async (config) => {
   try {
+    let token: string | null = null;
     const user = auth.currentUser;
     if (user) {
-      const token = await user.getIdToken();
-      config.headers.Authorization = `Bearer ${token}`;
+      token = await user.getIdToken();
+    }
+
+    if (token) {
+      const value = token.toLowerCase().startsWith('bearer ')
+        ? token
+        : `Bearer ${token}`;
+      config.headers.Authorization = value;
     }
     return config;
   } catch (error) {

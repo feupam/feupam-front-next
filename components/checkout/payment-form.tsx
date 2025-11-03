@@ -23,6 +23,10 @@ interface PaymentFormProps {
     status: string;
   };
   spotId?: string;
+  // External controls
+  disabled?: boolean;
+  disabledMessage?: string;
+  processing?: boolean;
 }
 
 interface PaymentData {
@@ -56,7 +60,7 @@ interface PaymentData {
   };
 }
 
-export default function PaymentForm({ event, onSubmit, reservationData, spotId }: PaymentFormProps) {
+export default function PaymentForm({ event, onSubmit, reservationData, spotId, disabled = false, disabledMessage, processing = false }: PaymentFormProps) {
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +86,8 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
   // Carrega opções de parcelamento ao montar o componente
   useEffect(() => {
     if (event && event.name) {
-      console.log('[PaymentForm] Carregando parcelas para evento:', event.name);
+      // Parcelas são carregadas pelo provider; manter apenas um log leve sem PII
+      console.log('[PaymentForm] Carregando parcelas para evento');
       fetchInstallments(event.name);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,16 +135,14 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
       const selectedOption = installmentOptions.find(option => option.number === selectedInstallment) || 
                             { number: 1, valueInCents: event.price || 0 };
 
-      console.log("Opção de parcelamento selecionada:", selectedOption);
+  // Não logar dados sensíveis; manter logs mínimos
 
       // O valueInCents da API vem como valor POR PARCELA
       // Precisamos multiplicar pelo número de parcelas para obter o valor total
       const valorPorParcela = selectedOption.valueInCents;
       const totalAmountInCents = valorPorParcela * selectedOption.number;
 
-      console.log(`Valor por parcela: ${valorPorParcela} centavos`);
-      console.log(`Número de parcelas: ${selectedOption.number}`);
-      console.log(`Valor total a cobrar: ${totalAmountInCents} centavos (${selectedOption.number}x de ${valorPorParcela})`);
+  // console.debug(`Parcelas: ${selectedOption.number}x de ${valorPorParcela} (total ${totalAmountInCents})`);
 
       const paymentData: PaymentData & { spotId?: string } = {
         items: [{
@@ -173,19 +176,14 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
         spotId: spotId || reservationData?.spotId
       };
 
-      console.log("Dados de pagamento:", paymentData);
-      console.log("Event:", event);
-      console.log("Event.name:", event.name);
-      console.log("SpotId:", spotId);
-      console.log("ReservationData:", reservationData);
-      console.log("ReservationData.spotId:", reservationData?.spotId);
+  // Nunca logar dados do cartão; evitar qualquer PII em logs de cliente
 
       if (onSubmit) {
         await onSubmit(paymentData);
       }
     } catch (error: any) {
       setError(error.message || "Erro ao processar pagamento. Tente novamente.");
-      console.error("Erro no processamento do pagamento:", error);
+      console.error("Erro no processamento do pagamento");
     } finally {
       setIsSubmitting(false);
     }
@@ -340,6 +338,12 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
         </div>
       </div>
 
+      {disabledMessage && (
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 text-amber-800 dark:text-amber-300 px-4 py-3 rounded-md">
+          {disabledMessage}
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           {error}
@@ -349,9 +353,9 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
       <Button
         type="submit"
         className="w-full"
-        disabled={isSubmitting}
+        disabled={isSubmitting || disabled || processing}
       >
-        {isSubmitting ? (
+        {isSubmitting || processing ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             Processando...

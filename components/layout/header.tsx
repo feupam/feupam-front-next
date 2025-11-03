@@ -39,22 +39,79 @@ export default function Header() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const clearCache = () => {
-    // Limpar localStorage e sessionStorage
-    localStorage.clear();
-    sessionStorage.clear();
-    
-    // Tentar limpar service workers
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((registration) => {
-          registration.unregister();
-        });
-      });
-    }
+  const clearCache = async () => {
+    try {
+      // Limpar localStorage e sessionStorage
+      try {
+        localStorage.clear();
+        sessionStorage.clear();
+      } catch (e) {
+        console.warn('[clearCache] Falha ao limpar storages', e);
+      }
 
-    // Recarregar a página
-    window.location.href = '/home';
+      // Desregistrar Service Workers
+      try {
+        if ('serviceWorker' in navigator) {
+          const registrations = await navigator.serviceWorker.getRegistrations();
+          await Promise.allSettled(registrations.map(r => r.unregister()));
+        }
+      } catch (e) {
+        console.warn('[clearCache] Falha ao desregistrar service workers', e);
+      }
+
+      // Apagar Cache Storage
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys();
+          await Promise.allSettled(keys.map(k => caches.delete(k)));
+        }
+      } catch (e) {
+        console.warn('[clearCache] Falha ao limpar Cache Storage', e);
+      }
+
+      // Remover todos os bancos IndexedDB (quando possível)
+      try {
+        if ('indexedDB' in window) {
+          const anyIDB = indexedDB as any;
+          if (typeof anyIDB?.databases === 'function') {
+            const dbs: Array<{ name?: string }> = await anyIDB.databases();
+            await Promise.allSettled(
+              dbs
+                .map(db => db?.name)
+                .filter((name): name is string => Boolean(name))
+                .map(name => new Promise<void>((resolve) => {
+                  const req = indexedDB.deleteDatabase(name);
+                  req.onsuccess = () => resolve();
+                  req.onerror = () => resolve();
+                  req.onblocked = () => resolve();
+                }))
+            );
+          } else {
+            // Fallback: tentar remover bases comuns
+            const commonDbs = ['firebaseLocalStorageDb', 'firebase-installations-database'];
+            await Promise.allSettled(
+              commonDbs.map(name => new Promise<void>((resolve) => {
+                const req = indexedDB.deleteDatabase(name);
+                req.onsuccess = () => resolve();
+                req.onerror = () => resolve();
+                req.onblocked = () => resolve();
+              }))
+            );
+          }
+        }
+      } catch (e) {
+        console.warn('[clearCache] Falha ao limpar IndexedDB', e);
+      }
+    } finally {
+      // Navegar para a Home (raiz) para consistência com o logo
+      try {
+        router.push('/');
+        // Força um reload completo para garantir ambiente limpo
+        setTimeout(() => window.location.reload(), 50);
+      } catch {
+        window.location.href = '/';
+      }
+    }
   };
   
   return (

@@ -82,7 +82,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
   // Carrega opções de parcelamento ao montar o componente
   useEffect(() => {
     if (event && event.name) {
-      console.log('[PaymentForm] Carregando parcelas para evento:', event.name);
+      console.log('[PaymentForm] Carregando parcelas para evento');
       fetchInstallments(event.name);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,16 +130,14 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
       const selectedOption = installmentOptions.find(option => option.number === selectedInstallment) || 
                             { number: 1, valueInCents: event.price || 0 };
 
-      console.log("Opção de parcelamento selecionada:", selectedOption);
+  // logs minimizados; não exibir dados sensíveis
 
       // O valueInCents da API vem como valor POR PARCELA
       // Precisamos multiplicar pelo número de parcelas para obter o valor total
       const valorPorParcela = selectedOption.valueInCents;
       const totalAmountInCents = valorPorParcela * selectedOption.number;
 
-      console.log(`Valor por parcela: ${valorPorParcela} centavos`);
-      console.log(`Número de parcelas: ${selectedOption.number}`);
-      console.log(`Valor total a cobrar: ${totalAmountInCents} centavos (${selectedOption.number}x de ${valorPorParcela})`);
+  // console.debug(`Parcelas: ${selectedOption.number}x de ${valorPorParcela} (total ${totalAmountInCents})`);
 
       const paymentData: PaymentData & { spotId?: string } = {
         items: [{
@@ -173,19 +171,14 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId }
         spotId: spotId || reservationData?.spotId
       };
 
-      console.log("Dados de pagamento:", paymentData);
-      console.log("Event:", event);
-      console.log("Event.name:", event.name);
-      console.log("SpotId:", spotId);
-      console.log("ReservationData:", reservationData);
-      console.log("ReservationData.spotId:", reservationData?.spotId);
+  // Nunca logar dados do cartão ou PII
 
       if (onSubmit) {
         await onSubmit(paymentData);
       }
     } catch (error: any) {
       setError(error.message || "Erro ao processar pagamento. Tente novamente.");
-      console.error("Erro no processamento do pagamento:", error);
+  console.error("Erro no processamento do pagamento");
     } finally {
       setIsSubmitting(false);
     }

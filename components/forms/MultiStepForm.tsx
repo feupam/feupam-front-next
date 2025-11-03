@@ -127,11 +127,12 @@ export default function MultiStepForm({
       const value = values[field.name];
       const status = getFieldStatus(field.name);
 
-      // Para campos de texto obrigatórios, não pode ser vazio ou só espaços
-      if ((field.type === 'text' || field.type === 'textarea') && field.required) {
-        if (!value || String(value).trim() === '') {
-          return false;
-        }
+      // Considera vazio para strings não preenchidas
+      const isEmpty = (v: any) => v === undefined || v === null || (typeof v === 'string' && v.trim() === '');
+
+      // Para campos obrigatórios de qualquer tipo, não pode estar vazio
+      if (isEmpty(value)) {
+        return false;
       }
 
       // Para todos os campos obrigatórios, não pode ter erro de validação

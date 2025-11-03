@@ -348,3 +348,56 @@ export function formatPhone(phone: string | undefined | null): string {
   }
   return phone;
 }
+
+/**
+ * Mascaras e utilitários de privacidade (LGPD)
+ */
+
+/**
+ * Mascara email preservando domínio e 1-2 caracteres do usuário
+ * Ex.: joaosilva@example.com -> j*****a@example.com
+ */
+export function maskEmail(email: string | undefined | null): string {
+  if (!email) return '';
+  const [user, domain] = email.split('@');
+  if (!user || !domain) return email;
+  if (user.length <= 2) return `${user[0] ?? '*'}*@${domain}`;
+  return `${user[0]}${'*'.repeat(Math.max(1, user.length - 2))}${user[user.length - 1]}@${domain}`;
+}
+
+/**
+ * Mascara telefone exibindo apenas DDD e 4 últimos dígitos
+ * Aceita string com ou sem máscara
+ * Ex.: (11) 91234-5678 -> (11) *****-5678
+ */
+export function maskPhone(phone: string | undefined | null): string {
+  if (!phone) return '';
+  const cleaned = removeNonNumeric(phone);
+  if (cleaned.length < 8) return phone;
+  // Captura DDD (2 primeiros) e últimos 4 dígitos
+  const ddd = cleaned.slice(0, 2);
+  const last4 = cleaned.slice(-4);
+  return `(${ddd}) *****-${last4}`;
+}
+
+/**
+ * Mascara CPF mantendo apenas os 2 primeiros e os 2 últimos dígitos
+ * Ex.: 123.456.789-10 -> 12*.***.***-10
+ */
+export function maskCPF(cpf: string | undefined | null): string {
+  if (!cpf) return '';
+  const cleaned = removeNonNumeric(cpf);
+  if (cleaned.length !== 11) return cpf;
+  const visibleStart = cleaned.slice(0, 2);
+  const visibleEnd = cleaned.slice(-2);
+  return `${visibleStart}*.***.***-${visibleEnd}`;
+}
+
+/**
+ * Mascara genérica de string
+ */
+export function maskString(value: string | undefined | null, visibleStart = 1, visibleEnd = 1): string {
+  if (!value) return '';
+  if (value.length <= visibleStart + visibleEnd) return '*'.repeat(value.length);
+  return `${value.slice(0, visibleStart)}${'*'.repeat(value.length - (visibleStart + visibleEnd))}${value.slice(-visibleEnd)}`;
+}

@@ -77,11 +77,22 @@ export default function FormularioInscricaoPage() {
   // Função para preparar valores iniciais do formulário
   const prepareInitialValues = (userData: any) => {
     console.log('Preparando valores iniciais com userData:', userData);
+    const normalizeYesNo = (v: any) => {
+      if (v === undefined || v === null) return '';
+      const s = String(v).trim().toLowerCase();
+      if (['sim', 's', 'true', '1', 'yes', 'y'].includes(s)) return 'Sim';
+      if (['não', 'nao', 'n', 'false', '0', 'no'].includes(s)) return 'Não';
+      // Se vier um texto livre, mantém, mas evita valores vazios
+      return s.length > 0 ? (v as string) : '';
+    };
     
     // Se não há userData, retorna apenas os valores padrão
     if (!userData) {
       return {
-        estado: 'MG' // Valor padrão para estado
+        estado: 'MG', // Valor padrão para estado
+        // Valores padrão seguros para selects obrigatórios da seção de saúde
+        alergia: 'Não',
+        medicamento: 'Não',
       };
     }
     
@@ -92,7 +103,10 @@ export default function FormularioInscricaoPage() {
       // Reconstrói o telefone do responsável com DDD
       cellphone_responsavel: formatPhoneFromParts(userData.ddd_responsavel, userData.cellphone_responsavel),
       // Garante que o estado tenha valor padrão se não existir
-      estado: userData.estado || 'MG'
+      estado: userData.estado || 'MG',
+      // Normaliza valores vindos do backend para opções válidas do Select
+      alergia: userData.alergia ? normalizeYesNo(userData.alergia) || 'Não' : 'Não',
+      medicamento: userData.medicamento ? normalizeYesNo(userData.medicamento) || 'Não' : 'Não',
     };
   };
 
@@ -214,22 +228,12 @@ export default function FormularioInscricaoPage() {
       if (isAcampamento && currentEvent) {
         console.log('📤 Enviando dados para API externa /events...');
         try {
-          const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://us-central1-federa-api.cloudfunctions.net/api';
-          const response = await fetch(`${API_URL}/events`, {
+          // Usa o cliente centralizado que injeta Authorization (dev token ou Firebase)
+          const { request } = await import('@/lib/api');
+          const result = await request<any>('/events', {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(cleanedData)
+            body: JSON.stringify(cleanedData),
           });
-          
-          if (!response.ok) {
-            const errorData = await response.json();
-            console.error('❌ Erro da API externa:', errorData);
-            throw new Error(errorData.message || 'Erro ao enviar dados para API externa');
-          }
-          
-          const result = await response.json();
           console.log('✅ Resposta da API externa:', result);
         } catch (apiError: any) {
           console.error('❌ Erro ao comunicar com API externa:', apiError);

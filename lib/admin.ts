@@ -1,5 +1,5 @@
 // Lista de emails autorizados para acessar a área admin
-export const ADMIN_EMAILS = ["arielaaaaa1@gmail.com", "lss.romulo@gmail.com", "wilian.guimaraaes@gmail.com", "biancaalvarengampraes@gmail.com", "acampsreino@gmail.com"];
+export const ADMIN_EMAILS = ["arielaaaaa1@gmail.com", "lss.romulo@gmail.com", "wilian.guimaraaes@gmail.com", "biancaalvarengampraes@gmail.com"];
 
 /**
  * Verifica se um email tem permissões de administrador

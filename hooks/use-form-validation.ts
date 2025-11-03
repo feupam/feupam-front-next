@@ -189,7 +189,13 @@ export function useFormValidation({
     const newErrors: Record<string, string> = {};
     let isValid = true;
 
-    Object.keys(validationRules).forEach(name => {
+    // Validar tanto regras customizadas quanto obrigatoriedades
+    const fieldsToCheck = new Set<string>([
+      ...Object.keys(validationRules || {}),
+      ...requiredFields,
+    ]);
+
+    fieldsToCheck.forEach((name) => {
       const error = validateField(name, values[name] || '');
       if (error) {
         newErrors[name] = error;
@@ -199,7 +205,7 @@ export function useFormValidation({
 
     setErrors(newErrors);
     return isValid;
-  }, [values, validationRules, validateField, validationContext]);
+  }, [values, validationRules, validateField, requiredFields]);
 
   // Buscar endereço por CEP
   const fetchAddressByCep = useCallback(async (cep: string) => {

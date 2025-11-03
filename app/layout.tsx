@@ -8,16 +8,26 @@ import { LoadingModalWrapper } from '@/components/shared/LoadingModalWrapper';
 import { WhatsAppFloatButton } from '@/components/shared/whatsapp-float-button';
 import { WHATSAPP_CONFIG } from '@/lib/whatsapp-config';
 import { CacheBuster } from '@/components/CacheBuster';
+import { Manrope } from 'next/font/google';
 
 export const metadata: Metadata = {
   title: 'Feupam',
-  description: 'Find and purchase tickets for the best events with our seamless experience, including waiting rooms and virtual queues for high-demand shows.',
+  description: 'Federação unida da mocidade de MG.',
   other: {
     'Cache-Control': 'no-cache, no-store, must-revalidate',
     'Pragma': 'no-cache',
     'Expires': '0',
   },
 };
+
+const manrope = Manrope({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-sans',
+  display: 'swap',
+  style: ['normal'],
+  preload: true,
+});
 
 export default function RootLayout({
   children,
@@ -31,7 +41,7 @@ export default function RootLayout({
         <meta httpEquiv="Pragma" content="no-cache" />
         <meta httpEquiv="Expires" content="0" />
       </head>
-      <body className={cn('min-h-screen bg-background font-sans antialiased')}>
+  <body className={cn(manrope.variable, 'min-h-screen bg-background font-sans antialiased scroll-smooth')}>
         <CacheBuster />
         <LoadingProvider>
           <Providers>

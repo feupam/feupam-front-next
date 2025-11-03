@@ -316,6 +316,7 @@ export const formSections: FormSection[] = [
         name: 'alergia',
         type: 'select',
         required: true,
+        defaultValue: 'Não',
         options: [
           { value: 'Não', label: 'Não possuo alergias' },
           { value: 'Sim', label: 'Sim, possuo alergias' }
@@ -326,6 +327,7 @@ export const formSections: FormSection[] = [
         name: 'medicamento',
         type: 'select',
         required: true,
+        defaultValue: 'Não',
         options: [
           { value: 'Não', label: 'Não tomo medicamentos' },
           { value: 'Sim', label: 'Sim, tomo medicamentos' }

@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/src/features/auth';
 import type { UserProfile } from '@/types/user';
+import { isAdmin } from '@/lib/admin';
+import { formatPhone as formatPhoneNumber, maskEmail, maskPhone } from '@/lib/utils';
 
 interface UserProfileCardProps {
   profile: UserProfile;
@@ -25,10 +27,8 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
       .slice(0, 2);
   };
 
-  const formatPhone = (ddd: string, phone: string) => {
-    if (!ddd || !phone) return '';
-    return `(${ddd}) ${phone.replace(/(\d{5})(\d{4})/, '$1-$2')}`;
-  };
+  const isOwnProfile = user?.email && profile.email && user.email === profile.email;
+  const canViewSensitive = Boolean(isOwnProfile || isAdmin(user));
 
   return (
     <Card className="w-full">
@@ -89,19 +89,23 @@ export function UserProfileCard({ profile, onEditProfile }: UserProfileCardProps
           <div className="grid grid-cols-1 gap-3 text-sm">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Email:</span>
-              <span className="break-all">{profile.email}</span>
+              <span className="break-all">{canViewSensitive ? profile.email : maskEmail(profile.email)}</span>
             </div>
             {(profile.ddd && profile.cellphone) && (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Telefone:</span>
-                <span>{formatPhone(profile.ddd, profile.cellphone)}</span>
+                <span>
+                  {canViewSensitive
+                    ? formatPhoneNumber(`${profile.ddd}${profile.cellphone}`)
+                    : maskPhone(`${profile.ddd}${profile.cellphone}`)}
+                </span>
               </div>
             )}
           </div>
         </div>
 
         {/* Igreja */}
-        {profile.church && (
+        {profile.church && canViewSensitive && (
           <div>
             <h3 className="font-semibold mb-3 flex items-center text-foreground">
               <HomeIcon className="h-4 w-4 mr-2" />

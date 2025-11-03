@@ -81,11 +81,12 @@ export default function AdminPage() {
       </div>
 
       <Tabs defaultValue="events" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="events">Eventos</TabsTrigger>
-          <TabsTrigger value="users">Usuários</TabsTrigger>
-          <TabsTrigger value="spots">Vagas</TabsTrigger>
-          <TabsTrigger value="consultations">Consultas</TabsTrigger>
+        {/* Tabs principais: quebram linha no mobile quando faltar espaço */}
+        <TabsList className="w-full h-auto flex flex-wrap justify-start gap-2">
+          <TabsTrigger className="flex-none" value="events">Eventos</TabsTrigger>
+          <TabsTrigger className="flex-none" value="users">Usuários</TabsTrigger>
+          <TabsTrigger className="flex-none" value="spots">Vagas</TabsTrigger>
+          <TabsTrigger className="flex-none" value="consultations">Consultas</TabsTrigger>
         </TabsList>
 
         <TabsContent value="events">
@@ -140,9 +141,10 @@ export default function AdminPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="by-event" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="by-event">Consulta por Evento</TabsTrigger>
-                  <TabsTrigger value="total">Consulta Total</TabsTrigger>
+                {/* Sub-abas: quebram linha quando faltar espaço */}
+                <TabsList className="w-full h-auto flex flex-wrap justify-start gap-2">
+                  <TabsTrigger className="flex-none" value="by-event">Consulta por Evento</TabsTrigger>
+                  <TabsTrigger className="flex-none" value="total">Consulta Total</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="by-event" className="mt-4">

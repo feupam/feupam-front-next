@@ -12,6 +12,7 @@ import AnimatedBackground from '@/components/ui/animated-background';
 import PaymentForm from '@/components/checkout/payment-form';
 import { NotificationToast, NotificationToastRef } from '@/components/notifications/notification-toast';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/firebase';
@@ -79,6 +80,18 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
   const [timerProgress, setTimerProgress] = useState(100); // Porcentagem restante
   const [pixQrCode, setPixQrCode] = useState<string | null>(null);
   const [pixCopiaECola, setPixCopiaECola] = useState<string | null>(null);
+  // Cooldown para evitar várias tentativas no cartão no curto prazo
+  const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
+  const cooldownTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // Modal de erro do cartão
+  const [showCardErrorModal, setShowCardErrorModal] = useState(false);
+  const [cardErrorDetails, setCardErrorDetails] = useState<{
+    status?: number;
+    code?: string;
+    message: string;
+    details?: any;
+    requestId?: string;
+  } | null>(null);
   
   // Referência para verificar se já está processando o tempo expirado
   const isHandlingExpiredTimer = useRef(false);
@@ -626,6 +639,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
   // Função para processar o pagamento com cartão
   const handleProcessPayment = async (paymentData: any) => {
     try {
+      setProcessingPayment(true);
       await api.payments.create(paymentData);
       notificationRef.current?.showNotification(
         'Pagamento realizado com sucesso! Sua Inscrição foi enviado para seu e-mail.',
@@ -633,7 +647,34 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       );
       router.push('/meus-ingressos');
     } catch (error: any) {
+      // Extrai detalhes estruturados do erro (ApiError)
+      const status = error?.status || error?.response?.status;
+      const code = error?.code || error?.response?.data?.code;
+      const message = error?.message || 'Erro ao processar pagamento';
+      const details = error?.details || error?.response?.data;
+      const requestId = error?.requestId || error?.response?.headers?.['x-request-id'];
+
+      setCardErrorDetails({ status, code, message, details, requestId });
+      setShowCardErrorModal(true);
+
+      // Inicia cooldown (ex.: 180s) para não acionar antifraude em repetidas tentativas
+      const COOLDOWN_SECONDS = 180;
+      setCooldownRemaining(COOLDOWN_SECONDS);
+      if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+      cooldownTimerRef.current = setInterval(() => {
+        setCooldownRemaining((prev) => {
+          if (prev <= 1) {
+            if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      // Também notifica de forma resumida
       handlePaymentError(error);
+    } finally {
+      setProcessingPayment(false);
     }
   };
 
@@ -882,6 +923,13 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                       spotId={searchParams.spotId}
                       reservationData={reservationData ? reservationData : undefined}
                       onSubmit={handleProcessPayment}
+                      processing={processingPayment}
+                      disabled={cooldownRemaining > 0}
+                      disabledMessage={
+                        cooldownRemaining > 0
+                          ? `Muitas tentativas próximas podem acionar antifraude. Aguarde ${Math.floor(cooldownRemaining/60).toString().padStart(2,'0')}:${(cooldownRemaining%60).toString().padStart(2,'0')} antes de tentar o mesmo cartão ou utilize outro cartão/PIX.`
+                          : undefined
+                      }
                     />
                   </TabsContent>
                   
@@ -946,6 +994,77 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         </motion.div>
       </div>
       <NotificationToast ref={notificationRef} />
+      {/* Modal fixo com detalhes do erro do cartão */}
+      <Dialog open={showCardErrorModal} onOpenChange={setShowCardErrorModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Falha no pagamento com cartão</DialogTitle>
+            <DialogDescription>
+              O pagamento não foi aprovado. Para evitar acionamento do antifraude, aguarde alguns minutos antes de tentar novamente com o mesmo cartão.
+            </DialogDescription>
+          </DialogHeader>
+
+          {cardErrorDetails && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div className="bg-muted/40 rounded p-3">
+                  <div className="text-muted-foreground">Status</div>
+                  <div className="font-medium">{cardErrorDetails.status ?? '-'}</div>
+                </div>
+                <div className="bg-muted/40 rounded p-3">
+                  <div className="text-muted-foreground">Código</div>
+                  <div className="font-medium">{cardErrorDetails.code ?? '-'}</div>
+                </div>
+                <div className="bg-muted/40 rounded p-3 col-span-2">
+                  <div className="text-muted-foreground">Mensagem</div>
+                  <div className="font-medium break-words">{cardErrorDetails.message}</div>
+                </div>
+                {cardErrorDetails.requestId && (
+                  <div className="bg-muted/40 rounded p-3 col-span-2">
+                    <div className="text-muted-foreground">Request ID</div>
+                    <div className="font-mono text-xs break-all">{cardErrorDetails.requestId}</div>
+                  </div>
+                )}
+              </div>
+
+              {/* Logs/Detalhes da API (sanitizados do lado do backend) */}
+              {cardErrorDetails.details && (
+                <div className="border rounded-md p-3 bg-card/50">
+                  <div className="text-sm font-medium mb-2">Detalhes da API</div>
+                  <pre className="text-xs whitespace-pre-wrap break-words max-h-64 overflow-auto">
+{JSON.stringify(cardErrorDetails.details, null, 2)}
+                  </pre>
+                </div>
+              )}
+
+              <div className="text-xs text-muted-foreground">
+                Dicas: aguarde ~3 minutos antes de tentar o mesmo cartão. Se possível, tente outro cartão ou use PIX para confirmação imediata.
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                <Button
+                  variant="default"
+                  onClick={() => setShowCardErrorModal(false)}
+                >
+                  Entendi
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => setActiveTab('pix')}
+                >
+                  Pagar com PIX
+                </Button>
+                <Button
+                  disabled={cooldownRemaining > 0}
+                  onClick={() => setShowCardErrorModal(false)}
+                >
+                  Tentar novamente {cooldownRemaining > 0 ? `(${Math.floor(cooldownRemaining/60).toString().padStart(2,'0')}:${(cooldownRemaining%60).toString().padStart(2,'0')})` : ''}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AnimatedBackground>
   );
 }

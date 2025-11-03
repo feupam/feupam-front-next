@@ -6,6 +6,8 @@ import { auth } from './firebase';
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 const API_TIMEOUT = 15000; // 15 segundos
 
+// (removido) suporte a token de desenvolvimento
+
 // Log para debug
 console.log('[API Config] API_URL:', API_URL || 'Não definida');
 
@@ -34,7 +36,9 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     public code: string,
-    message: string
+    message: string,
+    public details?: any,
+    public requestId?: string
   ) {
     super(message);
     this.name = 'ApiError';
@@ -56,6 +60,13 @@ export async function isOnline(): Promise<boolean> {
   }
 }
 
+// Helpers de token
+function buildAuthHeaderValue(token: string | null | undefined): string | undefined {
+  if (!token) return undefined;
+  const trimmed = token.trim();
+  return trimmed.toLowerCase().startsWith('bearer ') ? trimmed : `Bearer ${trimmed}`;
+}
+
 // Interceptor para adicionar logs e tratamento de erros
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -74,11 +85,13 @@ axiosInstance.interceptors.request.use(
     try {
       console.log('[API Request] Obtendo token...');
       const token = await getCurrentToken();
-      console.log('[API Request] Token obtido:', token ? 'Token presente' : 'Sem token');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
+      console.log('[API Request] Token obtido:', token ? 'Firebase token' : 'Sem token');
+      const authValue = buildAuthHeaderValue(token || undefined);
+      // Só injeta Authorization se ainda não houver um header definido no request
+      if (authValue && !config.headers?.Authorization) {
+        (config.headers as any).Authorization = authValue;
         console.log('[API Request] Authorization header configurado');
-      } else {
+      } else if (!authValue) {
         console.log('[API Request] Nenhum token disponível');
       }
     } catch (error) {
@@ -100,10 +113,12 @@ axiosInstance.interceptors.response.use(
       message: error.message,
     });
 
+    // Timeout
     if (error.code === 'ECONNABORTED') {
       throw new ApiError(408, 'TIMEOUT', 'A requisição excedeu o tempo limite');
     }
 
+    // Sem resposta (offline ou CORS)
     if (!error.response) {
       throw new ApiError(
         0,
@@ -112,13 +127,36 @@ axiosInstance.interceptors.response.use(
       );
     }
 
+    // Tenta renovar o token e refazer a requisição uma vez em caso de 401.
     const status = error.response.status;
-    const data = error.response.data as any;
+    const originalConfig = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    if (status === 401 && originalConfig && !originalConfig._retry) {
+      try {
+        originalConfig._retry = true;
+        const user = auth.currentUser;
+        if (user) {
+          const newToken = await user.getIdToken(true);
+          const authValue = buildAuthHeaderValue(newToken);
+          originalConfig.headers = originalConfig.headers || {};
+          if (authValue) {
+            (originalConfig.headers as any).Authorization = authValue;
+          }
+          return axiosInstance(originalConfig);
+        }
+      } catch (refreshErr) {
+        console.error('[API] Falha ao renovar token após 401:', refreshErr);
+      }
+    }
 
+    const data = error.response.data as any;
+    const requestId = (error.response.headers as any)?.['x-request-id'] || (error.response.data as any)?.requestId;
     throw new ApiError(
       status,
-      data.code || 'UNKNOWN_ERROR',
-      data.message || 'Ocorreu um erro inesperado'
+      data?.code || 'UNKNOWN_ERROR',
+      data?.message || 'Ocorreu um erro inesperado',
+      // include backend payload as details for richer UI
+      data,
+      requestId
     );
   }
 );
@@ -139,10 +177,12 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
   }
 
   const { token, ...restOptions } = options;
+  // Se não foi passado token, tenta obter (Firebase)
+  const resolvedToken = token || await getCurrentToken();
   
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
+    ...(resolvedToken && { Authorization: buildAuthHeaderValue(resolvedToken) as string }),
     ...options.headers,
   };
 
@@ -195,6 +235,7 @@ export async function request<T>(endpoint: string, options: RequestOptions = {})
 // Função para obter o token atual do usuário
 async function getCurrentToken() {
   console.log('[getCurrentToken] Iniciando obtenção de token...');
+  // Sempre usa Firebase Auth; sem override de desenvolvimento
   // Espera o estado de autenticação ser inicializado
   return new Promise<string | null>((resolve) => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -324,6 +365,24 @@ export const api = {
         if (error?.message === 'No spots available' || error?.response?.data?.message === 'No spots available') {
           console.warn(`[API] Sem vagas disponíveis para ${eventId}, retornando opções vazias`);
           return [];
+        }
+        // Se o token dev estiver inválido/expirado, tenta um fallback com token fresco do Firebase uma vez
+        const status = error?.response?.status;
+        const msg = error?.response?.data?.message || error?.message || '';
+        if (status === 401 || /invalid|expired|token/i.test(msg)) {
+          try {
+            const user = auth.currentUser;
+            if (user) {
+              const fresh = await user.getIdToken(true);
+              console.log('[API] Retentando getInstallments com token renovado (fallback Firebase)');
+              const response = await axiosInstance.get(`/events/${eventId}/installments`, {
+                headers: { Authorization: `Bearer ${fresh}` }
+              });
+              return response.data;
+            }
+          } catch (retryErr) {
+            console.error('[API] Falha no fallback de token para getInstallments:', retryErr);
+          }
         }
         throw error;
       }

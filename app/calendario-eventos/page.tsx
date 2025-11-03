@@ -10,6 +10,7 @@ import { formatEventDateLong, formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LoadingPage } from '@/components/shared/Loading';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface CalendarEvent {
   id: number;
@@ -144,6 +145,48 @@ export default function CalendarioEventosPage() {
       const checkIso = `${y}-${m}-${d}`; // força YYYY-MM-DD
       const checkNorm = formatDate(checkIso, { format: 'full' });
       return eventNorm === checkNorm;
+    });
+  };
+
+  // Helpers para trabalhar com ranges respeitando fuso de Brasília
+  const toYmdBR = (dateStr?: string | null) => {
+    if (!dateStr) return '';
+    const full = formatDate(dateStr, { format: 'full' }); // dd/MM/aaaa
+    const [dd, mm, yyyy] = full.split('/');
+    if (!dd || !mm || !yyyy) return '';
+    return `${yyyy}-${mm}-${dd}`; // yyyy-mm-dd
+  };
+
+  const isBetweenYmd = (valueYmd: string, startYmd: string, endYmd: string) => {
+    if (!valueYmd || !startYmd || !endYmd) return false;
+    return startYmd <= valueYmd && valueYmd <= endYmd;
+  };
+
+  const getEventDayEvents = (day: number | null) => {
+    if (!day) return [] as CalendarEvent[];
+    const y = currentDate.getFullYear();
+    const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    const checkYmd = `${y}-${m}-${d}`;
+    return processedEvents.filter(event => {
+      const startYmd = toYmdBR(event.date);
+      const endYmd = toYmdBR(event.range_date || event.date);
+      if (!startYmd) return false;
+      return isBetweenYmd(checkYmd, startYmd, endYmd || startYmd);
+    });
+  };
+
+  const getRegistrationDayEvents = (day: number | null) => {
+    if (!day) return [] as CalendarEvent[];
+    const y = currentDate.getFullYear();
+    const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+    const d = String(day).padStart(2, '0');
+    const checkYmd = `${y}-${m}-${d}`;
+    return processedEvents.filter(event => {
+      const startYmd = toYmdBR(event.startDate);
+      const endYmd = toYmdBR(event.endDate);
+      if (!startYmd || !endYmd) return false;
+      return isBetweenYmd(checkYmd, startYmd, endYmd);
     });
   };
 
@@ -297,35 +340,81 @@ export default function CalendarioEventosPage() {
                 
                 {/* Dias do calendário */}
                 {calendarDays.map((day, index) => {
-                  const dayEvents = getEventsForDate(day);
-                  const hasEvents = dayEvents.length > 0;
-                  const hasOpenEvents = dayEvents.some(event => event.isOpen);
-                  
-                  return (
-                    <div key={index} className="relative">
-                      {day ? (
-                        <div 
-                          className={`
-                            h-12 w-12 flex items-center justify-center text-sm rounded-lg cursor-pointer transition-all mx-auto
-                            ${hasEvents 
-                              ? hasOpenEvents 
-                                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                                : 'bg-orange-500 text-white hover:bg-orange-600'
-                              : 'hover:bg-muted'
-                            }
-                          `}
-                        >
-                          {day}
-                          {hasEvents && (
-                            <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
-                              <div className="w-1 h-1 bg-current rounded-full"></div>
-                            </div>
-                          )}
+                  const eventDayEvents = getEventDayEvents(day);
+                  const regDayEvents = getRegistrationDayEvents(day);
+                  const hasEventDays = eventDayEvents.length > 0;
+                  const hasOpenEventDays = eventDayEvents.some(e => e.isOpen);
+                  const hasRegistrationDays = regDayEvents.length > 0;
+
+                  const baseClasses = `h-12 w-12 flex items-center justify-center text-sm rounded-lg cursor-pointer transition-all mx-auto relative`;
+                  const bgClasses = hasEventDays
+                    ? (hasOpenEventDays ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'bg-orange-500 text-white hover:bg-orange-600')
+                    : 'hover:bg-muted';
+
+                  const DayCell = (
+                    <div className={`${baseClasses} ${bgClasses}`}>
+                      {day}
+                      {hasEventDays && (
+                        <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2">
+                          <div className="w-1.5 h-1.5 bg-current rounded-full"></div>
                         </div>
-                      ) : (
-                        <div className="h-12 w-12"></div>
+                      )}
+                      {hasRegistrationDays && (
+                        <div className="absolute top-0 right-0 m-1">
+                          <div className="w-2 h-2 rounded-full bg-violet-500 border border-background" title="Inscrições abertas"></div>
+                        </div>
                       )}
                     </div>
+                  );
+
+                  if (!day) {
+                    return <div key={index} className="h-12 w-12" />;
+                  }
+
+                  // Tooltip com detalhes do dia
+                  const tooltipContent = (
+                    <div className="space-y-2">
+                      {hasEventDays && (
+                        <div>
+                          <div className="text-xs font-semibold mb-1">Eventos</div>
+                          <ul className="text-xs space-y-1 max-w-[220px]">
+                            {eventDayEvents.map(ev => (
+                              <li key={`${ev.id}-event`} className="flex items-center justify-between gap-2">
+                                <span className="truncate" title={ev.name}>{ev.name}</span>
+                                <span className={`text-[10px] px-1.5 py-0.5 rounded ${ev.isOpen ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'bg-orange-500/20 text-orange-600 dark:text-orange-300'}`}>
+                                  {ev.isOpen ? 'Aberto' : 'Fechado'}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      {hasRegistrationDays && (
+                        <div>
+                          <div className="text-xs font-semibold mb-1">Inscrições</div>
+                          <ul className="text-xs space-y-1 max-w-[220px]">
+                            {regDayEvents.map(ev => (
+                              <li key={`${ev.id}-reg`} className="truncate" title={`Inscrições para ${ev.name}`}>Inscrições: {ev.name}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  );
+
+                  return (
+                    <TooltipProvider key={index}>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          {DayCell}
+                        </TooltipTrigger>
+                        {(hasEventDays || hasRegistrationDays) && (
+                          <TooltipContent side="top" align="center">
+                            {tooltipContent}
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
                   );
                 })}
               </div>
@@ -339,6 +428,10 @@ export default function CalendarioEventosPage() {
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 bg-orange-500 rounded"></div>
                   <span>Fechado</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full bg-violet-500"></div>
+                  <span>Inscrições</span>
                 </div>
               </div>
             </div>

@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Calendar, List, ChevronLeft, ChevronRight, MapPin, Clock, Users, ArrowLeft } from 'lucide-react';
-import { formatEventDateLong } from '@/lib/utils';
+import { formatEventDateLong, formatDate } from '@/lib/utils';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { LoadingPage } from '@/components/shared/Loading';
@@ -136,9 +136,14 @@ export default function CalendarioEventosPage() {
   const getEventsForDate = (day: number | null) => {
     if (!day) return [];
     return processedEvents.filter(event => {
-      const eventDate = new Date(event.date).toISOString().split('T')[0];
-      const checkDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day).toISOString().split('T')[0];
-      return eventDate === checkDate;
+      // Normaliza ambas as datas para o fuso de Brasília usando utils.formatDate
+      const eventNorm = formatDate(event.date, { format: 'full' }); // dd/MM/aaaa em America/Sao_Paulo
+      const y = currentDate.getFullYear();
+      const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+      const d = String(day).padStart(2, '0');
+      const checkIso = `${y}-${m}-${d}`; // força YYYY-MM-DD
+      const checkNorm = formatDate(checkIso, { format: 'full' });
+      return eventNorm === checkNorm;
     });
   };
 
@@ -196,15 +201,19 @@ export default function CalendarioEventosPage() {
                           <div className="text-xs text-primary font-semibold mb-1">
                             EVENTO
                           </div>
-                          <div className="text-2xl font-bold text-primary">
-                            {new Date(event.date).getDate()}
-                          </div>
-                          <div className="text-sm text-primary">
-                            {new Date(event.date).toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase()}
-                          </div>
-                          <div className="text-xs text-primary">
-                            {new Date(event.date).getFullYear()}
-                          </div>
+                          {(() => {
+                            const full = formatDate(event.date, { format: 'full' }); // dd/MM/aaaa
+                            const [dd, mm, yyyy] = full.split('/');
+                            const monthsShort = ['JAN.', 'FEV.', 'MAR.', 'ABR.', 'MAI.', 'JUN.', 'JUL.', 'AGO.', 'SET.', 'OUT.', 'NOV.', 'DEZ.'];
+                            const monthLabel = monthsShort[Number(mm) - 1] ?? '';
+                            return (
+                              <>
+                                <div className="text-2xl font-bold text-primary">{dd}</div>
+                                <div className="text-sm text-primary">{monthLabel}</div>
+                                <div className="text-xs text-primary">{yyyy}</div>
+                              </>
+                            );
+                          })()}
                         </div>
                       </div>
                       

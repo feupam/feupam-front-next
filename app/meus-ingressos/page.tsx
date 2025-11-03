@@ -22,6 +22,7 @@ interface Reservation {
   email: string;
   userType: string;
   gender: string;
+  name?: string; // Nome informado na inscrição (retornado pela API)
   eventId?: string; // Para compatibilidade com API
   eventName: string; // Campo principal após mapeamento
   price: number;
@@ -327,6 +328,12 @@ export default function MyTicketsPage() {
                             <span className="text-sm text-muted-foreground">Tipo de Inscrição:</span>
                             <span className="text-sm font-medium">{reservation.ticketKind || "Inscrição Completa"}</span>
                           </div>
+                          {reservation.name && (
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="text-sm text-muted-foreground">Nome na inscrição:</span>
+                              <span className="text-sm font-medium truncate max-w-[60%]" title={reservation.name}>{reservation.name}</span>
+                            </div>
+                          )}
                           <div className="flex justify-between items-center mb-2">
                             <span className="text-sm text-muted-foreground">Valor:</span>
                             <span className="text-sm font-medium">

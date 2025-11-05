@@ -442,10 +442,30 @@ export const api = {
   payments: {
     create: async (data: any) => {
       const token = await getCurrentToken();
+      // Gerar uma Idempotency-Key estável por reserva (evita duplos writes no backend)
+      let idemParts: string[] = [];
+      try {
+        const email = data?.customer?.email || '';
+        const desc = Array.isArray(data?.items) && data.items[0]?.description ? String(data.items[0].description) : '';
+        const spot = data?.spotId || '';
+        idemParts = [email, desc, spot].filter(Boolean);
+      } catch {}
+      const idemKey = idemParts.length ? `pay-${idemParts.join(':')}` : undefined;
+
       const response = await axiosInstance.post('/payments', 
         data,
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { 
+          Authorization: `Bearer ${token}`,
+          ...(idemKey ? { 'Idempotency-Key': idemKey } : {})
+        } }
       );
+      return response.data;
+    },
+    reprocessStatus: async (payload: { email: string; eventId: string; chargeId?: string }) => {
+      const token = await getCurrentToken();
+      const response = await axiosInstance.post('/payments/reprocessar-status', payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       return response.data;
     }
   },

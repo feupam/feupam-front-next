@@ -92,6 +92,40 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     details?: any;
     requestId?: string;
   } | null>(null);
+  // Flag para erro específico de reserva expirada
+  const isReservationExpiredError = !!(cardErrorDetails?.message || cardErrorDetails?.details?.message)
+    && (cardErrorDetails?.message?.toLowerCase?.().includes('reserva expirou')
+      || cardErrorDetails?.details?.message?.toLowerCase?.().includes('reserva expirou'));
+  // Flag para erro de transação do Firestore (ordem de leituras/escritas)
+  const isFirestoreTxnOrderError = !!(cardErrorDetails?.message || cardErrorDetails?.details?.message)
+    && (
+      cardErrorDetails?.message?.toLowerCase?.().includes('firestore transactions require all reads to be executed before all writes') ||
+      cardErrorDetails?.details?.message?.toLowerCase?.().includes('firestore transactions require all reads to be executed before all writes')
+    );
+  
+  const handleRedoReservation = () => {
+    try {
+      const eventIdForRedirect = currentEvent?.name;
+      if (eventIdForRedirect) {
+        // Limpa estados locais e storages relacionados à reserva anterior
+        localStorage.removeItem('reservationData');
+        localStorage.removeItem('reservationTimestamp');
+        const pixDataKey = `pixData-${eventIdForRedirect}`;
+        localStorage.removeItem(pixDataKey);
+      }
+      setShowCardErrorModal(false);
+      setCooldownRemaining(0);
+      // Redireciona para página de nova reserva
+      if (eventIdForRedirect) {
+        router.push(`/reserva/${eventIdForRedirect}/${searchParams.ticket || 'full'}`);
+      } else {
+        router.push('/reserva');
+      }
+    } catch (e) {
+      // fallback simples
+      router.push('/reserva');
+    }
+  };
   
   // Referência para verificar se já está processando o tempo expirado
   const isHandlingExpiredTimer = useRef(false);
@@ -657,8 +691,8 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       setCardErrorDetails({ status, code, message, details, requestId });
       setShowCardErrorModal(true);
 
-      // Inicia cooldown (ex.: 180s) para não acionar antifraude em repetidas tentativas
-      const COOLDOWN_SECONDS = 180;
+      // Inicia cooldown (ex.: 60s) para não acionar antifraude em repetidas tentativas
+      const COOLDOWN_SECONDS = 60;
       setCooldownRemaining(COOLDOWN_SECONDS);
       if (cooldownTimerRef.current) clearInterval(cooldownTimerRef.current);
       cooldownTimerRef.current = setInterval(() => {
@@ -996,11 +1030,21 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       <NotificationToast ref={notificationRef} />
       {/* Modal fixo com detalhes do erro do cartão */}
       <Dialog open={showCardErrorModal} onOpenChange={setShowCardErrorModal}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl w-[95vw] sm:w-full max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Falha no pagamento com cartão</DialogTitle>
+            <DialogTitle>
+              {isReservationExpiredError
+                ? 'Reserva expirada'
+                : isFirestoreTxnOrderError
+                  ? 'Erro no processamento do pagamento'
+                  : 'Falha no pagamento com cartão'}
+            </DialogTitle>
             <DialogDescription>
-              O pagamento não foi aprovado. Para evitar acionamento do antifraude, aguarde alguns minutos antes de tentar novamente com o mesmo cartão.
+              {isReservationExpiredError
+                ? 'Sua reserva expirou. Por favor, faça uma nova reserva para continuar.'
+                : isFirestoreTxnOrderError
+                  ? 'Houve um problema interno ao processar seu pagamento. Recomendamos usar PIX para confirmação imediata ou tentar novamente em alguns instantes.'
+                  : 'O pagamento não foi aprovado. Para evitar acionamento do antifraude, aguarde alguns minutos antes de tentar novamente com o mesmo cartão.'}
             </DialogDescription>
           </DialogHeader>
 
@@ -1037,29 +1081,67 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                 </div>
               )}
 
-              <div className="text-xs text-muted-foreground">
-                Dicas: aguarde ~3 minutos antes de tentar o mesmo cartão. Se possível, tente outro cartão ou use PIX para confirmação imediata.
-              </div>
+              {isReservationExpiredError ? (
+                <div className="text-xs text-muted-foreground">
+                  Sua reserva expirou. Clique em “Fazer reserva novamente” para iniciar uma nova reserva e então concluir o pagamento.
+                </div>
+              ) : isFirestoreTxnOrderError ? (
+                <div className="text-xs text-muted-foreground">
+                  Estamos com instabilidade no processamento do cartão. Use PIX para confirmar imediatamente, ou tente novamente mais tarde.
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground">
+                  Dicas: aguarde ~1 minutos antes de tentar o mesmo cartão. Se possível, tente outro cartão ou use PIX para confirmação imediata.
+                </div>
+              )}
 
               <div className="flex flex-col sm:flex-row gap-2 pt-2">
-                <Button
-                  variant="default"
-                  onClick={() => setShowCardErrorModal(false)}
-                >
-                  Entendi
-                </Button>
-                <Button
-                  variant="secondary"
-                  onClick={() => setActiveTab('pix')}
-                >
-                  Pagar com PIX
-                </Button>
-                <Button
-                  disabled={cooldownRemaining > 0}
-                  onClick={() => setShowCardErrorModal(false)}
-                >
-                  Tentar novamente {cooldownRemaining > 0 ? `(${Math.floor(cooldownRemaining/60).toString().padStart(2,'0')}:${(cooldownRemaining%60).toString().padStart(2,'0')})` : ''}
-                </Button>
+                {isReservationExpiredError ? (
+                  <Button
+                    className="w-full sm:w-auto"
+                    variant="destructive"
+                    onClick={handleRedoReservation}
+                  >
+                    Fazer reserva novamente
+                  </Button>
+                ) : isFirestoreTxnOrderError ? (
+                  <>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setActiveTab('pix')}
+                      className="w-full sm:w-auto"
+                    >
+                      Pagar com PIX
+                    </Button>
+                    <Button
+                      variant="default"
+                      onClick={() => setShowCardErrorModal(false)}
+                    >
+                      Entendi
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant="default"
+                      onClick={() => setShowCardErrorModal(false)}
+                    >
+                      Entendi
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setActiveTab('pix')}
+                    >
+                      Pagar com PIX
+                    </Button>
+                    <Button
+                      disabled={cooldownRemaining > 0}
+                      onClick={() => setShowCardErrorModal(false)}
+                    >
+                      Tentar novamente {cooldownRemaining > 0 ? `(${Math.floor(cooldownRemaining/60).toString().padStart(2,'0')}:${(cooldownRemaining%60).toString().padStart(2,'0')})` : ''}
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}

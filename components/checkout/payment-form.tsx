@@ -144,6 +144,21 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId, 
 
   // console.debug(`Parcelas: ${selectedOption.number}x de ${valorPorParcela} (total ${totalAmountInCents})`);
 
+      // Sanitize statement descriptor (Pagarme: até 13 chars, sem acentos)
+      const sanitizeDescriptor = (value: string) =>
+        value
+          .normalize('NFD')
+          .replace(/\p{Diacritic}/gu, '')
+          .replace(/[^A-Za-z0-9 ]/g, '')
+          .trim()
+          .toUpperCase()
+          .slice(0, 13) || 'EVENTO';
+
+      // Normaliza exp_year para 2 dígitos se vier como AAAA
+      const expYearRaw = formData.expYear.trim();
+      const expYearParsed = parseInt(expYearRaw);
+      const normalizedExpYear = expYearRaw.length === 4 ? expYearParsed % 100 : expYearParsed;
+
       const paymentData: PaymentData & { spotId?: string } = {
         items: [{
           amount: totalAmountInCents,
@@ -156,19 +171,19 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId, 
           payment_method: 'credit_card',
           credit_card: {
             installments: selectedOption.number,
-            statement_descriptor: event.name,
+            statement_descriptor: sanitizeDescriptor(event.name || 'Evento'),
             card: {
               number: formData.cardNumber.replace(/\D/g, ''),
               holder_name: formData.holderName,
               exp_month: parseInt(formData.expMonth),
-              exp_year: parseInt(formData.expYear),
+              exp_year: normalizedExpYear,
               cvv: formData.cvv,
               billing_address: {
                 line_1: formData.address.line1,
                 zip_code: formData.address.zipCode,
                 city: formData.address.city,
-                state: formData.address.state,
-                country: formData.address.country
+                state: formData.address.state.toUpperCase(),
+                country: (formData.address.country || 'BR').toUpperCase()
               }
             }
           }

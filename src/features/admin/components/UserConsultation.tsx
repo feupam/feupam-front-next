@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Search, Download, User, Mail, Phone, MapPin, Calendar, CreditCard, MessageCircle, ChevronLeft, ChevronRight, Building2 } from 'lucide-react';
+import { Loader2, Search, Download, User, Mail, Phone, MapPin, Calendar, CreditCard, MessageCircle, ChevronLeft, ChevronRight, Building2, RotateCcw } from 'lucide-react';
 import { api } from '@/lib/api';
 import { auth } from '@/lib/firebase';
 import { toast } from '@/hooks/use-toast';
@@ -106,6 +106,7 @@ export function UserConsultation() {
   const [usersWithReservations, setUsersWithReservations] = useState<UserWithReservations[]>([]);
   const [filteredData, setFilteredData] = useState<UserWithReservations[]>([]);
   const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
+  const [reprocessingId, setReprocessingId] = useState<string | null>(null);
   
   // Paginação
   const [currentPage, setCurrentPage] = useState(1);
@@ -549,6 +550,35 @@ export function UserConsultation() {
     setSelectedChurch('todos');
   };
 
+  // Ação: reprocessar status de pagamento para um usuário/reserva específica
+  const handleAdminReprocess = async (item: UserWithReservations) => {
+    if (!selectedEvent) {
+      toast({ title: 'Selecione um evento', description: 'É necessário escolher um evento antes.', variant: 'destructive' });
+      return;
+    }
+    const reservation = item.reservation;
+    const mainCharge = reservation.chargeId && reservation.chargeId.length > 0
+      ? reservation.chargeId[reservation.chargeId.length - 1]
+      : undefined;
+    const payload: { email: string; eventId: string; chargeId?: string } = {
+      email: item.user.email,
+      eventId: selectedEvent,
+      ...(mainCharge?.chargeId ? { chargeId: mainCharge.chargeId } : {})
+    };
+    try {
+      setReprocessingId(reservation.id);
+      console.log('[Admin] POST /payments/reprocessar-status payload:', payload);
+      const resp = await api.payments.reprocessStatus(payload);
+      console.log('[Admin] Resposta /payments/reprocessar-status:', resp);
+      toast({ title: 'Solicitado', description: 'Reprocessamento enviado. Aguarde alguns instantes e atualize.', variant: 'default' });
+    } catch (err: any) {
+      console.error('[Admin] Erro ao reprocessar status:', err);
+      toast({ title: 'Erro', description: err?.message || 'Falha ao reprocessar status', variant: 'destructive' });
+    } finally {
+      setReprocessingId(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Seleção de Evento */}
@@ -723,6 +753,7 @@ export function UserConsultation() {
                         <TableHead>Reservas</TableHead>
                         <TableHead>Cliente/Staff</TableHead>
                         <TableHead>Total</TableHead>
+                        <TableHead>Ações</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -868,6 +899,26 @@ export function UserConsultation() {
                                 <div className="text-xs text-muted-foreground">
                                   Total pago
                                 </div>
+                              </div>
+                            </TableCell>
+                            {/* Coluna Ações */}
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleAdminReprocess(item)}
+                                  disabled={reprocessingId === reservation.id}
+                                  aria-label="Atualizar pagamento (reprocessar status)"
+                                  className="p-2"
+                                >
+                                  {reprocessingId === reservation.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <RotateCcw className="h-4 w-4" />
+                                  )}
+                                  <span className="sr-only">Atualizar pagamento</span>
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>

@@ -54,7 +54,34 @@ export default function MyTicketsPage() {
   const [activeTab, setActiveTab] = useState('todos');
   const [selectedCharge, setSelectedCharge] = useState<ChargeInfo | null>(null);
   const [pixDialogOpen, setPixDialogOpen] = useState(false);
+  const [reprocessingId, setReprocessingId] = useState<string | null>(null);
+  const [cooldowns, setCooldowns] = useState<Record<string, number>>({});
+  const cooldownIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const notificationRef = useRef<NotificationToastRef>(null);
+  const [chargeIdHints, setChargeIdHints] = useState<Record<string, string>>({});
+  const checkingStatusRef = useRef<boolean>(false);
+
+  // Helper para processar a lista de reservas no formato esperado pela UI
+  const processReservations = (reservationsData: any[]): Reservation[] => {
+    if (!Array.isArray(reservationsData)) return [] as Reservation[];
+    return reservationsData.map((reservation: any) => {
+      // Garantir price (usa charge.amount caso price não venha)
+      let finalPrice = reservation.price;
+      if ((!finalPrice || finalPrice === 0) && reservation.chargeId && reservation.chargeId.length > 0) {
+        finalPrice = reservation.chargeId[reservation.chargeId.length - 1]?.amount || reservation.chargeId[0]?.amount;
+      }
+      if (typeof finalPrice === 'string') {
+        const parsed = parseInt(finalPrice, 10);
+        if (!Number.isNaN(parsed)) finalPrice = parsed;
+      }
+
+      return {
+        ...reservation,
+        price: finalPrice || 0,
+        eventName: reservation.eventName || reservation.eventId,
+      } as Reservation;
+    });
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -162,16 +189,50 @@ export default function MyTicketsPage() {
     fetchData();
   }, []);
 
-  // Verificação automática de pagamentos pendentes
+  // Controla contagem regressiva dos "debounces" por reserva
+  const hasAnyCooldown = Object.values(cooldowns).some((v) => (v ?? 0) > 0);
   useEffect(() => {
-    // Verificamos apenas se houver pelo menos uma reserva com pagamento pendente (apenas eventos pagos)
-    const hasPendingPayment = reservations.some(res => {
+    if (hasAnyCooldown && !cooldownIntervalRef.current) {
+      cooldownIntervalRef.current = setInterval(() => {
+        setCooldowns((prev) => {
+          const next: Record<string, number> = {};
+          let changed = false;
+          for (const [id, secs] of Object.entries(prev)) {
+            const newVal = Math.max((secs ?? 0) - 1, 0);
+            next[id] = newVal;
+            if (newVal !== secs) changed = true;
+          }
+          return changed ? next : prev;
+        });
+      }, 1000);
+    }
+    if (!hasAnyCooldown && cooldownIntervalRef.current) {
+      clearInterval(cooldownIntervalRef.current);
+      cooldownIntervalRef.current = null;
+    }
+    return () => {
+      if (cooldownIntervalRef.current && !hasAnyCooldown) {
+        clearInterval(cooldownIntervalRef.current);
+        cooldownIntervalRef.current = null;
+      }
+    };
+  }, [hasAnyCooldown]);
+
+  // Verificação automática de pagamentos pendentes
+  const hasPendingPayment = (() => {
+    // Computa fora do effect para poder reduzir dependências
+    return reservations.some((res) => {
       const event = events[res.eventName];
       return res.status?.toLowerCase() !== 'pago' && event && event.price > 0;
     });
+  })();
+
+  useEffect(() => {
     if (!hasPendingPayment || loading) return;
 
     const checkPaymentStatus = async () => {
+      if (checkingStatusRef.current) return; // evita concorrência/loop
+      checkingStatusRef.current = true;
       try {
         // Buscar reservas do usuário
         const updatedReservations = await api.users.getReservations();
@@ -186,19 +247,24 @@ export default function MyTicketsPage() {
         if (newPaymentConfirmed) {
           setReservations(updatedReservations);
           
-          // Buscar novos detalhes dos eventos para cada reserva
+          // Buscar novos detalhes dos eventos somente se necessário
           const eventsMap: Record<string, any> = { ...events };
+          let eventsChanged = false;
           for (const reservation of updatedReservations) {
-            if (!eventsMap[reservation.eventName]) {
+            const key = reservation.eventName || reservation.eventId;
+            if (key && !eventsMap[key]) {
               try {
-                const eventData = await api.events.get(reservation.eventName);
-                eventsMap[reservation.eventName] = eventData;
+                const eventData = await api.events.get(key);
+                eventsMap[key] = eventData;
+                eventsChanged = true;
               } catch (err) {
-                console.error(`Erro ao buscar evento ${reservation.eventName}:`, err);
+                console.error(`Erro ao buscar evento ${key}:`, err);
               }
             }
           }
-          setEvents(eventsMap);
+          if (eventsChanged) {
+            setEvents(eventsMap);
+          }
           
           // Fechar o modal de PIX se estiver aberto
           if (pixDialogOpen) {
@@ -207,15 +273,18 @@ export default function MyTicketsPage() {
         }
       } catch (error) {
         console.error('Erro ao verificar status de pagamento:', error);
+      } finally {
+        checkingStatusRef.current = false;
       }
     };
 
     // Verificar imediatamente e depois a cada 1 minuto
     const interval = setInterval(checkPaymentStatus, 60000);
-    checkPaymentStatus();
+    // Executa uma vez agora
+    void checkPaymentStatus();
 
     return () => clearInterval(interval);
-  }, [reservations, loading, events, pixDialogOpen]);
+  }, [hasPendingPayment, loading, pixDialogOpen]);
 
   const filteredReservations = reservations.filter(reservation => {
     console.log('[MyTickets] Filtering reservation:', reservation.id, 'status:', reservation.status, 'activeTab:', activeTab);
@@ -234,6 +303,130 @@ export default function MyTicketsPage() {
   const handleViewPixQRCode = (charge: ChargeInfo) => {
     setSelectedCharge(charge);
     setPixDialogOpen(true);
+  };
+
+  const refreshReservations = async () => {
+    try {
+      const updatedRaw = await api.users.getReservations();
+      const updatedList = Array.isArray(updatedRaw)
+        ? updatedRaw
+        : (Array.isArray(updatedRaw?.data) ? updatedRaw.data : []);
+      const processed = processReservations(updatedList);
+      setReservations(processed);
+
+      // Atualiza o mapa de eventos para qualquer evento ainda não carregado
+      const eventsMap: Record<string, any> = { ...events };
+      for (const reservation of processed) {
+        const key = reservation.eventName || reservation.eventId;
+        if (key && !eventsMap[key]) {
+          try {
+            const eventData = await api.events.get(key);
+            eventsMap[key] = eventData;
+          } catch (err) {
+            console.error(`Erro ao buscar evento ${key}:`, err);
+          }
+        }
+      }
+      setEvents(eventsMap);
+    } catch (err) {
+      console.error('[MyTickets] Erro ao atualizar reservas após reprocessar status:', err);
+    }
+  };
+
+  // Atualiza apenas um card (uma reserva específica) sem refazer todo o grid
+  const updateSingleReservation = async (reservationId: string) => {
+    try {
+      console.log('[MyTickets] Atualizando apenas a reserva:', reservationId);
+      const updatedRaw = await api.users.getReservations();
+      const updatedList = Array.isArray(updatedRaw)
+        ? updatedRaw
+        : (Array.isArray(updatedRaw?.data) ? updatedRaw.data : []);
+      const processed = processReservations(updatedList);
+
+      const updated = processed.find((r) => r.id === reservationId);
+      if (!updated) {
+        console.warn('[MyTickets] Reserva não encontrada no refresh parcial, mantendo estado atual:', reservationId);
+        return;
+      }
+
+      setReservations((prev) => {
+        const prevRes = prev.find((r) => r.id === reservationId);
+        if (prevRes) {
+          // Evita setState se nada relevante mudou
+          const same = prevRes.status === updated.status &&
+            (prevRes.price ?? 0) === (updated.price ?? 0) &&
+            (prevRes.chargeId?.length ?? 0) === (updated.chargeId?.length ?? 0);
+          if (same) return prev;
+        }
+        return prev.map((r) => (r.id === reservationId ? updated : r));
+      });
+
+      // Garante que o evento do card atualizado exista no mapa
+      const key = updated.eventName || updated.eventId;
+      if (key && !events[key]) {
+        try {
+          const eventData = await api.events.get(key);
+          setEvents((prev) => ({ ...prev, [key]: eventData }));
+        } catch (err) {
+          console.error(`[MyTickets] Erro ao buscar evento ${key} para refresh parcial:`, err);
+        }
+      }
+    } catch (err) {
+      console.error('[MyTickets] Erro ao atualizar reserva específica:', err);
+    }
+  };
+
+  const handleReprocessStatus = async (reservation: Reservation) => {
+    try {
+      setReprocessingId(reservation.id);
+      const currentCharge = reservation.chargeId && reservation.chargeId.length > 0
+        ? reservation.chargeId[reservation.chargeId.length - 1]
+        : undefined;
+      const payload: { email: string; eventId: string; chargeId?: string } = {
+        email: reservation.email,
+        eventId: reservation.eventName,
+      };
+      if (currentCharge?.chargeId) payload.chargeId = currentCharge.chargeId;
+      if (payload.chargeId) {
+        // Guarda um hint local para exibir no card mesmo que a API ainda não retorne o chargeId
+        setChargeIdHints((prev) => ({ ...prev, [reservation.id]: payload.chargeId as string }));
+      }
+      console.log('[MyTickets] POST /payments/reprocessar-status payload:', payload);
+      const reprocessResp = await api.payments.reprocessStatus(payload);
+      console.log('[MyTickets] Resposta /payments/reprocessar-status:', reprocessResp);
+      // Tenta extrair chargeId da resposta (caso a API retorne diretamente)
+      try {
+        const extractChargeId = (obj: any): string | undefined => {
+          if (!obj || typeof obj !== 'object') return undefined;
+          if (typeof obj.chargeId === 'string') return obj.chargeId;
+          // Alguns formatos possíveis
+          if (typeof obj.data?.chargeId === 'string') return obj.data.chargeId;
+          if (Array.isArray(obj.chargeId) && obj.chargeId[0]?.chargeId) return obj.chargeId[0].chargeId;
+          // Busca rasa nas chaves
+          for (const key of Object.keys(obj)) {
+            const val: any = (obj as any)[key];
+            if (typeof val === 'string' && /^ch_/.test(val)) return val;
+            const nested = extractChargeId(val);
+            if (nested) return nested;
+          }
+          return undefined;
+        };
+        const respChargeId = extractChargeId(reprocessResp);
+        if (respChargeId) {
+          setChargeIdHints((prev) => ({ ...prev, [reservation.id]: respChargeId }));
+        }
+      } catch {}
+      notificationRef.current?.showNotification('Solicitação de reprocessamento enviada. Aguarde alguns instantes e atualizaremos o status.', 'info');
+      // Atualiza apenas o card clicado
+      await updateSingleReservation(reservation.id);
+    } catch (error: any) {
+      console.error('[MyTickets] Erro ao reprocessar status:', error);
+      notificationRef.current?.showNotification(error?.message || 'Falha ao reprocessar status. Tente novamente mais tarde.', 'error');
+    } finally {
+      setReprocessingId(null);
+      // Inicia cooldown de 60s para evitar múltiplos reprocessamentos em sequência
+      setCooldowns((prev) => ({ ...prev, [reservation.id]: 60 }));
+    }
   };
 
   const getStatusBadgeColor = (status: string, price: number = 0) => {
@@ -298,6 +491,12 @@ export default function MyTicketsPage() {
                   const currentCharge = reservation.chargeId && reservation.chargeId.length > 0 
                     ? reservation.chargeId[reservation.chargeId.length - 1] 
                     : undefined;
+                  // Determinar um Charge ID principal de forma resiliente
+                  const mainChargeId = (
+                    Array.isArray(reservation.chargeId)
+                      ? (reservation.chargeId[0]?.chargeId || reservation.chargeId[reservation.chargeId.length - 1]?.chargeId)
+                      : (typeof (reservation as any).chargeId === 'string' ? (reservation as any).chargeId : undefined)
+                  ) || chargeIdHints[reservation.id];
                   
                   return (
                     <Card key={reservation.id} className="overflow-hidden">
@@ -319,6 +518,17 @@ export default function MyTicketsPage() {
                             <MapPin className="h-3 w-3 mr-1 opacity-70" />
                             <span className="text-xs">{event.location}</span>
                           </div>
+                          {mainChargeId && (
+                            <div className="flex items-center mt-1">
+                              <span className="text-[10px] opacity-70">Charge ID:</span>
+                              <span
+                                className="ml-1 text-[10px] font-mono truncate max-w-[80%]"
+                                title={mainChargeId}
+                              >
+                                {mainChargeId}
+                              </span>
+                            </div>
+                          )}
                         </CardDescription>
                       </CardHeader>
                       
@@ -348,6 +558,12 @@ export default function MyTicketsPage() {
                               </span>
                             </div>
                           )}
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm text-muted-foreground">Charge ID:</span>
+                            <span className="text-xs font-mono font-medium truncate max-w-[60%]" title={mainChargeId || ''}>
+                              {mainChargeId || '-'}
+                            </span>
+                          </div>
                         </div>
                         
                         {/* Aviso especial para eventos de acampamento */}
@@ -366,8 +582,8 @@ export default function MyTicketsPage() {
                           </div>
                         )}
                         
-                        {/* Status do pagamento */}
-                        <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                          {/* Botões de ação */}
+                          <div className="flex flex-col gap-3">
                           <div className="flex items-center">
                             {event.price === 0 ? (
                               // Evento gratuito - ícone verde com check
@@ -383,9 +599,13 @@ export default function MyTicketsPage() {
                               <p className="text-sm font-medium">
                                 {event.price === 0
                                   ? 'Inscrição confirmada'
-                                  : reservation.status === 'Pago' 
-                                    ? 'Pagamento confirmado' 
-                                    : 'Aguardando pagamento'}
+                                  : reservation.status === 'Pago'
+                                  ? 'Pagamento confirmado'
+                                  : (
+                                    <span className="inline-flex items-baseline">
+                                      <span>Atualizar pagamento</span>
+                                    </span>
+                                  )}
                               </p>
                               {currentCharge && currentCharge.meio && event.price > 0 && (
                                 <p className="text-xs text-muted-foreground">
@@ -395,8 +615,31 @@ export default function MyTicketsPage() {
                             </div>
                           </div>
                           
-                          {/* Botões de ação */}
-                          <div className="flex flex-col gap-2">
+                          {/* Controles de ação (ocupam toda a largura) */}
+                          <div className="flex flex-col gap-2 w-full">
+                            {/* Botão para reprocessar status (força atualização) */}
+                            {reservation.status !== 'Pago' && event.price > 0 && (
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleReprocessStatus(reservation)}
+                                disabled={reprocessingId === reservation.id || (cooldowns[reservation.id] ?? 0) > 0}
+                                className={cn('w-full bg-amber-500 hover:bg-amber-600 text-white', (cooldowns[reservation.id] ?? 0) > 0 && 'opacity-80')}
+                              >
+                                {reprocessingId === reservation.id ? (
+                                  <span className="inline-flex items-center"><Loader2 className="h-4 w-4 mr-1 animate-spin" />Reprocessando...</span>
+                                ) : (cooldowns[reservation.id] ?? 0) > 0 ? (
+                                  <span>
+                                    Aguarde {String(Math.floor((cooldowns[reservation.id] ?? 0)/60)).padStart(2,'0')}:{String((cooldowns[reservation.id] ?? 0)%60).padStart(2,'0')}
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-baseline">
+                                    <span>Atualizar pagamento</span>
+                                    <span className="ml-1 text-[10px] leading-none opacity-90">(ver se pagou)</span>
+                                  </span>
+                                )}
+                              </Button>
+                            )}
                             {/* Botão para visualizar QR Code do PIX (só aparece se o PIX estiver pendente e não for gratuito) */}
                             {hasPixPayment && event.price > 0 && (
                               <Button 
@@ -422,6 +665,7 @@ export default function MyTicketsPage() {
                                 variant="default" 
                                 size="sm"
                                 onClick={() => window.location.href = `/reserva/${reservation.eventName}/${reservation.ticketKind || 'full'}`}
+                                className="w-full sm:w-auto"
                               >
                                 <CreditCard className="h-4 w-4 mr-1" />
                                 Continuar Pagamento
@@ -449,6 +693,7 @@ export default function MyTicketsPage() {
                                     console.error('Documento de autorização não encontrado para:', reservation.eventName);
                                   }
                                 }}
+                                className="w-full sm:w-auto"
                               >
                                 <Download className="h-4 w-4 mr-1" />
                                 Baixar Autorização

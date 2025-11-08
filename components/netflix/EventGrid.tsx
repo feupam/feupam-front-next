@@ -1,12 +1,13 @@
 "use client"
 
 import { Info, Ticket, Calendar } from "lucide-react"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { EventData } from '@/services/eventService'
 import { useCurrentEventContext } from '@/contexts/CurrentEventContext'
 import { useRouter } from 'next/navigation'
 import { useLoading } from '@/contexts/LoadingContext'
-import { isEventExpired, formatDate, formatEventDate } from '@/lib/utils'
+import { isEventExpired, formatEventDate } from '@/lib/utils'
 import { useEventStorage } from '@/hooks/useEventStorage'
 
 interface EventGridProps {
@@ -141,7 +142,16 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     return (
       <section className="px-4 pb-12">
         <div className="container mx-auto">
-          <h2 className="text-xl md:text-2xl font-bold mb-4 text-left text-white">Eventos Disponíveis</h2>
+          <div className="mb-56 flex justify-center">
+            <Image
+              src="/deeper.jpeg"
+              alt="Eventos disponíveis"
+              width={1600}
+              height={320}
+              className="w-full h-auto"
+              priority
+            />
+          </div>
           <div className="text-center py-8 text-white/70">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Nenhum evento ativo no momento</p>
@@ -154,13 +164,23 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
   return (
     <section className="px-4 pb-12">
       <div className="container mx-auto">
-    <h2 className="text-xl md:text-2xl font-bold mb-4 text-left text-white">Eventos Disponíveis</h2>
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 md:gap-4">
+        <div className="mb-56 flex justify-center">
+          <Image
+            src="/deeper.jpeg"
+            alt="Eventos disponíveis"
+            width={1600}
+            height={320}
+            className="w-full h-auto"
+            priority
+          />
+        </div>
+        <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8">
           {activeEvents.map((event, index) => (
             <div 
               key={event.id} 
               className={`group relative rounded-xl p-[1px] cursor-pointer transform-gpu transition-all duration-300 
                 bg-gradient-to-br from-emerald-500/30 via-emerald-400/10 to-transparent hover:from-emerald-400/60 hover:via-emerald-300/20 
+                w-[calc(50%-0.5rem)] sm:w-[calc(33.333%-0.667rem)] md:w-[220px] lg:w-[240px] flex-shrink-0
                 ${index === selectedIndex ? 'ring-2 ring-emerald-400/60' : ''}
               `}
               onClick={(e) => {
@@ -172,15 +192,7 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
               onMouseMove={handleTiltMove}
               onMouseLeave={handleTiltLeave}
             >
-              {/* Destaque da semana (exemplo: primeiro card) */}
-              {index === 0 && (
-                <div className="pointer-events-none absolute -inset-[2px] rounded-[14px]">
-                  <div className="absolute inset-0 rounded-[14px] animate-spin" style={{ animationDuration: '6s' }}>
-                    <div className="absolute inset-0 rounded-[14px] opacity-25 blur-[2px] 
-                                    bg-[conic-gradient(from_0deg,rgba(16,185,129,0.5),transparent_55%,rgba(16,185,129,0.5))]" />
-                  </div>
-                </div>
-              )}
+
               <div className="relative rounded-[12px] overflow-hidden bg-zinc-900/80 backdrop-blur-md 
                               shadow-[0_8px_24px_rgba(16,185,129,0.15)] group-hover:shadow-[0_12px_40px_rgba(16,185,129,0.35)] 
                               transition-all duration-300 group-hover:-translate-y-1 tilt">

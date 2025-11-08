@@ -33,9 +33,10 @@ export function EventsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
+  // Comentado: não carrega eventos automaticamente pois requer autenticação
+  // useEffect(() => {
+  //   fetchEvents();
+  // }, []);
 
   const getEventByUuid = (uuid: string) => events.find(e => e.uuid === uuid);
 

@@ -635,7 +635,7 @@ export default function MyTicketsPage() {
                                 ) : (
                                   <span className="inline-flex items-baseline">
                                     <span>Atualizar pagamento</span>
-                                    <span className="ml-1 text-[10px] leading-none opacity-90">(ver se pagou)</span>
+                                    <span className="ml-1 text-[10px] leading-none opacity-90">(confirmar pagamento)</span>
                                   </span>
                                 )}
                               </Button>

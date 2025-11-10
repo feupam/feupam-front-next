@@ -28,10 +28,10 @@ export const eventService = {
     const response = await api.get<EventStatusResponse>(`/events/event-status`);
     const data = response.data;
 
-    // Only return events owned by IPCP. If owner is null/undefined or different, filter out.
+    // Only return events owned by null. If owner is null/undefined or different, filter out.
     const filtered: EventStatusResponse = {
       ...data,
-      events: Array.isArray(data.events) ? data.events.filter((e) => e.owner === 'IPCP') : [],
+      events: Array.isArray(data.events) ? data.events.filter((e) => e.owner === '') : [],
     };
 
     return filtered;

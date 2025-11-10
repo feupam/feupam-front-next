@@ -13,7 +13,7 @@ export default function PortalLGPDPage() {
         {/* Header */}
         <div className="text-center mb-16">
           <div className="inline-flex items-center gap-3 mb-6">
-            <Shield className="w-12 h-12 text-sky-400" />
+            <Shield className="w-12 h-12 text-esmerald-400" />
             <h1 className="text-4xl md:text-5xl font-bold text-white">
               Portal LGPD
             </h1>
@@ -26,10 +26,10 @@ export default function PortalLGPDPage() {
         {/* Cards Grid */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-16">
           {/* Política de Privacidade */}
-          <div className="group bg-gradient-to-br from-zinc-900/80 via-zinc-800/60 to-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-sky-400/30 transition-all duration-300 hover:shadow-2xl hover:shadow-sky-400/10">
+          <div className="group bg-gradient-to-br from-zinc-900/80 via-zinc-800/60 to-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-esmerald-400/30 transition-all duration-300 hover:shadow-2xl hover:shadow-esmerald-400/10">
             <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-400/20">
-                <Shield className="w-6 h-6 text-sky-400" />
+              <div className="p-3 rounded-xl bg-esmerald-500/10 border border-esmerald-400/20">
+                <Shield className="w-6 h-6 text-esmerald-400" />
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold text-white mb-3">
@@ -37,14 +37,14 @@ export default function PortalLGPDPage() {
                 </h2>
                 <p className="text-white/70 leading-relaxed">
                   Essa política explica os processos de dados pessoais da{" "}
-                  <span className="text-sky-400 font-medium">Igreja Presbiteriana Central de Passos</span>, 
+                  <span className="text-esmerald-400 font-medium">Igreja Presbiteriana Central de Passos</span>, 
                   compreendendo a forma como eles são coletados, utilizados e para quais fins.
                 </p>
               </div>
             </div>
             <Link 
               href="/portal-lgpd/politica"
-              className="inline-flex items-center gap-2 mt-4 text-sky-400 hover:text-sky-300 transition-colors group-hover:gap-3 duration-200"
+              className="inline-flex items-center gap-2 mt-4 text-esmerald-400 hover:text-esmerald-300 transition-colors group-hover:gap-3 duration-200"
             >
               <span className="font-medium">Conheça a Política de Privacidade</span>
               <span className="text-xl">→</span>
@@ -52,10 +52,10 @@ export default function PortalLGPDPage() {
           </div>
 
           {/* Política de Cookies */}
-          <div className="group bg-gradient-to-br from-zinc-900/80 via-zinc-800/60 to-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-sky-400/30 transition-all duration-300 hover:shadow-2xl hover:shadow-sky-400/10">
+          <div className="group bg-gradient-to-br from-zinc-900/80 via-zinc-800/60 to-zinc-900/80 backdrop-blur-xl border border-white/10 rounded-2xl p-8 hover:border-esmerald-400/30 transition-all duration-300 hover:shadow-2xl hover:shadow-esmerald-400/10">
             <div className="flex items-start gap-4 mb-4">
-              <div className="p-3 rounded-xl bg-sky-500/10 border border-sky-400/20">
-                <Cookie className="w-6 h-6 text-sky-400" />
+              <div className="p-3 rounded-xl bg-esmerald-500/10 border border-esmerald-400/20">
+                <Cookie className="w-6 h-6 text-esmerald-400" />
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl font-semibold text-white mb-3">
@@ -73,7 +73,7 @@ export default function PortalLGPDPage() {
                   <ul className="space-y-1">
                     {["Google Analytics", "Youtube", "Facebook", "Google AdSense", "DoubleClick"].map((cookie) => (
                       <li key={cookie} className="flex items-center gap-2 text-white/50 text-sm">
-                        <div className="w-1.5 h-1.5 rounded-full bg-sky-400/60"></div>
+                        <div className="w-1.5 h-1.5 rounded-full bg-esmerald-400/60"></div>
                         {cookie}
                       </li>
                     ))}
@@ -83,7 +83,7 @@ export default function PortalLGPDPage() {
             </div>
             <Link 
               href="/portal-lgpd/politica#cookies"
-              className="inline-flex items-center gap-2 mt-4 text-sky-400 hover:text-sky-300 transition-colors group-hover:gap-3 duration-200"
+              className="inline-flex items-center gap-2 mt-4 text-esmerald-400 hover:text-esmerald-300 transition-colors group-hover:gap-3 duration-200"
             >
               <span className="font-medium">Conheça a Política de Cookies</span>
               <span className="text-xl">→</span>

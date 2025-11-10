@@ -7,17 +7,17 @@ export default function PoliticaPrivacidadePage() {
   return (
     <div className="min-h-screen bg-white">
       {/* Header com botão de voltar */}
-      <div className="bg-gradient-to-r from-sky-600 to-sky-800 text-white py-6">
+      <div className="bg-gradient-to-r from-esmerald-600 to-esmerald-800 text-white py-6">
         <div className="container mx-auto px-4">
           <Link 
             href="/portal-lgpd" 
-            className="inline-flex items-center gap-2 text-sky-100 hover:text-white mb-4 transition-colors"
+            className="inline-flex items-center gap-2 text-esmerald-100 hover:text-white mb-4 transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             Voltar ao Portal LGPD
           </Link>
           <h1 className="text-3xl font-bold">Política de Privacidade e Proteção de Dados</h1>
-          <p className="text-sky-100 mt-2">Última atualização: 07 de novembro de 2025</p>
+          <p className="text-esmerald-100 mt-2">Última atualização: 07 de novembro de 2025</p>
         </div>
       </div>
 
@@ -25,7 +25,7 @@ export default function PoliticaPrivacidadePage() {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <div className="prose prose-lg max-w-none">
           
-          <div className="bg-sky-50 border-l-4 border-sky-500 p-6 mb-8">
+          <div className="bg-esmerald-50 border-l-4 border-esmerald-500 p-6 mb-8">
             <p className="text-gray-800 leading-relaxed">
               O site <strong>IPC Passos</strong> é responsável por promover e gerenciar inscrições para acampamentos e eventos da Igreja Presbiteriana Central de Passos.
               Prezamos pela segurança e privacidade dos dados pessoais de nossos participantes, incluindo menores de idade.
@@ -34,7 +34,7 @@ export default function PoliticaPrivacidadePage() {
           </div>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">1. Dados pessoais coletados</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">1. Dados pessoais coletados</h2>
             <p className="text-gray-700 mb-4">Podemos coletar as seguintes informações durante o processo de inscrição e participação:</p>
             <ul className="list-disc ml-6 space-y-2 text-gray-700">
               <li>Nome completo do participante e do responsável legal</li>
@@ -56,7 +56,7 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">2. Finalidade do tratamento de dados</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">2. Finalidade do tratamento de dados</h2>
             <p className="text-gray-700 mb-4">Os dados são utilizados para as seguintes finalidades:</p>
             <ul className="list-disc ml-6 space-y-2 text-gray-700">
               <li>Gerenciamento de inscrições e pagamentos</li>
@@ -69,7 +69,7 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">3. Base legal</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">3. Base legal</h2>
             <p className="text-gray-700 mb-4">O tratamento de dados realizado pelo IPC Passos é fundamentado nas seguintes bases legais:</p>
             <ul className="list-disc ml-6 space-y-2 text-gray-700">
               <li>Execução de contrato ou procedimentos preliminares de inscrição</li>
@@ -80,7 +80,7 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">4. Compartilhamento de dados</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">4. Compartilhamento de dados</h2>
             <p className="text-gray-700 mb-4">Os dados poderão ser compartilhados com:</p>
             <ul className="list-disc ml-6 space-y-2 text-gray-700">
               <li>Serviços de hospedagem e infraestrutura (Vercel, Firebase, Google Cloud)</li>
@@ -92,7 +92,7 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">5. Armazenamento e segurança</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">5. Armazenamento e segurança</h2>
             <p className="text-gray-700">
               Os dados são armazenados de forma segura em servidores localizados no Brasil e no exterior,
               com medidas técnicas e administrativas para proteger contra acesso não autorizado, perda ou vazamento de informações.
@@ -101,7 +101,7 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">6. Tempo de retenção</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">6. Tempo de retenção</h2>
             <p className="text-gray-700">
               Os dados serão mantidos apenas pelo tempo necessário para cumprir as finalidades descritas ou conforme exigência legal.
               Após esse período, serão eliminados ou anonimizados.
@@ -109,7 +109,7 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">7. Direitos do titular</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">7. Direitos do titular</h2>
             <p className="text-gray-700 mb-4">O titular dos dados (ou seu responsável legal) tem direito a:</p>
             <ul className="list-disc ml-6 space-y-2 text-gray-700">
               <li>Solicitar confirmação da existência de tratamento</li>
@@ -120,20 +120,20 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">8. Encarregado de Dados (DPO)</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">8. Encarregado de Dados (DPO)</h2>
             <p className="text-gray-700 mb-4">
               Em caso de dúvidas ou solicitações sobre esta Política ou o tratamento de dados, entre em contato:
             </p>
             <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
               <ul className="space-y-2 text-gray-700">
                 <li><strong>Nome:</strong> Encarregado de Dados – IPC Passos</li>
-                <li><strong>E-mail:</strong> <a href="mailto:ipbcpassos@gmail.com" className="text-sky-600 hover:text-sky-800 underline">ipbcpassos@gmail.com</a></li>
+                <li><strong>E-mail:</strong> <a href="mailto:ipbcpassos@gmail.com" className="text-esmerald-600 hover:text-esmerald-800 underline">ipbcpassos@gmail.com</a></li>
               </ul>
             </div>
           </section>
 
           <section id="cookies" className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">9. Uso de Cookies</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">9. Uso de Cookies</h2>
             <p className="text-gray-700 mb-4">
               Nosso site utiliza cookies para melhorar sua experiência de navegação, analisar o tráfego e integrar ferramentas como o <strong>Google Analytics</strong>.
               Cookies são pequenos arquivos de texto armazenados no seu dispositivo.
@@ -161,7 +161,7 @@ export default function PoliticaPrivacidadePage() {
           </section>
 
           <section className="mb-8">
-            <h2 className="text-2xl font-bold text-sky-800 mb-4">10. Atualizações desta Política</h2>
+            <h2 className="text-2xl font-bold text-esmerald-800 mb-4">10. Atualizações desta Política</h2>
             <p className="text-gray-700">
               Esta Política poderá ser atualizada periodicamente para refletir mudanças em nossas práticas ou exigências legais.
               Recomendamos que você a consulte regularmente.

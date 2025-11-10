@@ -82,7 +82,7 @@ export function useFormValidation({
           if (age < minAge || age > maxAge) {
             setErrors(prev => ({ 
               ...prev, 
-              data_nasc: `Este evento é para idades de ${minAge} a ${maxAge} anos (incluindo ${minAge} e ${maxAge}). Sua idade: ${age} anos.`
+              data_nasc: `Este evento é para idades de ${minAge} a ${maxAge} anos.`
             }));
             setTouched(prev => ({ ...prev, data_nasc: true }));
           } else {

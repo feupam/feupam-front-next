@@ -158,13 +158,15 @@ export default function MyTicketsPage() {
 
         // Buscar detalhes dos eventos para cada reserva
         const eventsMap: Record<string, any> = {};
+
         for (const reservation of processedReservations) {
           const eventKey = reservation.eventName || reservation.eventId;
           if (eventKey && !eventsMap[eventKey]) {
-            try {
-              const eventData = await api.events.get(eventKey);
-              eventsMap[eventKey] = eventData;
-            } catch (err) {
+              try {
+                const eventData = await api.events.get(eventKey);
+                eventsMap[eventKey] = eventData;
+                console.log(`[MyTickets] Event ${eventKey} loaded`);
+} catch (err) {
               console.error(`Erro ao buscar evento ${eventKey}:`, err);
               // Evento não encontrado, configurar dados mínimos
               eventsMap[eventKey] = {
@@ -178,6 +180,9 @@ export default function MyTicketsPage() {
             console.warn('[MyTickets] Reservation without eventName or eventId:', reservation);
           }
         }
+
+        
+        console.log('[MyTickets] Filtered reservations:', filteredReservations);
         setEvents(eventsMap);
       } catch (error) {
         console.error('Erro ao buscar dados:', error);
@@ -458,6 +463,42 @@ export default function MyTicketsPage() {
         <div className="max-w-6xl mx-auto px-4 py-8">
           <h1 className="text-3xl font-bold mb-6">Minhas Inscrições</h1>
           
+          {/* Caixa informativa sobre cancelamentos e transferências */}
+          <Card className="mb-6 border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
+            <CardHeader>
+              <CardTitle className="text-lg text-amber-800 dark:text-amber-400 flex items-center gap-2">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                </svg>
+                Informações Importantes
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-amber-800 dark:text-amber-300">
+              <ul className="space-y-2 text-sm">
+                <li className="flex items-start gap-2">
+                  <span className="font-semibold">•</span>
+                  <span>O valor integral será devolvido caso o cancelamento seja solicitado em até <strong>7 dias após a inscrição</strong> (conforme o Art. 49 do Código de Defesa do Consumidor).</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-semibold">•</span>
+                  <span>Após esse período, será cobrada uma taxa administrativa de <strong>R$ 50,00</strong>.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-semibold">•</span>
+                  <span>A partir de <strong>31 de dezembro de 2025</strong>, não haverá devolução.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-semibold">•</span>
+                  <span>É possível <strong>transferir a inscrição</strong> para outro participante que ainda não esteja inscrito.</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="font-semibold">•</span>
+                  <span>Para cancelamento ou transferência, entre em contato com a <strong>Ariela</strong> pelo WhatsApp: <a href="https://wa.me/5535998185335" target="_blank" rel="noopener noreferrer" className="font-bold underline hover:no-underline text-blue-600 dark:text-blue-400">(35) 9.9818-5335</a></span>
+                </li>
+              </ul>
+            </CardContent>
+          </Card>
+          
           <Tabs defaultValue="todos" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-6">
             <TabsTrigger value="todos">Todos</TabsTrigger>
@@ -471,8 +512,8 @@ export default function MyTicketsPage() {
             ) : filteredReservations.length === 0 ? (
               <div className="text-center py-12 text-muted-foreground">
                 <Ticket className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                <h3 className="text-lg font-medium mb-2">Nenhum ingresso encontrado</h3>
-                <p>Você ainda não possui ingressos {activeTab !== 'todos' ? 'nesta categoria' : ''}</p>
+                <h3 className="text-lg font-medium mb-2">Nenhum compra realizada</h3>
+                <p>Você não fez nenhuma compra ainda {activeTab !== 'todos' ? 'nesta categoria' : ''}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -565,7 +606,6 @@ export default function MyTicketsPage() {
                             </span>
                           </div>
                         </div>
-                        
                         {/* Aviso especial para eventos de acampamento */}
                         {isAcampamentoEvent(reservation.eventName) && (
                           <div className="mt-4 p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg">
@@ -640,7 +680,7 @@ export default function MyTicketsPage() {
                                 )}
                               </Button>
                             )}
-                            {/* Botão para visualizar QR Code do PIX (só aparece se o PIX estiver pendente e não for gratuito) */}
+                            {/* Botão para visualizar QR Code do PIX (só aparece se o Pix estiver pendente e não for gratuito) */}
                             {hasPixPayment && event.price > 0 && (
                               <Button 
                                 variant="outline" 
@@ -655,11 +695,11 @@ export default function MyTicketsPage() {
                                 }}
                               >
                                 <QrCode className="h-4 w-4 mr-1" />
-                                Ver PIX
+                                Ver Pix
                               </Button>
                             )}
                             
-                            {/* Botão para continuar pagamento (apenas se não estiver pago, não tiver PIX pendente e não for gratuito) */}
+                            {/* Botão para continuar pagamento (apenas se não estiver pago, não tiver Pix pendente e não for gratuito) */}
                             {reservation.status !== 'Pago' && !hasPixPayment && event.price > 0 && (
                               <Button 
                                 variant="default" 
@@ -672,31 +712,25 @@ export default function MyTicketsPage() {
                               </Button>
                             )}
                             
-                            {/* Botão para baixar autorização (apenas para eventos de acampamento) */}
-                            {isAcampamentoEvent(reservation.eventName) && (
+                            {/* Botão para baixar autorização de menores (apenas quando pago) */}
+                            {(reservation.status === 'Pago' || event.price === 0) && (
                               <Button 
                                 variant="outline" 
                                 size="sm"
                                 onClick={() => {
-                                  // Usa a mesma lógica do formulário - cada evento tem seu próprio documento
-                                  const downloadUrl = getTermosDownloadUrl(reservation.eventName);
-                                  const fileName = getTermosFileName(reservation.eventName);
-                                  
-                                  if (downloadUrl && fileName) {
-                                    const link = document.createElement('a');
-                                    link.href = downloadUrl;
-                                    link.download = fileName;
-                                    document.body.appendChild(link);
-                                    link.click();
-                                    document.body.removeChild(link);
-                                  } else {
-                                    console.error('Documento de autorização não encontrado para:', reservation.eventName);
-                                  }
+                                  // Download direto do PDF de autorização de menores 2026
+                                  const link = document.createElement('a');
+                                  link.href = '/docs/Autorizacao_2026.pdf';
+                                  link.download = 'Autorizacao_de_Menores_2026.pdf';
+                                  link.target = '_blank';
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
                                 }}
-                                className="w-full sm:w-auto"
+                                className="w-full sm:w-auto bg-green-50 hover:bg-green-100 border-green-300 text-green-800 hover:text-green-900"
                               >
                                 <Download className="h-4 w-4 mr-1" />
-                                Baixar Autorização
+                                Autorização de Menores
                               </Button>
                             )}
                           </div>
@@ -712,7 +746,7 @@ export default function MyTicketsPage() {
         </div>
       </div>
       
-      {/* Dialog para exibir QR Code do PIX */}
+      {/* Dialog para exibir QR Code do Pix */}
       <Dialog open={pixDialogOpen} onOpenChange={setPixDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -728,7 +762,7 @@ export default function MyTicketsPage() {
                 <div className="bg-white p-4 rounded-md border">
                   <img 
                     src={selectedCharge.qrcodePix} 
-                    alt="QR Code PIX" 
+                    alt="QR Code Pix" 
                     className="w-full max-w-[250px] h-auto mx-auto"
                   />
                 </div>
@@ -753,7 +787,7 @@ export default function MyTicketsPage() {
                         notificationRef.current?.showNotification('Código PIX copiado!', 'success');
                       }}
                       className="absolute right-2 top-2 text-primary hover:text-primary/80"
-                      title="Copiar código PIX"
+                      title="Copiar código Pix"
                     >
                       <svg 
                         xmlns="http://www.w3.org/2000/svg" 

@@ -30,7 +30,19 @@ function parseDate(dateStr: string): Date {
     const [year, month, day] = dateStr.split('-');
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
   }
-  return new Date(dateStr);
+  
+  // Para datas ISO com timezone (ex: 2026-02-12T20:00:00.000Z)
+  // Converter para o horário de Brasília (UTC-3)
+  const date = new Date(dateStr);
+  
+  // Se a data vem em UTC (com Z no final), ajustar para horário de Brasília
+  if (dateStr.includes('Z') || dateStr.includes('+00:00')) {
+    // Não precisamos fazer nada aqui, pois o Intl.DateTimeFormat
+    // com timeZone: 'America/Sao_Paulo' já fará a conversão correta
+    return date;
+  }
+  
+  return date;
 }
 
 // Função unificada para formatação de datas
@@ -149,20 +161,26 @@ export function formatEventDateTime(startDate: string, rangeDate?: string): { da
   try {
     const dateOnly = formatDate(startDate, { format: 'short', rangeDate });
     
-    // Tentar extrair o horário da data
+    // Tentar extrair o horário da data com timezone de Brasília
     const parsedDate = parseDate(startDate);
-    const hours = parsedDate.getHours();
-    const minutes = parsedDate.getMinutes();
     
-    // Se tem horário definido (não é meia-noite), mostrar o horário
-    if (hours !== 0 || minutes !== 0) {
-      const timeOnly = formatDate(startDate, { includeTime: true }).split(' ')[1] || '';
-      if (timeOnly) {
-        return {
-          date: dateOnly,
-          time: timeOnly
-        };
-      }
+    // Usar toLocaleString para obter o horário no timezone de Brasília
+    const brasiliaTimeStr = parsedDate.toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    });
+    
+    // Extrair apenas a parte do horário (formato: "HH:mm")
+    const timeOnly = brasiliaTimeStr;
+    
+    // Verificar se tem horário definido (não é meia-noite no horário de Brasília)
+    if (timeOnly && timeOnly !== '00:00') {
+      return {
+        date: dateOnly,
+        time: timeOnly
+      };
     }
     
     // Se não tem horário definido, mostrar apenas a data

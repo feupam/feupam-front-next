@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   // Checa se o site está em modo manutenção via variável de ambiente
   // Defina MAINTENANCE_MODE=true no painel da Vercel para ativar
-  const maintenance = 'true'; //process.env.MAINTENANCE_MODE === 'true';
+  const maintenance = 'false'; //process.env.MAINTENANCE_MODE === 'true';
 
   // Evita loop: permite acessar a página de manutenção
   const pathname = request.nextUrl.pathname;

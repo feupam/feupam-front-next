@@ -58,6 +58,8 @@ interface PaymentData {
       };
     };
   };
+  eventId?: string;
+  spotId?: string;
 }
 
 export default function PaymentForm({ event, onSubmit, reservationData, spotId, disabled = false, disabledMessage, processing = false }: PaymentFormProps) {
@@ -120,6 +122,12 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId, 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Proteção contra cliques duplos - se já está processando ou está desabilitado, não executa
+    if (isSubmitting || disabled || processing) {
+      return;
+    }
+    
     setIsSubmitting(true);
     setError(null);
 
@@ -188,6 +196,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId, 
             }
           }
         },
+        eventId: event.name, // Nome do evento (obrigatório para o backend)
         spotId: spotId || reservationData?.spotId
       };
 
@@ -367,7 +376,7 @@ export default function PaymentForm({ event, onSubmit, reservationData, spotId, 
 
       <Button
         type="submit"
-        className="w-full"
+        className={`w-full ${(isSubmitting || disabled || processing) ? 'pointer-events-none' : ''}`}
         disabled={isSubmitting || disabled || processing}
       >
         {isSubmitting || processing ? (

@@ -150,6 +150,18 @@ axiosInstance.interceptors.response.use(
 
     const data = error.response.data as any;
     const requestId = (error.response.headers as any)?.['x-request-id'] || (error.response.data as any)?.requestId;
+    
+    // Tratamento específico para erro 500 em reserve-spot
+    if (status === 500 && error.config?.url?.includes('/reserve-spot')) {
+      throw new ApiError(
+        status,
+        'NO_SPOTS_AVAILABLE',
+        'As vagas já acabaram',
+        data,
+        requestId
+      );
+    }
+    
     throw new ApiError(
       status,
       data?.code || 'UNKNOWN_ERROR',

@@ -72,6 +72,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
   const [loading, setLoading] = useState(true);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [processingPix, setProcessingPix] = useState(false);
+  const [paymentBlocked, setPaymentBlocked] = useState(false); // Bloqueia todos os tipos de pagamento
   const [error, setError] = useState<string | null>(null);
   const [reservationData, setReservationData] = useState<ReservationData | null>(null);
   const [activeTab, setActiveTab] = useState('cartao');
@@ -515,21 +516,45 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
     }
   }, [currentEvent, fetchInstallments, loadingInstallments]);
 
+  // Proteção adicional contra cliques duplos a nível de documento
+  useEffect(() => {
+    const handleGlobalClick = (event: any) => {
+      if (paymentBlocked || processingPayment) {
+        event.preventDefault?.();
+        event.stopPropagation?.();
+        return false;
+      }
+    };
+
+    if (paymentBlocked || processingPayment) {
+      document.addEventListener('click', handleGlobalClick, { capture: true });
+      document.addEventListener('submit', handleGlobalClick, { capture: true });
+    }
+
+    return () => {
+      document.removeEventListener('click', handleGlobalClick, { capture: true });
+      document.removeEventListener('submit', handleGlobalClick, { capture: true });
+    };
+  }, [paymentBlocked, processingPayment]);
+
   // Função para lidar com o pagamento via PIX
   const handlePixPayment = async () => {
-    if (!reservationData) return;
+    if (!reservationData || paymentBlocked || processingPayment || processingPix) return;
+    
+    // Bloqueia imediatamente para evitar cliques duplos
+    setPaymentBlocked(true);
     setProcessingPayment(true);
     setProcessingPix(true);
     
-    console.log('[PIX Payment] Iniciando pagamento PIX...');
-    console.log('[PIX Payment] params.eventId:', params.eventId);
-    console.log('[PIX Payment] currentEvent?.name:', currentEvent?.name);
-    console.log('[PIX Payment] reservationData:', reservationData);
+    console.log('[PIX Payment] Iniciando pagamento Pix...');
+    console.log('[Pix Payment] params.eventId:', params.eventId);
+    console.log('[Pix Payment] currentEvent?.name:', currentEvent?.name);
+    console.log('[Pix Payment] reservationData:', reservationData);
     
     try {
       // Primeiro verificamos o status da reserva usando a rota /retry
       try {
-        console.log("Verificando status da reserva antes de gerar PIX...");
+        console.log("Verificando status da reserva antes de gerar Pix...");
         // params.eventId sempre contém o nome do evento
         const eventNameForAPI = currentEvent?.name || params.eventId;
         console.log("eventNameForAPI que será usado:", eventNameForAPI);
@@ -568,7 +593,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           localStorage.setItem('reservationTimestamp', new Date().toISOString());
         }
       } catch (error) {
-        console.error("Erro ao verificar status da reserva para PIX:", error);
+        console.error("Erro ao verificar status da reserva para Pix:", error);
         // Continuamos mesmo se ocorrer erro na verificação
       }
       
@@ -578,47 +603,58 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
         throw new Error('Email da reserva não encontrado');
       }
       
-      console.log('[PIX Payment] Email da reserva:', reservationEmail);
+      console.log('[Pix Payment] Email da reserva:', reservationEmail);
       
       // Garante que usamos o valor correto para o pagamento
       const eventPrice = currentEvent?.price || 0;
       
-      console.log('[PIX Payment] Debug valores:');
-      console.log('- eventPrice (valor correto para PIX):', eventPrice);
+      console.log('[Pix Payment] Debug valores:');
+      console.log('- eventPrice (valor correto para Pix):', eventPrice);
       console.log('- currentEvent:', currentEvent);
+      console.log('- activeTab:', activeTab);
       
-      // Para PIX, sempre usar o preço exato do evento
-      const valueToUse = eventPrice;
+      // ✅ CORRIGIDO: Valor fixo para parcela 4x
+      // Pix normal: valor total | Pix parcela 4x: R$ 110,00 fixo
+      const valueToUse = activeTab === 'parcela4x' 
+        ? 11000  // R$ 110,00 fixo em centavos
+        : eventPrice; // Valor total do evento
       
-      console.log('[PIX Payment] Valor final para PIX:', valueToUse);
+      console.log('[Pix Payment] Valor final para Pix:', valueToUse);
+      console.log('[Pix Payment] É parcela 4x?', activeTab === 'parcela4x');
       
       if (valueToUse <= 0) {
         throw new Error('Valor do pagamento inválido: ' + valueToUse);
       }
       
+      // ✅ CORRIGIDO: Payload correto - descrição sempre o nome simples do evento
       const paymentData = {
         items: [{
           amount: valueToUse,
-          description: currentEvent?.name || 'Evento'
+          description: currentEvent?.name || 'Evento' // Sempre nome simples, sem sufixos
         }],
         customer: {
           email: reservationEmail,
         },
         payments: {
           payment_method: 'pix'
-        },
-        spotId: reservationData.spotId || reservationEmail // Backend pode usar spotId ou email
+        }
       };
       
-      console.log('[PIX Payment] Dados enviados para API:', paymentData);
-      console.log('[PIX Payment] Current Event:', currentEvent);
-      console.log('[PIX Payment] Current Event Name:', currentEvent?.name);
-      console.log('[PIX Payment] Reservation Data:', reservationData);
-      console.log('[PIX Payment] Email usado:', reservationEmail);
+      console.log('[Pix Payment] ==================== DEBUG COMPLETO ====================');
+      console.log('[Pix Payment] Dados enviados para API:', JSON.stringify(paymentData, null, 2));
+      console.log('[Pix Payment] Current Event completo:', JSON.stringify(currentEvent, null, 2));
+      console.log('[Pix Payment] Reservation Data completo:', JSON.stringify(reservationData, null, 2));
+      console.log('[Pix Payment] params.eventId:', params.eventId);
+      console.log('[Pix Payment] currentEvent?.name:', currentEvent?.name);
+      console.log('[Pix Payment] currentEvent?.uuid:', currentEvent?.uuid);
+      console.log('[Pix Payment] Email usado:', reservationEmail);
+      console.log('[Pix Payment] SpotId usado:', reservationData.spotId);
+      console.log('[Pix Payment] ActiveTab:', activeTab);
+      console.log('[Pix Payment] ====================================================');
       
       const response = await api.payments.create(paymentData);
       
-      // Extrai os dados do PIX da resposta
+      // Extrai os dados do Pix da resposta
       if (response) {
         // Verifica todos os possíveis formatos da resposta
         if (response.qrcodePix && response.payLink) {
@@ -634,9 +670,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
               copiaECola: response.payLink
             }));
           }
-          setActiveTab('pix');
+          setActiveTab(activeTab === 'parcela4x' ? 'parcela4x' : 'pix');
           notificationRef.current?.showNotification(
-            'PIX gerado com sucesso! Escaneie o código para pagar.',
+            activeTab === 'parcela4x' 
+              ? '1ª Parcela gerada! Escaneie o código para pagar a primeira parcela.'
+              : 'Pix gerado com sucesso! Escaneie o código para pagar.',
             'success'
           );
         } 
@@ -650,29 +688,39 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
             qrCode: response.last_transaction.qr_code_url,
             copiaECola: response.last_transaction.qr_code
           }));
-          setActiveTab('pix');
+          setActiveTab(activeTab === 'parcela4x' ? 'parcela4x' : 'pix');
           notificationRef.current?.showNotification(
-            'PIX gerado com sucesso! Escaneie o código para pagar.',
+            activeTab === 'parcela4x' 
+              ? '1ª Parcela gerada! Escaneie o código para pagar a primeira parcela.'
+              : 'Pix gerado com sucesso! Escaneie o código para pagar.',
             'success'
           );
         } else {
-          throw new Error('Não foi possível gerar o QR Code do PIX');
+          throw new Error('Não foi possível gerar o QR Code do Pix');
         }
       } else {
-        throw new Error('Não foi possível gerar o QR Code do PIX');
+        throw new Error('Não foi possível gerar o QR Code do Pix');
       }
     } catch (error: any) {
-      console.error('Erro ao gerar PIX:', error);
+      console.error('Erro ao gerar Pix:', error);
       handlePaymentError(error);
     } finally {
       setProcessingPayment(false);
       setProcessingPix(false);
+      // Desbloqueia pagamentos após 2 segundos para evitar cliques muito rápidos
+      setTimeout(() => {
+        setPaymentBlocked(false);
+      }, 2000);
     }
   };
 
   // Função para processar o pagamento com cartão
   const handleProcessPayment = async (paymentData: any) => {
+    if (paymentBlocked || processingPayment) return;
+    
     try {
+      // Bloqueia imediatamente para evitar cliques duplos
+      setPaymentBlocked(true);
       setProcessingPayment(true);
       await api.payments.create(paymentData);
       notificationRef.current?.showNotification(
@@ -709,6 +757,10 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       handlePaymentError(error);
     } finally {
       setProcessingPayment(false);
+      // Desbloqueia pagamentos após 2 segundos para evitar cliques muito rápidos
+      setTimeout(() => {
+        setPaymentBlocked(false);
+      }, 2000);
     }
   };
 
@@ -720,7 +772,6 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       error?.message || 'Erro ao processar pagamento. Por favor, tente novamente.',
       'error'
     );
-    
   };
 
   // Formata o tempo restante (segundos) para MM:SS
@@ -781,8 +832,18 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="max-w-4xl mx-auto"
+          className="max-w-4xl mx-auto relative"
         >
+          {/* Overlay de bloqueio de pagamento */}
+          {paymentBlocked && (
+            <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-40 rounded-lg flex items-center justify-center">
+              <div className="bg-white dark:bg-gray-900 p-4 rounded-lg shadow-lg flex items-center gap-3">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                <span className="font-medium">Processando pagamento...</span>
+              </div>
+            </div>
+          )}
+          
           <div className="bg-card rounded-lg border border-border p-6 shadow-sm">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold">Finalizar Compra</h1>
@@ -836,13 +897,15 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                 </div>
 
                 {/* Exibe o QR Code do PIX quando disponível */}
-                {activeTab === 'pix' && pixQrCode && (
+                {(activeTab === 'pix' || activeTab === 'parcela4x') && pixQrCode && (
                   <div className="mt-4 p-4 border rounded-lg bg-muted/30 dark:bg-card/50 flex flex-col items-center">
-                    <h3 className="font-semibold mb-2">QR Code PIX</h3>
+                    <h3 className="font-semibold mb-2">
+                      {activeTab === 'parcela4x' ? 'QR Code Pix - 1ª Parcela' : 'QR Code PIX'}
+                    </h3>
                     <div className="bg-white dark:bg-white p-2 rounded-lg border mb-2">
                       <img 
                         src={pixQrCode} 
-                        alt="QR Code PIX" 
+                        alt="QR Code Pix" 
                         className="w-full max-w-[180px] h-auto"
                       />
                     </div>
@@ -900,7 +963,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                       </p>
                       <Button 
                         onClick={async () => {
+                          if (paymentBlocked || processingPayment) return;
+                          
                           try {
+                            // Bloqueia imediatamente para evitar cliques duplos
+                            setPaymentBlocked(true);
                             setProcessingPayment(true);
                             
                             // Para eventos gratuitos, marcar como "Pago" diretamente
@@ -922,10 +989,14 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                             );
                           } finally {
                             setProcessingPayment(false);
+                            // Desbloqueia pagamentos após 2 segundos
+                            setTimeout(() => {
+                              setPaymentBlocked(false);
+                            }, 2000);
                           }
                         }}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
-                        disabled={processingPayment}
+                        className={`w-full bg-green-600 hover:bg-green-700 text-white ${(processingPayment || paymentBlocked) ? 'pointer-events-none' : ''}`}
+                        disabled={processingPayment || paymentBlocked}
                       >
                         {processingPayment ? (
                           <div className="flex items-center justify-center">
@@ -940,14 +1011,18 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                   </div>
                 ) : (
                   <Tabs defaultValue="cartao" value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="grid grid-cols-2 mb-4">
+                    <TabsList className="grid grid-cols-3 mb-4">
                       <TabsTrigger value="cartao" className="flex items-center">
                         <CreditCard className="h-4 w-4 mr-2" />
                         Cartão
                       </TabsTrigger>
                       <TabsTrigger value="pix" className="flex items-center" disabled={processingPix && !pixQrCode}>
                         <QrCode className="h-4 w-4 mr-2" />
-                        PIX
+                        Pix
+                      </TabsTrigger>
+                      <TabsTrigger value="parcela4x" className="flex items-center">
+                        <CreditCard className="h-4 w-4 mr-2" />
+                        Parcela 4x
                       </TabsTrigger>
                     </TabsList>
                   
@@ -958,10 +1033,12 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                       reservationData={reservationData ? reservationData : undefined}
                       onSubmit={handleProcessPayment}
                       processing={processingPayment}
-                      disabled={cooldownRemaining > 0}
+                      disabled={cooldownRemaining > 0 || paymentBlocked}
                       disabledMessage={
-                        cooldownRemaining > 0
-                          ? `Muitas tentativas próximas podem acionar antifraude. Aguarde ${Math.floor(cooldownRemaining/60).toString().padStart(2,'0')}:${(cooldownRemaining%60).toString().padStart(2,'0')} antes de tentar o mesmo cartão ou utilize outro cartão/PIX.`
+                        paymentBlocked
+                          ? 'Processando pagamento... Aguarde.'
+                          : cooldownRemaining > 0
+                          ? `Muitas tentativas próximas podem acionar antifraude. Aguarde ${Math.floor(cooldownRemaining/60).toString().padStart(2,'0')}:${(cooldownRemaining%60).toString().padStart(2,'0')} antes de tentar o mesmo cartão ou utilize outro cartão/Pix.`
                           : undefined
                       }
                     />
@@ -988,13 +1065,13 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                       {!pixQrCode ? (
                         <Button 
                           onClick={handlePixPayment} 
-                          disabled={processingPayment}
-                          className="w-full"
+                          disabled={processingPayment || paymentBlocked}
+                          className={`w-full ${(processingPayment || paymentBlocked) ? 'pointer-events-none' : ''}`}
                         >
                           {processingPix ? (
                             <div className="flex items-center justify-center w-full">
                               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              <span>Gerando PIX...</span>
+                              <span>Gerando Pix...</span>
                               <div className="ml-2 w-full max-w-[120px] bg-primary-foreground/20 h-1 rounded-full overflow-hidden">
                                 <div className="h-full bg-primary/70 rounded-full animate-pulse" style={{ width: '100%' }}></div>
                               </div>
@@ -1002,18 +1079,126 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                           ) : (
                             <>
                               <QrCode className="mr-2 h-4 w-4" />
-                              Gerar QR Code PIX
+                              Gerar QR Code Pix
                             </>
                           )}
                         </Button>
                       ) : (
                         <div className="text-center text-sm text-muted-foreground">
-                          <p>Escaneie o QR Code acima ou copie o código PIX para pagar.</p>
+                          <p>Escaneie o QR Code acima ou copie o código Pix para pagar.</p>
                           <p className="mt-2">Após o pagamento, aguarde alguns instantes para receber a confirmação.</p>
                           {processingPayment && (
                             <div className="flex items-center justify-center mt-4">
                               <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
                               <span className="text-primary">Verificando pagamento...</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </TabsContent>
+
+                  <TabsContent value="parcela4x">
+                    <div className="space-y-4">
+                      <div className="bg-purple-50 dark:bg-purple-950/30 border border-purple-200 dark:border-purple-900 rounded-md p-4 mb-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <CreditCard className="h-5 w-5 text-purple-800 dark:text-purple-400" />
+                          <h3 className="font-semibold text-purple-800 dark:text-purple-400">Pagamento Parcelado - 4x</h3>
+                        </div>
+                        <p className="text-sm text-purple-700 dark:text-purple-300 mb-2">
+                          Pague a primeira parcela agora via PIX. As próximas parcelas devem ser feitas nos próximos 3 meses.
+                          <br />
+                          <span className="text-xs italic">Valor parcelado: R$ 110,00 cada parcela (4x R$ 110,00 = R$ 440,00 total).</span>
+                        </p>
+                        <div className="flex justify-between items-center font-medium mt-2">
+                          <span className="text-purple-800 dark:text-purple-400">1ª parcela (hoje):</span>
+                          <span className="text-lg text-purple-800 dark:text-purple-300">
+                            {formatCurrency(110)}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900 rounded-md p-4 mb-4">
+                        <h4 className="font-medium text-amber-800 dark:text-amber-400 mb-2">📅 Cronograma das próximas parcelas</h4>
+                        <p className="text-sm text-amber-700 dark:text-amber-300 mb-3">
+                          As próximas parcelas devem ser feitas até o 5º dia útil de cada mês:
+                        </p>
+                        
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="border-b border-amber-300 dark:border-amber-700">
+                                <th className="text-left py-2 font-medium text-amber-800 dark:text-amber-400">Parcela</th>
+                                <th className="text-left py-2 font-medium text-amber-800 dark:text-amber-400">Mês</th>
+                                <th className="text-left py-2 font-medium text-amber-800 dark:text-amber-400">Data limite</th>
+                                <th className="text-right py-2 font-medium text-amber-800 dark:text-amber-400">Valor</th>
+                              </tr>
+                            </thead>
+                            <tbody className="text-amber-700 dark:text-amber-300">
+                              <tr className="border-b border-amber-200 dark:border-amber-800">
+                                <td className="py-2">2ª</td>
+                                <td className="py-2">Dezembro</td>
+                                <td className="py-2">5 de dezembro (sex)</td>
+                                <td className="py-2 text-right font-medium">{formatCurrency(110)}</td>
+                              </tr>
+                              <tr className="border-b border-amber-200 dark:border-amber-800">
+                                <td className="py-2">3ª</td>
+                                <td className="py-2">Janeiro</td>
+                                <td className="py-2">8 de janeiro (qui)</td>
+                                <td className="py-2 text-right font-medium">{formatCurrency(110)}</td>
+                              </tr>
+                              <tr>
+                                <td className="py-2">4ª</td>
+                                <td className="py-2">Fevereiro</td>
+                                <td className="py-2">5 de fevereiro (qui)</td>
+                                <td className="py-2 text-right font-medium">{formatCurrency(110)}</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        <div className="mt-3 pt-3 border-t border-amber-300 dark:border-amber-700">
+                          <div className="flex justify-between items-center font-medium">
+                            <span className="text-amber-800 dark:text-amber-400">Valor total:</span>
+                            <span className="text-lg text-amber-800 dark:text-amber-300">
+                              {formatCurrency(440)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {!pixQrCode || activeTab !== 'parcela4x' ? (
+                        <Button 
+                          onClick={() => {
+                            // Usar a mesma função do PIX mas com contexto de parcela 4x
+                            handlePixPayment();
+                          }} 
+                          disabled={processingPayment || paymentBlocked}
+                          className={`w-full bg-purple-600 hover:bg-purple-700 ${(processingPayment || paymentBlocked) ? 'pointer-events-none' : ''}`}
+                        >
+                          {processingPix ? (
+                            <div className="flex items-center justify-center w-full">
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              <span>Gerando Pix para 1ª parcela...</span>
+                            </div>
+                          ) : (
+                            <>
+                              <QrCode className="mr-2 h-4 w-4" />
+                              Gerar Pix - 1ª Parcela ({formatCurrency(110)})
+                            </>
+                          )}
+                        </Button>
+                      ) : (
+                        <div className="text-center text-sm text-muted-foreground">
+                          <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-900 rounded-md p-3 mb-3">
+                            <p className="font-medium text-green-800 dark:text-green-400">✅ Pagando 1ª parcela via Pix</p>
+                            <p className="text-green-700 dark:text-green-300">Escaneie o QR Code acima para pagar a primeira parcela.</p>
+                          </div>
+                          <p>Após o pagamento da 1ª parcela, você receberá instruções para as próximas parcelas.</p>
+                          {processingPayment && (
+                            <div className="flex items-center justify-center mt-4">
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin text-primary" />
+                              <span className="text-primary">Verificando pagamento da 1ª parcela...</span>
                             </div>
                           )}
                         </div>
@@ -1043,7 +1228,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
               {isReservationExpiredError
                 ? 'Sua reserva expirou. Por favor, faça uma nova reserva para continuar.'
                 : isFirestoreTxnOrderError
-                  ? 'Houve um problema interno ao processar seu pagamento. Recomendamos usar PIX para confirmação imediata ou tentar novamente em alguns instantes.'
+                  ? 'Houve um problema interno ao processar seu pagamento. Recomendamos usar Pix para confirmação imediata ou tentar novamente em alguns instantes.'
                   : 'O pagamento não foi aprovado. Para evitar acionamento do antifraude, aguarde alguns minutos antes de tentar novamente com o mesmo cartão.'}
             </DialogDescription>
           </DialogHeader>
@@ -1087,11 +1272,11 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                 </div>
               ) : isFirestoreTxnOrderError ? (
                 <div className="text-xs text-muted-foreground">
-                  Estamos com instabilidade no processamento do cartão. Use PIX para confirmar imediatamente, ou tente novamente mais tarde.
+                  Estamos com instabilidade no processamento do cartão. Use Pix para confirmar imediatamente, ou tente novamente mais tarde.
                 </div>
               ) : (
                 <div className="text-xs text-muted-foreground">
-                  Dicas: aguarde ~1 minutos antes de tentar o mesmo cartão. Se possível, tente outro cartão ou use PIX para confirmação imediata.
+                  Dicas: aguarde ~1 minutos antes de tentar o mesmo cartão. Se possível, tente outro cartão ou use Pix para confirmação imediata.
                 </div>
               )}
 
@@ -1111,7 +1296,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                       onClick={() => setActiveTab('pix')}
                       className="w-full sm:w-auto"
                     >
-                      Pagar com PIX
+                      Pagar com Pix
                     </Button>
                     <Button
                       variant="default"
@@ -1132,7 +1317,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
                       variant="secondary"
                       onClick={() => setActiveTab('pix')}
                     >
-                      Pagar com PIX
+                      Pagar com Pix
                     </Button>
                     <Button
                       disabled={cooldownRemaining > 0}

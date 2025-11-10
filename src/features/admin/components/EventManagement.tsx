@@ -30,6 +30,7 @@ export function EventManagement() {
     location: '',
     description: '',
     eventType: 'general',
+    owner: '',
     maxClientMale: '0',
     maxClientFemale: '0',
     maxStaffMale: '0',
@@ -91,6 +92,7 @@ export function EventManagement() {
     location: '',
     description: '',
     eventType: 'general',
+    owner: '',
     maxClientMale: '0',
     maxClientFemale: '0',
     maxStaffMale: '0',
@@ -139,6 +141,7 @@ export function EventManagement() {
         location: selectedEvent.location || '',
         description: selectedEvent.description || '',
         eventType: selectedEvent.eventType || 'general',
+        owner: (selectedEvent as any).owner || '',
         maxClientMale: String(selectedEvent.maxClientMale || 0),
         maxClientFemale: String(selectedEvent.maxClientFemale || 0),
         maxStaffMale: String(selectedEvent.maxStaffMale || 0),
@@ -175,7 +178,8 @@ export function EventManagement() {
         isUnlimited: false,
         idadeMinima: '',
         idadeMaxima: '',
-        range_date: ''
+        range_date: '',
+        owner: '',
       });
       
       // Limpar também as imagens
@@ -310,6 +314,11 @@ export function EventManagement() {
       
       formData.append('startDate', startDateISO);
       formData.append('endDate', endDateISO);
+
+      // Adicionar owner se fornecido
+      if (createEventData.owner && createEventData.owner.trim() !== '') {
+        formData.append('owner', createEventData.owner.trim());
+      }
       
       // Adicionar campos de idade
       if (createEventData.idadeMaxima && createEventData.idadeMaxima.trim() !== '') {
@@ -421,7 +430,8 @@ export function EventManagement() {
           isUnlimited: false,
           idadeMinima: '',
           idadeMaxima: '',
-          range_date: ''
+          range_date: '',
+          owner: '',
         });
         // Reset images
         setImageFiles({
@@ -562,6 +572,12 @@ export function EventManagement() {
           ? eventDataToUpdate.range_date
           : `${eventDataToUpdate.range_date}T23:59:59.000Z` // Converter YYYY-MM-DD para ISO 8601
       };
+
+      // Incluir owner no update se fornecido
+      if (eventDataToUpdate.owner && eventDataToUpdate.owner.trim() !== '') {
+        // @ts-ignore
+        (updateData as any).owner = eventDataToUpdate.owner.trim();
+      }
 
       // Adicionar datas de inscrição se fornecidas
       if (eventDataToUpdate.startDate) {
@@ -838,6 +854,16 @@ export function EventManagement() {
                     onChange={(e) => setCreateEventData({ ...createEventData, price: e.target.value })}
                     required
                   />
+                </div>
+                <div>
+                  <Label htmlFor="owner">Owner</Label>
+                  <Input
+                    id="owner"
+                    value={createEventData.owner}
+                    onChange={(e) => setCreateEventData({ ...createEventData, owner: e.target.value })}
+                    placeholder="Ex: IPCP"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">Informe o owner do evento (ex.: IPCP). Deixe em branco se não se aplica.</p>
                 </div>
               </div>
 
@@ -1192,6 +1218,16 @@ export function EventManagement() {
                         }}
                         required
                       />
+                    </div>
+                    <div>
+                      <Label htmlFor="updateOwner">Owner</Label>
+                      <Input
+                        id="updateOwner"
+                        value={updateEventData.owner}
+                        onChange={(e) => setUpdateEventData({ ...updateEventData, owner: e.target.value })}
+                        placeholder="Ex: IPCP"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">Campo opcional. Use "IPCP" para eventos da IPCP.</p>
                     </div>
                   </div>
 

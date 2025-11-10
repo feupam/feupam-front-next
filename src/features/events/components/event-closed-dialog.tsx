@@ -23,7 +23,7 @@ export function EventClosedDialog({ open, onClose, startDate, endDate }: EventCl
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>As inscrições ainda não estâo abertas</AlertDialogTitle>
+          <AlertDialogTitle>As inscrições ainda não estão abertas</AlertDialogTitle>
             <AlertDialogDescription>
               Este evento estará disponível de{" "}
               <strong>

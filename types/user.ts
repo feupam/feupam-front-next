@@ -131,7 +131,7 @@ export const formSections: FormSection[] = [
               console.log('[VALIDAÇÃO] Restrições:', context);
               
               if (age < context.idadeMinima || age > context.idadeMaxima) {
-                return `Este evento é para idades de ${context.idadeMinima} a ${context.idadeMaxima} anos (incluindo ${context.idadeMinima} e ${context.idadeMaxima}). Sua idade: ${age} anos.`;
+                return `Este evento é para idades de ${context.idadeMinima} a ${context.idadeMaxima} anos`;
               }
             }
             

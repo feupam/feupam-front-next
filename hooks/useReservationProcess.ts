@@ -215,6 +215,19 @@ export function useReservationProcess(
         (duplicateError as any).userMessage = apiMessage; // ✅ Mensagem da API
         (duplicateError as any).apiData = error.response?.data; // ✅ Dados completos da API
         throw duplicateError;
+      } else if (error.code === 'NO_SPOTS_AVAILABLE' || (error.response?.status === 500 && error.config?.url?.includes('/reserve-spot'))) {
+        console.log('❌ Erro 500: Vagas esgotadas');
+        
+        toast({
+          title: 'Vagas esgotadas',
+          description: 'As vagas já acabaram',
+          variant: 'destructive',
+        });
+        
+        const noSpotsError = new Error('NO_SPOTS_AVAILABLE');
+        (noSpotsError as any).status = 500;
+        (noSpotsError as any).userMessage = 'As vagas já acabaram';
+        throw noSpotsError;
       } else {
         setIsError(true);
         // Tentar extrair mensagem de erro da API

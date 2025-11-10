@@ -13,8 +13,9 @@ import { useCurrentEventContext } from '@/contexts/CurrentEventContext';
 import { isAcampamentoEvent, convertAcampamentoToUserProfile } from '@/types/acampamento-form';
 import { auth } from '@/lib/firebase';
 import { useEventStorage } from '@/hooks/useEventStorage';
+import { ProtectedRoute } from '@/src/features/auth';
 
-export default function FormularioInscricaoPage() {
+function FormularioInscricaoPageContent() {
   const { userData, isLoading: userDataLoading, error: userDataError, isExistingUser } = useUserData();
   const { currentEvent, setCurrentEventByName, setCurrentEventFromData } = useCurrentEventContext();
   const { selectedEvent } = useEventStorage();
@@ -25,6 +26,7 @@ export default function FormularioInscricaoPage() {
   const eventNameFromUrl = searchParams?.get('eventName');
 
   console.log('=== FORMULARIO PAGE ===');
+  console.log('auth.currentUser:', auth.currentUser?.email || 'Não logado');
   console.log('userDataLoading:', userDataLoading);
   console.log('userDataError:', userDataError);
   console.log('userData:', userData);
@@ -304,5 +306,14 @@ export default function FormularioInscricaoPage() {
         />
       </div>
     </div>
+  );
+}
+
+// Componente principal que envolve tudo com ProtectedRoute
+export default function FormularioInscricaoPage() {
+  return (
+    <ProtectedRoute>
+      <FormularioInscricaoPageContent />
+    </ProtectedRoute>
   );
 }

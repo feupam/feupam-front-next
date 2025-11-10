@@ -250,7 +250,7 @@ export default function EventPage() {
             <h2 className="text-3xl font-bold">Informações da Inscrição</h2>
             <div className="grid gap-6">
               <div className="p-6 rounded-lg bg-card border border-border">
-                <h3 className="text-xl font-semibold mb-4">Valor</h3>
+                <h3 className="text-xl font-semibold mb-4">Valor a partir de</h3>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl font-bold text-primary">
                     {formatCurrency((eventDetails.price || 0) / 100)}

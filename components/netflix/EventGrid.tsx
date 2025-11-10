@@ -142,16 +142,7 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
     return (
       <section className="px-4 pb-12">
         <div className="container mx-auto">
-          <div className="mb-56 flex justify-center">
-            <Image
-              src="/deeper.jpeg"
-              alt="Eventos disponíveis"
-              width={1600}
-              height={320}
-              className="w-full h-auto"
-              priority
-            />
-          </div>
+
           <div className="text-center py-8 text-white/70">
             <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Nenhum evento ativo no momento</p>
@@ -164,16 +155,7 @@ export function EventGrid({ events, onEventSelect, selectedIndex }: EventGridPro
   return (
     <section className="px-4 pb-12">
       <div className="container mx-auto">
-        <div className="mb-56 flex justify-center">
-          <Image
-            src="/deeper.jpeg"
-            alt="Eventos disponíveis"
-            width={1600}
-            height={320}
-            className="w-full h-auto"
-            priority
-          />
-        </div>
+
         <div className="flex flex-wrap justify-center gap-4 md:gap-6 lg:gap-8">
           {activeEvents.map((event, index) => (
             <div 

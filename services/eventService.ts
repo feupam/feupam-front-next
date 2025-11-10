@@ -28,11 +28,16 @@ export const eventService = {
     const response = await api.get<EventStatusResponse>(`/events/event-status`);
     const data = response.data;
 
-    // Only return events owned by null. If owner is null/undefined or different, filter out.
+    console.log('[EventService] Eventos recebidos da API:', data.events?.length || 0);
+    console.log('[EventService] Owners dos eventos:', data.events?.map(e => ({ id: e.id, name: e.name, owner: e.owner })));
+
+    // Only return events where owner is empty, null, or undefined
     const filtered: EventStatusResponse = {
       ...data,
-      events: Array.isArray(data.events) ? data.events.filter((e) => e.owner === '') : [],
+      events: Array.isArray(data.events) ? data.events.filter((e) => !e.owner || e.owner === '') : [],
     };
+
+    console.log('[EventService] Eventos após filtro (!owner || owner === ""):', filtered.events.length);
 
     return filtered;
   }

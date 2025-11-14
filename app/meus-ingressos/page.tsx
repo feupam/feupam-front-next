@@ -704,7 +704,7 @@ export default function MyTicketsPage() {
                               <Button 
                                 variant="default" 
                                 size="sm"
-                                onClick={() => window.location.href = `/checkout/${reservation.eventName}?ticket=${reservation.ticketKind || 'full'}&spotId=${reservation.spotId}`}
+                                onClick={() => window.location.href = `/checkout/${reservation.eventName}?ticket=${reservation.ticketKind || 'full'}`}
                                 className="w-full sm:w-auto"
                               >
                                 <CreditCard className="h-4 w-4 mr-1" />

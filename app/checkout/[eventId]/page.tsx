@@ -539,17 +539,10 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
 
   // Função para lidar com o pagamento via PIX
   const handlePixPayment = async () => {
-    if (!reservationData || paymentBlocked || processingPayment || processingPix) return;
-    
     // Bloqueia imediatamente para evitar cliques duplos
     setPaymentBlocked(true);
     setProcessingPayment(true);
     setProcessingPix(true);
-    
-    console.log('[PIX Payment] Iniciando pagamento Pix...');
-    console.log('[Pix Payment] params.eventId:', params.eventId);
-    console.log('[Pix Payment] currentEvent?.name:', currentEvent?.name);
-    console.log('[Pix Payment] reservationData:', reservationData);
     
     try {
       // Primeiro verificamos o status da reserva usando a rota /retry
@@ -598,7 +591,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       }
       
       // ✅ CORRIGIDO: Usar email como identificador (email é o ID da reserva)
-      const reservationEmail = reservationData.email || auth.currentUser?.email;
+      const reservationEmail = reservationData?.email || auth.currentUser?.email;
       if (!reservationEmail) {
         throw new Error('Email da reserva não encontrado');
       }
@@ -648,7 +641,7 @@ export default function CheckoutPage({ params, searchParams }: CheckoutPageProps
       console.log('[Pix Payment] currentEvent?.name:', currentEvent?.name);
       console.log('[Pix Payment] currentEvent?.uuid:', currentEvent?.uuid);
       console.log('[Pix Payment] Email usado:', reservationEmail);
-      console.log('[Pix Payment] SpotId usado:', reservationData.spotId);
+      console.log('[Pix Payment] SpotId usado:', reservationData?.spotId);
       console.log('[Pix Payment] ActiveTab:', activeTab);
       console.log('[Pix Payment] ====================================================');
       
